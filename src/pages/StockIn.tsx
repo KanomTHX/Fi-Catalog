@@ -10,7 +10,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useStockMovements, useCreateMovement } from "@/hooks/useStockMovements";
 import { ProductCombobox } from "@/components/ProductCombobox";
 import { format } from "date-fns";
-import { ArrowDownToLine } from "lucide-react";
+import { ArrowDownToLine, Barcode } from "lucide-react";
 
 export default function StockIn() {
   const { data: products = [] } = useProducts();
@@ -72,6 +72,9 @@ export default function StockIn() {
                 <TableRow>
                   <TableHead>สินค้า</TableHead>
                   <TableHead className="text-right">จำนวน</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    <span className="inline-flex items-center gap-1"><Barcode className="h-3.5 w-3.5" /> บาร์โค้ด</span>
+                  </TableHead>
                   <TableHead>หมายเหตุ</TableHead>
                   <TableHead>วันที่</TableHead>
                 </TableRow>
@@ -83,12 +86,15 @@ export default function StockIn() {
                     <TableCell className="text-right font-mono">
                       <Badge variant="default" className="bg-success text-success-foreground">+{m.quantity}</Badge>
                     </TableCell>
+                    <TableCell className="hidden sm:table-cell font-mono text-xs text-muted-foreground">
+                      {(m.products as any)?.barcode ?? <span className="italic text-muted-foreground/50">—</span>}
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-sm max-w-48 truncate">{m.note ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "dd/MM, HH:mm")}</TableCell>
                   </TableRow>
                 ))}
                 {movements.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">ยังไม่มีประวัติการรับเข้า</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">ยังไม่มีประวัติการรับเข้า</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>

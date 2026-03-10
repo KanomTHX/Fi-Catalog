@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useProducts, useCategories, useCreateProduct, useUpdateProduct, useDeleteProduct, useProductStock } from "@/hooks/useProducts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Upload, Pencil, Trash2, Hash } from "lucide-react";
+import { Plus, Search, Upload, Pencil, Trash2, Hash, Barcode, MapPin, Weight } from "lucide-react";
 import { SerialNumberDialog } from "@/components/SerialNumberDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -156,7 +156,17 @@ export default function Products() {
               <TableRow>
                 <TableHead>สินค้า</TableHead>
                 <TableHead>SKU</TableHead>
+                <TableHead className="hidden md:table-cell">แบรนด์</TableHead>
                 <TableHead>หมวดหมู่</TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  <span className="inline-flex items-center gap-1"><Barcode className="h-3.5 w-3.5" /> บาร์โค้ด</span>
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> ตำแหน่ง</span>
+                </TableHead>
+                <TableHead className="hidden xl:table-cell">
+                  <span className="inline-flex items-center gap-1"><Weight className="h-3.5 w-3.5" /> น้ำหนัก</span>
+                </TableHead>
                 <TableHead className="text-right">ต้นทุน</TableHead>
                 <TableHead className="text-right">ราคาขาย</TableHead>
                 <TableHead className="text-right">สต็อก</TableHead>
@@ -171,7 +181,11 @@ export default function Products() {
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell className="font-mono text-sm">{p.sku ?? "—"}</TableCell>
+                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{(p as any).brand ?? "—"}</TableCell>
                     <TableCell>{(p as any).categories?.name ?? "—"}</TableCell>
+                    <TableCell className="hidden lg:table-cell font-mono text-xs text-muted-foreground">{(p as any).barcode ?? <span className="text-muted-foreground/50 italic">รอรับเข้า</span>}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{(p as any).location ?? "—"}</TableCell>
+                    <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">{(p as any).weight ? `${(p as any).weight} กก.` : "—"}</TableCell>
                     <TableCell className="text-right font-mono">{(p.cost_price ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right font-mono">{(p.selling_price ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right">
@@ -188,7 +202,7 @@ export default function Products() {
                 );
               })}
               {!isLoading && filtered.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-12">ไม่พบสินค้า</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-12">ไม่พบสินค้า</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -202,18 +216,14 @@ export default function Products() {
             <DialogTitle>{editId ? "แก้ไขสินค้า" : "เพิ่มสินค้า"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-2">
-            {/* ชื่อสินค้า */}
             <div className="grid gap-2">
               <Label>ชื่อสินค้า *</Label>
               <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} placeholder="เช่น น้ำมันเครื่อง 5W-30" />
             </div>
-
-            {/* รายละเอียด */}
             <div className="grid gap-2">
               <Label>รายละเอียดสินค้า</Label>
               <Textarea value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="คำอธิบายสินค้า..." rows={3} />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>SKU</Label>
@@ -224,7 +234,6 @@ export default function Products() {
                 <Input value={form.brand} onChange={(e) => setForm(f => ({ ...f, brand: e.target.value }))} placeholder="เช่น Toyota, Samsung" />
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>หมวดหมู่</Label>
@@ -235,18 +244,8 @@ export default function Products() {
                   </SelectContent>
                 </Select>
                 <div className="flex gap-1.5">
-                  <Input
-                    placeholder="หมวดหมู่ใหม่..."
-                    value={newCatName}
-                    onChange={(e) => setNewCatName(e.target.value)}
-                    className="h-8 text-xs"
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-8 shrink-0 text-xs"
-                    disabled={!newCatName.trim() || creatingCat}
+                  <Input placeholder="หมวดหมู่ใหม่..." value={newCatName} onChange={(e) => setNewCatName(e.target.value)} className="h-8 text-xs" />
+                  <Button type="button" size="sm" variant="outline" className="h-8 shrink-0 text-xs" disabled={!newCatName.trim() || creatingCat}
                     onClick={async () => {
                       setCreatingCat(true);
                       const { data, error } = await supabase.from("categories").insert({ name: newCatName.trim() }).select("id").single();
@@ -270,7 +269,6 @@ export default function Products() {
                 <Input value={form.unit} onChange={(e) => setForm(f => ({ ...f, unit: e.target.value }))} placeholder="เช่น ชิ้น, กล่อง, แพ็ค" />
               </div>
             </div>
-
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
                 <Label>ราคาต้นทุน</Label>
@@ -285,7 +283,6 @@ export default function Products() {
                 <Input type="number" min={0} value={form.min_stock_level} onChange={(e) => setForm(f => ({ ...f, min_stock_level: Number(e.target.value) }))} />
               </div>
             </div>
-
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
                 <Label>น้ำหนัก (กก.)</Label>
@@ -300,7 +297,6 @@ export default function Products() {
                 <Input value={form.location} onChange={(e) => setForm(f => ({ ...f, location: e.target.value }))} placeholder="เช่น ชั้น A-01" />
               </div>
             </div>
-
             <div className="grid gap-2">
               <Label>รูปสินค้า</Label>
               <Input type="file" accept="image/*" onChange={handleImageUpload} />
@@ -314,7 +310,6 @@ export default function Products() {
         </DialogContent>
       </Dialog>
 
-      {/* ยืนยันการลบ */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -327,7 +322,6 @@ export default function Products() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {/* Serial Number Dialog */}
       {serialDialogProduct && (
         <SerialNumberDialog
           open={!!serialDialogProduct}
