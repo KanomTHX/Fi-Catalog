@@ -34,6 +34,8 @@ function ProtectedRoutes() {
         <Route path="/stock-in" element={<StockIn />} />
         <Route path="/stock-out" element={<StockOut />} />
         <Route path="/adjustments" element={<Adjustments />} />
+        <Route path="/serial-print" element={<SerialPrint />} />
+        <Route path="/stock-check" element={<StockCheck />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/activity-log" element={<ActivityLog />} />

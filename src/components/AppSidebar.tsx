@@ -19,6 +19,8 @@ const mainItems = [
   { title: "รับเข้า", url: "/stock-in", icon: ArrowDownToLine },
   { title: "เบิกออก", url: "/stock-out", icon: ArrowUpFromLine },
   { title: "ปรับปรุง", url: "/adjustments", icon: SlidersHorizontal },
+  { title: "พิมพ์ฉลาก", url: "/serial-print", icon: Printer },
+  { title: "เช็คสต็อก", url: "/stock-check", icon: ScanBarcode },
   { title: "รายงาน", url: "/reports", icon: FileBarChart },
 ];
 
