@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useProducts, useProductStock } from "@/hooks/useProducts";
 import { useStockMovements, useCreateMovement } from "@/hooks/useStockMovements";
+import { ProductCombobox } from "@/components/ProductCombobox";
 import { format } from "date-fns";
 import { ArrowUpFromLine } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -55,12 +55,7 @@ export default function StockOut() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label>สินค้า *</Label>
-                <Select value={productId} onValueChange={setProductId}>
-                  <SelectTrigger><SelectValue placeholder="เลือกสินค้า" /></SelectTrigger>
-                  <SelectContent>
-                    {products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} {p.sku ? `(${p.sku})` : ""}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <ProductCombobox products={products} value={productId} onSelect={setProductId} placeholder="ค้นหาด้วยชื่อหรือ SKU..." />
                 {productId && <p className="text-sm text-muted-foreground">คงเหลือ: <span className="font-mono font-semibold">{currentStock}</span></p>}
               </div>
               <div className="space-y-2">
