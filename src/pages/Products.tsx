@@ -214,6 +214,36 @@ export default function Products() {
                     {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                <div className="flex gap-1.5">
+                  <Input
+                    placeholder="New category..."
+                    value={newCatName}
+                    onChange={(e) => setNewCatName(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 shrink-0 text-xs"
+                    disabled={!newCatName.trim() || creatingCat}
+                    onClick={async () => {
+                      setCreatingCat(true);
+                      const { data, error } = await supabase.from("categories").insert({ name: newCatName.trim() }).select("id").single();
+                      if (error) {
+                        toast({ title: "Error", description: error.message, variant: "destructive" });
+                      } else {
+                        await queryClient.invalidateQueries({ queryKey: ["categories"] });
+                        setForm(f => ({ ...f, category_id: data.id }));
+                        setNewCatName("");
+                        toast({ title: "Category created" });
+                      }
+                      setCreatingCat(false);
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-0.5" /> Add
+                  </Button>
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label>Unit</Label>
