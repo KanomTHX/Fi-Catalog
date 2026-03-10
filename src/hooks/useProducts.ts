@@ -72,7 +72,7 @@ export function useUpdateProduct() {
       qc.invalidateQueries({ queryKey: ["products"] });
       toast({ title: "อัปเดตสินค้าสำเร็จ" });
     },
-    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "เกิดข้อผิดพลาด", description: e.message, variant: "destructive" }),
   });
 }
 
