@@ -43,9 +43,9 @@ export function AppHeader() {
           </PopoverTrigger>
           <PopoverContent className="w-80" align="end">
             <div className="space-y-2">
-              <h4 className="font-semibold text-sm">Low Stock Alerts</h4>
+              <h4 className="font-semibold text-sm">แจ้งเตือนสินค้าใกล้หมด</h4>
               {lowStockItems.length === 0 ? (
-                <p className="text-sm text-muted-foreground">All products are sufficiently stocked.</p>
+                <p className="text-sm text-muted-foreground">สินค้าทุกรายการมีสต็อกเพียงพอ</p>
               ) : (
                 lowStockItems.slice(0, 10).map((item) => (
                   <div key={item.product_id} className="flex items-center justify-between text-sm py-1 border-b border-border last:border-0">
@@ -63,8 +63,8 @@ export function AppHeader() {
             <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">{initials}</AvatarFallback>
           </Avatar>
           <div className="hidden md:block">
-            <p className="text-sm font-medium leading-none">{profile?.full_name ?? "User"}</p>
-            <p className="text-xs text-muted-foreground capitalize">{role ?? "staff"}</p>
+            <p className="text-sm font-medium leading-none">{profile?.full_name ?? "ผู้ใช้"}</p>
+            <p className="text-xs text-muted-foreground capitalize">{role === "admin" ? "ผู้ดูแล" : "พนักงาน"}</p>
           </div>
         </div>
       </div>

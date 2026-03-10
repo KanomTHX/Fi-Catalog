@@ -22,8 +22,8 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">User Management</h1>
-        <p className="text-muted-foreground">View and manage system users</p>
+        <h1 className="text-2xl font-bold">จัดการผู้ใช้</h1>
+        <p className="text-muted-foreground">ดูและจัดการผู้ใช้ในระบบ</p>
       </div>
 
       <Card>
@@ -31,9 +31,9 @@ export default function UsersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Joined</TableHead>
+                <TableHead>ผู้ใช้</TableHead>
+                <TableHead>บทบาท</TableHead>
+                <TableHead>วันที่สมัคร</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -46,13 +46,15 @@ export default function UsersPage() {
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="bg-primary/10 text-primary text-xs">{initials}</AvatarFallback>
                         </Avatar>
-                        <span className="font-medium">{u.full_name ?? "Unknown"}</span>
+                        <span className="font-medium">{u.full_name ?? "ไม่ทราบชื่อ"}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={u.role === "admin" ? "default" : "secondary"} className="capitalize">{u.role}</Badge>
+                      <Badge variant={u.role === "admin" ? "default" : "secondary"} className="capitalize">
+                        {u.role === "admin" ? "ผู้ดูแล" : "พนักงาน"}
+                      </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{format(new Date(u.created_at), "MMM dd, yyyy")}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{format(new Date(u.created_at), "dd/MM/yyyy")}</TableCell>
                   </TableRow>
                 );
               })}

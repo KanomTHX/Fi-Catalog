@@ -47,9 +47,9 @@ export function useCreateMovement() {
       qc.invalidateQueries({ queryKey: ["stock-movements"] });
       qc.invalidateQueries({ queryKey: ["product-stock"] });
       qc.invalidateQueries({ queryKey: ["low-stock-alerts"] });
-      const labels = { in: "Stock received", out: "Stock withdrawn", adjustment: "Stock adjusted" };
+      const labels = { in: "รับเข้าสต็อกสำเร็จ", out: "เบิกออกสต็อกสำเร็จ", adjustment: "ปรับปรุงสต็อกสำเร็จ" };
       toast({ title: labels[vars.type] });
     },
-    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: "เกิดข้อผิดพลาด", description: e.message, variant: "destructive" }),
   });
 }

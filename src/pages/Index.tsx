@@ -26,28 +26,28 @@ export default function Dashboard() {
     return Array.from({ length: days }, (_, i) => {
       const date = subDays(new Date(), days - 1 - i);
       const dayStr = format(date, "yyyy-MM-dd");
-      const label = format(date, "MMM dd");
+      const label = format(date, "dd/MM");
       const dayMovements = movements.filter(m => m.created_at.startsWith(dayStr));
       return {
         date: label,
-        "Stock In": dayMovements.filter(m => m.type === "in").reduce((s, m) => s + m.quantity, 0),
-        "Stock Out": dayMovements.filter(m => m.type === "out").reduce((s, m) => s + m.quantity, 0),
+        "รับเข้า": dayMovements.filter(m => m.type === "in").reduce((s, m) => s + m.quantity, 0),
+        "เบิกออก": dayMovements.filter(m => m.type === "out").reduce((s, m) => s + m.quantity, 0),
       };
     });
   }, [movements]);
 
   const stats = [
-    { label: "Total Products", value: totalProducts, icon: Package, color: "text-primary" },
-    { label: "Total Stock", value: totalStock.toLocaleString(), icon: TrendingUp, color: "text-success" },
-    { label: "Low Stock Items", value: lowStockCount, icon: AlertTriangle, color: "text-warning" },
-    { label: "Today In / Out", value: `${todayIn} / ${todayOut}`, icon: TrendingDown, color: "text-chart-4" },
+    { label: "สินค้าทั้งหมด", value: totalProducts, icon: Package, color: "text-primary" },
+    { label: "สต็อกรวม", value: totalStock.toLocaleString(), icon: TrendingUp, color: "text-success" },
+    { label: "สินค้าใกล้หมด", value: lowStockCount, icon: AlertTriangle, color: "text-warning" },
+    { label: "วันนี้ เข้า / ออก", value: `${todayIn} / ${todayOut}`, icon: TrendingDown, color: "text-chart-4" },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your inventory</p>
+        <h1 className="text-2xl font-bold">แดชบอร์ด</h1>
+        <p className="text-muted-foreground">ภาพรวมคลังสินค้าของคุณ</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -68,7 +68,7 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Stock Movement Trend (14 Days)</CardTitle>
+          <CardTitle className="text-lg">แนวโน้มการเคลื่อนไหวสต็อก (14 วัน)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-72">
@@ -79,8 +79,8 @@ export default function Dashboard() {
                 <YAxis className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
                 <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "var(--radius)" }} />
                 <Legend />
-                <Bar dataKey="Stock In" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Stock Out" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="รับเข้า" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="เบิกออก" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -90,16 +90,16 @@ export default function Dashboard() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Recent Movements</CardTitle>
+            <CardTitle className="text-lg">การเคลื่อนไหวล่าสุด</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>สินค้า</TableHead>
+                  <TableHead>ประเภท</TableHead>
+                  <TableHead className="text-right">จำนวน</TableHead>
+                  <TableHead>วันที่</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -107,16 +107,16 @@ export default function Dashboard() {
                   <TableRow key={m.id}>
                     <TableCell className="font-medium">{m.products?.name ?? "—"}</TableCell>
                     <TableCell>
-                      <Badge variant={m.type === "in" ? "default" : m.type === "out" ? "destructive" : "secondary"} className="capitalize text-xs">
-                        {m.type}
+                      <Badge variant={m.type === "in" ? "default" : m.type === "out" ? "destructive" : "secondary"} className="text-xs">
+                        {m.type === "in" ? "รับเข้า" : m.type === "out" ? "เบิกออก" : "ปรับปรุง"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-mono">{m.quantity}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "MMM dd, HH:mm")}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "dd/MM, HH:mm")}</TableCell>
                   </TableRow>
                 ))}
                 {movements.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No movements yet</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">ยังไม่มีการเคลื่อนไหว</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -125,16 +125,16 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Low Stock Alerts</CardTitle>
+            <CardTitle className="text-lg">แจ้งเตือนสินค้าใกล้หมด</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
+                  <TableHead>สินค้า</TableHead>
                   <TableHead>SKU</TableHead>
-                  <TableHead className="text-right">Stock</TableHead>
-                  <TableHead className="text-right">Min</TableHead>
+                  <TableHead className="text-right">คงเหลือ</TableHead>
+                  <TableHead className="text-right">ขั้นต่ำ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -147,7 +147,7 @@ export default function Dashboard() {
                   </TableRow>
                 ))}
                 {stock.filter(p => p.current_stock !== null && p.min_stock_level !== null && p.current_stock <= p.min_stock_level).length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">All products are stocked</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">สินค้าทุกรายการมีสต็อกเพียงพอ</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>

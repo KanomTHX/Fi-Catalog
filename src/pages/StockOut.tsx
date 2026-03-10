@@ -30,7 +30,7 @@ export default function StockOut() {
     if (!productId || !quantity) return;
     const qty = Number(quantity);
     if (qty > currentStock) {
-      toast({ title: "Insufficient stock", description: `Only ${currentStock} available.`, variant: "destructive" });
+      toast({ title: "สต็อกไม่เพียงพอ", description: `คงเหลือเพียง ${currentStock} ชิ้น`, variant: "destructive" });
       return;
     }
     await createMovement.mutateAsync({ product_id: productId, type: "out", quantity: qty, note: note || undefined });
@@ -40,39 +40,39 @@ export default function StockOut() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Stock Withdrawal</h1>
-        <p className="text-muted-foreground">Withdraw products for selling or distribution</p>
+        <h1 className="text-2xl font-bold">เบิกสินค้าออก</h1>
+        <p className="text-muted-foreground">เบิกสินค้าเพื่อขายหรือจัดจำหน่าย</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <ArrowUpFromLine className="h-5 w-5 text-destructive" /> Withdraw Stock
+              <ArrowUpFromLine className="h-5 w-5 text-destructive" /> เบิกออกสต็อก
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label>Product *</Label>
+                <Label>สินค้า *</Label>
                 <Select value={productId} onValueChange={setProductId}>
-                  <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="เลือกสินค้า" /></SelectTrigger>
                   <SelectContent>
                     {products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} {p.sku ? `(${p.sku})` : ""}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                {productId && <p className="text-sm text-muted-foreground">Available: <span className="font-mono font-semibold">{currentStock}</span></p>}
+                {productId && <p className="text-sm text-muted-foreground">คงเหลือ: <span className="font-mono font-semibold">{currentStock}</span></p>}
               </div>
               <div className="space-y-2">
-                <Label>Quantity *</Label>
-                <Input type="number" min={1} max={currentStock} value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Enter quantity" />
+                <Label>จำนวน *</Label>
+                <Input type="number" min={1} max={currentStock} value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="กรอกจำนวน" />
               </div>
               <div className="space-y-2">
-                <Label>Note (Customer / Order Ref)</Label>
-                <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note..." rows={3} />
+                <Label>หมายเหตุ (ลูกค้า / เลขอ้างอิง)</Label>
+                <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="หมายเหตุ (ไม่บังคับ)..." rows={3} />
               </div>
               <Button type="submit" variant="destructive" className="w-full" disabled={!productId || !quantity || createMovement.isPending}>
-                {createMovement.isPending ? "Saving..." : "Withdraw Stock"}
+                {createMovement.isPending ? "กำลังบันทึก..." : "เบิกออกสต็อก"}
               </Button>
             </form>
           </CardContent>
@@ -80,16 +80,16 @@ export default function StockOut() {
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg">Withdrawal History</CardTitle>
+            <CardTitle className="text-lg">ประวัติการเบิกออก</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead>Note</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>สินค้า</TableHead>
+                  <TableHead className="text-right">จำนวน</TableHead>
+                  <TableHead>หมายเหตุ</TableHead>
+                  <TableHead>วันที่</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -100,11 +100,11 @@ export default function StockOut() {
                       <Badge variant="destructive">-{m.quantity}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm max-w-48 truncate">{m.note ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "MMM dd, HH:mm")}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "dd/MM, HH:mm")}</TableCell>
                   </TableRow>
                 ))}
                 {movements.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No withdrawal history</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">ยังไม่มีประวัติการเบิกออก</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>

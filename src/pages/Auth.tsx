@@ -32,10 +32,10 @@ export default function Auth() {
           options: { data: { full_name: fullName }, emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast({ title: "Account created!", description: "Check your email to confirm your account." });
+        toast({ title: "สร้างบัญชีสำเร็จ!", description: "กรุณาตรวจสอบอีเมลเพื่อยืนยันบัญชีของคุณ" });
       }
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "เกิดข้อผิดพลาด", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -50,33 +50,33 @@ export default function Auth() {
           </div>
           <CardTitle className="text-2xl font-bold">StockFlow</CardTitle>
           <CardDescription>
-            {isLogin ? "Sign in to manage your inventory" : "Create your account to get started"}
+            {isLogin ? "เข้าสู่ระบบเพื่อจัดการคลังสินค้า" : "สร้างบัญชีเพื่อเริ่มต้นใช้งาน"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" required />
+                <Label htmlFor="fullName">ชื่อ-นามสกุล</Label>
+                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="สมชาย ใจดี" required />
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">อีเมล</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">รหัสผ่าน</Label>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
+              {loading ? "กำลังโหลด..." : isLogin ? "เข้าสู่ระบบ" : "สร้างบัญชี"}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+            {isLogin ? "ยังไม่มีบัญชี?" : "มีบัญชีอยู่แล้ว?"}{" "}
             <button onClick={() => setIsLogin(!isLogin)} className="text-primary hover:underline font-medium">
-              {isLogin ? "Sign Up" : "Sign In"}
+              {isLogin ? "สมัครสมาชิก" : "เข้าสู่ระบบ"}
             </button>
           </div>
         </CardContent>

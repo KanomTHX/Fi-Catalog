@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProducts, useProductStock, useCategories } from "@/hooks/useProducts";
 import { useStockMovements } from "@/hooks/useStockMovements";
@@ -42,52 +41,52 @@ export default function Reports() {
   }, [movements, movementType, dateFrom, dateTo]);
 
   const exportInventory = () => {
-    const headers = ["Product", "SKU", "Current Stock", "Min Stock"];
+    const headers = ["สินค้า", "SKU", "สต็อกปัจจุบัน", "สต็อกขั้นต่ำ"];
     const rows = stock.map((s) => [s.name ?? "", s.sku ?? "", String(s.current_stock ?? 0), String(s.min_stock_level ?? 0)]);
-    downloadCSV("inventory-report.csv", headers, rows);
+    downloadCSV("รายงานสินค้าคงคลัง.csv", headers, rows);
   };
 
   const exportLowStock = () => {
-    const headers = ["Product", "SKU", "Current Stock", "Min Stock"];
+    const headers = ["สินค้า", "SKU", "สต็อกปัจจุบัน", "สต็อกขั้นต่ำ"];
     const rows = lowStock.map((s) => [s.name ?? "", s.sku ?? "", String(s.current_stock ?? 0), String(s.min_stock_level ?? 0)]);
-    downloadCSV("low-stock-report.csv", headers, rows);
+    downloadCSV("รายงานสินค้าใกล้หมด.csv", headers, rows);
   };
 
   const exportMovements = () => {
-    const headers = ["Product", "Type", "Quantity", "Note", "Date"];
-    const rows = filteredMovements.map((m) => [m.products?.name ?? "", m.type, String(m.quantity), m.note ?? "", format(new Date(m.created_at), "yyyy-MM-dd HH:mm")]);
-    downloadCSV("stock-movements-report.csv", headers, rows);
+    const headers = ["สินค้า", "ประเภท", "จำนวน", "หมายเหตุ", "วันที่"];
+    const rows = filteredMovements.map((m) => [m.products?.name ?? "", m.type === "in" ? "รับเข้า" : m.type === "out" ? "เบิกออก" : "ปรับปรุง", String(m.quantity), m.note ?? "", format(new Date(m.created_at), "yyyy-MM-dd HH:mm")]);
+    downloadCSV("รายงานการเคลื่อนไหว.csv", headers, rows);
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Reports</h1>
-        <p className="text-muted-foreground">View and export inventory reports</p>
+        <h1 className="text-2xl font-bold">รายงาน</h1>
+        <p className="text-muted-foreground">ดูและส่งออกรายงานคลังสินค้า</p>
       </div>
 
       <Tabs defaultValue="inventory">
         <TabsList>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="low-stock">Low Stock</TabsTrigger>
-          <TabsTrigger value="movements">Movements</TabsTrigger>
+          <TabsTrigger value="inventory">สินค้าคงคลัง</TabsTrigger>
+          <TabsTrigger value="low-stock">สินค้าใกล้หมด</TabsTrigger>
+          <TabsTrigger value="movements">การเคลื่อนไหว</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inventory">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Inventory Report</CardTitle>
-              <Button variant="outline" size="sm" onClick={exportInventory}><Download className="h-4 w-4 mr-1" /> Export CSV</Button>
+              <CardTitle>รายงานสินค้าคงคลัง</CardTitle>
+              <Button variant="outline" size="sm" onClick={exportInventory}><Download className="h-4 w-4 mr-1" /> ส่งออก CSV</Button>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Product</TableHead>
+                    <TableHead>สินค้า</TableHead>
                     <TableHead>SKU</TableHead>
-                    <TableHead className="text-right">Current Stock</TableHead>
-                    <TableHead className="text-right">Min Level</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">สต็อกปัจจุบัน</TableHead>
+                    <TableHead className="text-right">ขั้นต่ำ</TableHead>
+                    <TableHead>สถานะ</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -100,7 +99,7 @@ export default function Reports() {
                         <TableCell className="text-right font-mono">{s.current_stock}</TableCell>
                         <TableCell className="text-right font-mono">{s.min_stock_level}</TableCell>
                         <TableCell>
-                          <Badge variant={isLow ? "destructive" : "secondary"}>{isLow ? "Low" : "OK"}</Badge>
+                          <Badge variant={isLow ? "destructive" : "secondary"}>{isLow ? "ใกล้หมด" : "ปกติ"}</Badge>
                         </TableCell>
                       </TableRow>
                     );
@@ -114,18 +113,18 @@ export default function Reports() {
         <TabsContent value="low-stock">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Low Stock Report</CardTitle>
-              <Button variant="outline" size="sm" onClick={exportLowStock}><Download className="h-4 w-4 mr-1" /> Export CSV</Button>
+              <CardTitle>รายงานสินค้าใกล้หมด</CardTitle>
+              <Button variant="outline" size="sm" onClick={exportLowStock}><Download className="h-4 w-4 mr-1" /> ส่งออก CSV</Button>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Product</TableHead>
+                    <TableHead>สินค้า</TableHead>
                     <TableHead>SKU</TableHead>
-                    <TableHead className="text-right">Current</TableHead>
-                    <TableHead className="text-right">Min Level</TableHead>
-                    <TableHead className="text-right">Deficit</TableHead>
+                    <TableHead className="text-right">คงเหลือ</TableHead>
+                    <TableHead className="text-right">ขั้นต่ำ</TableHead>
+                    <TableHead className="text-right">ขาด</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -139,7 +138,7 @@ export default function Reports() {
                     </TableRow>
                   ))}
                   {lowStock.length === 0 && (
-                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">All products are sufficiently stocked</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">สินค้าทุกรายการมีสต็อกเพียงพอ</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -151,22 +150,22 @@ export default function Reports() {
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <CardTitle>Stock Movement Report</CardTitle>
-                <Button variant="outline" size="sm" onClick={exportMovements}><Download className="h-4 w-4 mr-1" /> Export CSV</Button>
+                <CardTitle>รายงานการเคลื่อนไหวสต็อก</CardTitle>
+                <Button variant="outline" size="sm" onClick={exportMovements}><Download className="h-4 w-4 mr-1" /> ส่งออก CSV</Button>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 mt-3">
                 <Select value={movementType} onValueChange={setMovementType}>
                   <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="in">Stock In</SelectItem>
-                    <SelectItem value="out">Stock Out</SelectItem>
-                    <SelectItem value="adjustment">Adjustment</SelectItem>
+                    <SelectItem value="all">ทุกประเภท</SelectItem>
+                    <SelectItem value="in">รับเข้า</SelectItem>
+                    <SelectItem value="out">เบิกออก</SelectItem>
+                    <SelectItem value="adjustment">ปรับปรุง</SelectItem>
                   </SelectContent>
                 </Select>
                 <div className="flex gap-2 items-center">
                   <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-auto" />
-                  <span className="text-muted-foreground text-sm">to</span>
+                  <span className="text-muted-foreground text-sm">ถึง</span>
                   <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-auto" />
                 </div>
               </div>
@@ -175,11 +174,11 @@ export default function Reports() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Qty</TableHead>
-                    <TableHead>Note</TableHead>
-                    <TableHead>Date</TableHead>
+                    <TableHead>สินค้า</TableHead>
+                    <TableHead>ประเภท</TableHead>
+                    <TableHead className="text-right">จำนวน</TableHead>
+                    <TableHead>หมายเหตุ</TableHead>
+                    <TableHead>วันที่</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -187,15 +186,17 @@ export default function Reports() {
                     <TableRow key={m.id}>
                       <TableCell className="font-medium">{m.products?.name ?? "—"}</TableCell>
                       <TableCell>
-                        <Badge variant={m.type === "in" ? "default" : m.type === "out" ? "destructive" : "secondary"} className="capitalize">{m.type}</Badge>
+                        <Badge variant={m.type === "in" ? "default" : m.type === "out" ? "destructive" : "secondary"}>
+                          {m.type === "in" ? "รับเข้า" : m.type === "out" ? "เบิกออก" : "ปรับปรุง"}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right font-mono">{m.quantity}</TableCell>
                       <TableCell className="text-muted-foreground text-sm max-w-48 truncate">{m.note ?? "—"}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "MMM dd, HH:mm")}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "dd/MM, HH:mm")}</TableCell>
                     </TableRow>
                   ))}
                   {filteredMovements.length === 0 && (
-                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No movements found</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">ไม่พบการเคลื่อนไหว</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
