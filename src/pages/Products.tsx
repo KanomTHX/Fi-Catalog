@@ -52,7 +52,14 @@ export default function Products() {
   const openCreate = () => { setEditId(null); setForm(emptyForm); setDialogOpen(true); };
   const openEdit = (p: typeof products[0]) => {
     setEditId(p.id);
-    setForm({ name: p.name, sku: p.sku ?? "", barcode: p.barcode ?? "", category_id: p.category_id ?? "", cost_price: p.cost_price ?? 0, selling_price: p.selling_price ?? 0, unit: p.unit ?? "pcs", min_stock_level: p.min_stock_level ?? 0, image_url: p.image_url ?? "" });
+    setForm({
+      name: p.name, sku: p.sku ?? "", category_id: p.category_id ?? "",
+      cost_price: p.cost_price ?? 0, selling_price: p.selling_price ?? 0,
+      unit: p.unit ?? "pcs", min_stock_level: p.min_stock_level ?? 0, image_url: p.image_url ?? "",
+      description: (p as any).description ?? "", brand: (p as any).brand ?? "",
+      weight: (p as any).weight ?? 0, dimensions: (p as any).dimensions ?? "",
+      location: (p as any).location ?? "",
+    });
     setDialogOpen(true);
   };
 
