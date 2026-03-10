@@ -87,7 +87,7 @@ export function useDeleteProduct() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["product-stock"] });
-      toast({ title: "Product deleted" });
+      toast({ title: "ลบสินค้าสำเร็จ" });
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
