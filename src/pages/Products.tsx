@@ -293,6 +293,15 @@ export default function Products() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Serial Number Dialog */}
+      {serialDialogProduct && (
+        <SerialNumberDialog
+          open={!!serialDialogProduct}
+          onOpenChange={(o) => !o && setSerialDialogProduct(null)}
+          productId={serialDialogProduct.id}
+          productName={serialDialogProduct.name}
+        />
+      )}
     </div>
   );
 }
