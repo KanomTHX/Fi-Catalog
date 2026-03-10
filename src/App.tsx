@@ -35,6 +35,7 @@ function ProtectedRoutes() {
         <Route path="/reports" element={<Reports />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/activity-log" element={<ActivityLog />} />
+        <Route path="/settings/line" element={<LineSettings />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
