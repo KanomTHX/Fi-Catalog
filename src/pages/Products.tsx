@@ -37,6 +37,7 @@ export default function Products() {
   const [creatingCat, setCreatingCat] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [serialDialogProduct, setSerialDialogProduct] = useState<{ id: string; name: string } | null>(null);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
