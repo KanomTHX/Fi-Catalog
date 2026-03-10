@@ -196,25 +196,34 @@ export default function Products() {
 
       {/* ฟอร์มสินค้า */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editId ? "แก้ไขสินค้า" : "เพิ่มสินค้า"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-2">
+            {/* ชื่อสินค้า */}
             <div className="grid gap-2">
               <Label>ชื่อสินค้า *</Label>
-              <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+              <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} placeholder="เช่น น้ำมันเครื่อง 5W-30" />
             </div>
+
+            {/* รายละเอียด */}
+            <div className="grid gap-2">
+              <Label>รายละเอียดสินค้า</Label>
+              <Textarea value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="คำอธิบายสินค้า..." rows={3} />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>SKU</Label>
-                <Input value={form.sku} onChange={(e) => setForm(f => ({ ...f, sku: e.target.value }))} />
+                <Input value={form.sku} onChange={(e) => setForm(f => ({ ...f, sku: e.target.value }))} placeholder="รหัสสินค้า" />
               </div>
               <div className="grid gap-2">
-                <Label>บาร์โค้ด</Label>
-                <Input value={form.barcode} onChange={(e) => setForm(f => ({ ...f, barcode: e.target.value }))} />
+                <Label>แบรนด์ / ยี่ห้อ</Label>
+                <Input value={form.brand} onChange={(e) => setForm(f => ({ ...f, brand: e.target.value }))} placeholder="เช่น Toyota, Samsung" />
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>หมวดหมู่</Label>
@@ -257,10 +266,11 @@ export default function Products() {
               </div>
               <div className="grid gap-2">
                 <Label>หน่วย</Label>
-                <Input value={form.unit} onChange={(e) => setForm(f => ({ ...f, unit: e.target.value }))} />
+                <Input value={form.unit} onChange={(e) => setForm(f => ({ ...f, unit: e.target.value }))} placeholder="เช่น ชิ้น, กล่อง, แพ็ค" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+
+            <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
                 <Label>ราคาต้นทุน</Label>
                 <Input type="number" min={0} step={0.01} value={form.cost_price} onChange={(e) => setForm(f => ({ ...f, cost_price: Number(e.target.value) }))} />
@@ -269,11 +279,27 @@ export default function Products() {
                 <Label>ราคาขาย</Label>
                 <Input type="number" min={0} step={0.01} value={form.selling_price} onChange={(e) => setForm(f => ({ ...f, selling_price: Number(e.target.value) }))} />
               </div>
+              <div className="grid gap-2">
+                <Label>สต็อกขั้นต่ำ</Label>
+                <Input type="number" min={0} value={form.min_stock_level} onChange={(e) => setForm(f => ({ ...f, min_stock_level: Number(e.target.value) }))} />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label>สต็อกขั้นต่ำ</Label>
-              <Input type="number" min={0} value={form.min_stock_level} onChange={(e) => setForm(f => ({ ...f, min_stock_level: Number(e.target.value) }))} />
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label>น้ำหนัก (กก.)</Label>
+                <Input type="number" min={0} step={0.01} value={form.weight} onChange={(e) => setForm(f => ({ ...f, weight: Number(e.target.value) }))} placeholder="0.00" />
+              </div>
+              <div className="grid gap-2">
+                <Label>ขนาด / มิติ</Label>
+                <Input value={form.dimensions} onChange={(e) => setForm(f => ({ ...f, dimensions: e.target.value }))} placeholder="เช่น 10x20x5 ซม." />
+              </div>
+              <div className="grid gap-2">
+                <Label>ตำแหน่งจัดเก็บ</Label>
+                <Input value={form.location} onChange={(e) => setForm(f => ({ ...f, location: e.target.value }))} placeholder="เช่น ชั้น A-01" />
+              </div>
             </div>
+
             <div className="grid gap-2">
               <Label>รูปสินค้า</Label>
               <Input type="file" accept="image/*" onChange={handleImageUpload} />
