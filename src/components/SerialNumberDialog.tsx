@@ -1,0 +1,144 @@
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSerialNumbers, useCreateSerial, useBatchCreateSerials, useUpdateSerialStatus } from "@/hooks/useSerialNumbers";
+import { Plus, Hash } from "lucide-react";
+
+const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
+  in_stock: { label: "คงเหลือ", variant: "default" },
+  sold: { label: "ขายแล้ว", variant: "secondary" },
+  damaged: { label: "ชำรุด", variant: "destructive" },
+};
+
+export function SerialNumberDialog({
+  open, onOpenChange, productId, productName,
+}: {
+  open: boolean; onOpenChange: (o: boolean) => void; productId: string; productName: string;
+}) {
+  const { data: serials = [], isLoading } = useSerialNumbers(productId);
+  const createSerial = useCreateSerial();
+  const batchCreate = useBatchCreateSerials();
+  const updateStatus = useUpdateSerialStatus();
+
+  const [singleCode, setSingleCode] = useState("");
+  const [prefix, setPrefix] = useState("");
+  const [count, setCount] = useState(10);
+  const [startNum, setStartNum] = useState(1);
+
+  const handleSingle = async () => {
+    if (!singleCode.trim()) return;
+    await createSerial.mutateAsync({ product_id: productId, serial_code: singleCode.trim().toUpperCase() });
+    setSingleCode("");
+  };
+
+  const handleBatch = async () => {
+    if (!prefix.trim() || count < 1) return;
+    await batchCreate.mutateAsync({ product_id: productId, prefix: prefix.trim().toUpperCase(), count, startNum });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Serial Numbers — {productName}</DialogTitle>
+        </DialogHeader>
+
+        <Tabs defaultValue="list" className="mt-2">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="list">รายการ ({serials.length})</TabsTrigger>
+            <TabsTrigger value="single">เพิ่มทีละรายการ</TabsTrigger>
+            <TabsTrigger value="batch">สร้างชุด</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="list" className="mt-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Serial Code</TableHead>
+                  <TableHead>สถานะ</TableHead>
+                  <TableHead>เปลี่ยนสถานะ</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {serials.map((s: any) => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-mono text-sm">{s.serial_code}</TableCell>
+                    <TableCell>
+                      <Badge variant={STATUS_MAP[s.status]?.variant ?? "secondary"}>
+                        {STATUS_MAP[s.status]?.label ?? s.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Select value={s.status} onValueChange={(v) => updateStatus.mutate({ id: s.id, status: v })}>
+                        <SelectTrigger className="h-8 w-28">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="in_stock">คงเหลือ</SelectItem>
+                          <SelectItem value="sold">ขายแล้ว</SelectItem>
+                          <SelectItem value="damaged">ชำรุด</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!isLoading && serials.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground py-8">ยังไม่มี Serial Number</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TabsContent>
+
+          <TabsContent value="single" className="mt-4 space-y-4">
+            <div className="grid gap-2">
+              <Label>Serial Code</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={singleCode}
+                  onChange={(e) => setSingleCode(e.target.value)}
+                  placeholder="เช่น SN-0001"
+                  className="font-mono"
+                  onKeyDown={(e) => e.key === "Enter" && handleSingle()}
+                />
+                <Button onClick={handleSingle} disabled={!singleCode.trim() || createSerial.isPending}>
+                  <Plus className="h-4 w-4 mr-1" /> เพิ่ม
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="batch" className="mt-4 space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label>Prefix</Label>
+                <Input value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="SN-" className="font-mono" />
+              </div>
+              <div className="grid gap-2">
+                <Label>เริ่มจากเลข</Label>
+                <Input type="number" min={1} value={startNum} onChange={(e) => setStartNum(Number(e.target.value))} />
+              </div>
+              <div className="grid gap-2">
+                <Label>จำนวน</Label>
+                <Input type="number" min={1} max={500} value={count} onChange={(e) => setCount(Number(e.target.value))} />
+              </div>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              ตัวอย่าง: {prefix.toUpperCase()}{String(startNum).padStart(4, '0')} — {prefix.toUpperCase()}{String(startNum + count - 1).padStart(4, '0')}
+            </div>
+            <Button onClick={handleBatch} disabled={!prefix.trim() || batchCreate.isPending}>
+              <Hash className="h-4 w-4 mr-1" /> สร้าง {count} รายการ
+            </Button>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+}
