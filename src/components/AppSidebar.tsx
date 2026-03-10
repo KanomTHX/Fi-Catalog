@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Package, ArrowDownToLine, ArrowUpFromLine,
-  SlidersHorizontal, FileBarChart, Users, Activity, LogOut
+  SlidersHorizontal, FileBarChart, Users, Activity, LogOut, MessageSquare
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -24,6 +24,7 @@ const mainItems = [
 const adminItems = [
   { title: "Users", url: "/users", icon: Users },
   { title: "Activity Log", url: "/activity-log", icon: Activity },
+  { title: "LINE Settings", url: "/settings/line", icon: MessageSquare },
 ];
 
 export function AppSidebar() {

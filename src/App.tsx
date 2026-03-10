@@ -14,6 +14,8 @@ import Adjustments from "./pages/Adjustments";
 import Reports from "./pages/Reports";
 import UsersPage from "./pages/Users";
 import ActivityLog from "./pages/ActivityLog";
+import LineSettings from "./pages/LineSettings";
+import Showcase from "./pages/Showcase";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +35,7 @@ function ProtectedRoutes() {
         <Route path="/reports" element={<Reports />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/activity-log" element={<ActivityLog />} />
+        <Route path="/settings/line" element={<LineSettings />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
@@ -55,6 +58,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<AuthRoute />} />
+            <Route path="/showcase" element={<Showcase />} />
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </AuthProvider>
