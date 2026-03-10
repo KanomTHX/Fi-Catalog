@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -16,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
 
-const emptyForm = { name: "", sku: "", barcode: "", category_id: "", cost_price: 0, selling_price: 0, unit: "pcs", min_stock_level: 0, image_url: "" };
+const emptyForm = { name: "", sku: "", category_id: "", cost_price: 0, selling_price: 0, unit: "pcs", min_stock_level: 0, image_url: "", description: "", brand: "", weight: 0, dimensions: "", location: "" };
 
 export default function Products() {
   const { data: products = [], isLoading } = useProducts();
@@ -52,7 +53,14 @@ export default function Products() {
   const openCreate = () => { setEditId(null); setForm(emptyForm); setDialogOpen(true); };
   const openEdit = (p: typeof products[0]) => {
     setEditId(p.id);
-    setForm({ name: p.name, sku: p.sku ?? "", barcode: p.barcode ?? "", category_id: p.category_id ?? "", cost_price: p.cost_price ?? 0, selling_price: p.selling_price ?? 0, unit: p.unit ?? "pcs", min_stock_level: p.min_stock_level ?? 0, image_url: p.image_url ?? "" });
+    setForm({
+      name: p.name, sku: p.sku ?? "", category_id: p.category_id ?? "",
+      cost_price: p.cost_price ?? 0, selling_price: p.selling_price ?? 0,
+      unit: p.unit ?? "pcs", min_stock_level: p.min_stock_level ?? 0, image_url: p.image_url ?? "",
+      description: (p as any).description ?? "", brand: (p as any).brand ?? "",
+      weight: (p as any).weight ?? 0, dimensions: (p as any).dimensions ?? "",
+      location: (p as any).location ?? "",
+    });
     setDialogOpen(true);
   };
 
@@ -80,11 +88,11 @@ export default function Products() {
             await createProduct.mutateAsync({
               name: row.name,
               sku: row.sku || undefined,
-              barcode: row.barcode || undefined,
               cost_price: Number(row.cost_price) || 0,
               selling_price: Number(row.selling_price) || 0,
               unit: row.unit || "pcs",
               min_stock_level: Number(row.min_stock_level) || 0,
+              brand: row.brand || undefined,
             });
             count++;
           } catch { /* skip duplicates */ }
@@ -189,25 +197,34 @@ export default function Products() {
 
       {/* ฟอร์มสินค้า */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editId ? "แก้ไขสินค้า" : "เพิ่มสินค้า"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-2">
+            {/* ชื่อสินค้า */}
             <div className="grid gap-2">
               <Label>ชื่อสินค้า *</Label>
-              <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+              <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} placeholder="เช่น น้ำมันเครื่อง 5W-30" />
             </div>
+
+            {/* รายละเอียด */}
+            <div className="grid gap-2">
+              <Label>รายละเอียดสินค้า</Label>
+              <Textarea value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="คำอธิบายสินค้า..." rows={3} />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>SKU</Label>
-                <Input value={form.sku} onChange={(e) => setForm(f => ({ ...f, sku: e.target.value }))} />
+                <Input value={form.sku} onChange={(e) => setForm(f => ({ ...f, sku: e.target.value }))} placeholder="รหัสสินค้า" />
               </div>
               <div className="grid gap-2">
-                <Label>บาร์โค้ด</Label>
-                <Input value={form.barcode} onChange={(e) => setForm(f => ({ ...f, barcode: e.target.value }))} />
+                <Label>แบรนด์ / ยี่ห้อ</Label>
+                <Input value={form.brand} onChange={(e) => setForm(f => ({ ...f, brand: e.target.value }))} placeholder="เช่น Toyota, Samsung" />
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>หมวดหมู่</Label>
@@ -250,10 +267,11 @@ export default function Products() {
               </div>
               <div className="grid gap-2">
                 <Label>หน่วย</Label>
-                <Input value={form.unit} onChange={(e) => setForm(f => ({ ...f, unit: e.target.value }))} />
+                <Input value={form.unit} onChange={(e) => setForm(f => ({ ...f, unit: e.target.value }))} placeholder="เช่น ชิ้น, กล่อง, แพ็ค" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+
+            <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
                 <Label>ราคาต้นทุน</Label>
                 <Input type="number" min={0} step={0.01} value={form.cost_price} onChange={(e) => setForm(f => ({ ...f, cost_price: Number(e.target.value) }))} />
@@ -262,11 +280,27 @@ export default function Products() {
                 <Label>ราคาขาย</Label>
                 <Input type="number" min={0} step={0.01} value={form.selling_price} onChange={(e) => setForm(f => ({ ...f, selling_price: Number(e.target.value) }))} />
               </div>
+              <div className="grid gap-2">
+                <Label>สต็อกขั้นต่ำ</Label>
+                <Input type="number" min={0} value={form.min_stock_level} onChange={(e) => setForm(f => ({ ...f, min_stock_level: Number(e.target.value) }))} />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label>สต็อกขั้นต่ำ</Label>
-              <Input type="number" min={0} value={form.min_stock_level} onChange={(e) => setForm(f => ({ ...f, min_stock_level: Number(e.target.value) }))} />
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label>น้ำหนัก (กก.)</Label>
+                <Input type="number" min={0} step={0.01} value={form.weight} onChange={(e) => setForm(f => ({ ...f, weight: Number(e.target.value) }))} placeholder="0.00" />
+              </div>
+              <div className="grid gap-2">
+                <Label>ขนาด / มิติ</Label>
+                <Input value={form.dimensions} onChange={(e) => setForm(f => ({ ...f, dimensions: e.target.value }))} placeholder="เช่น 10x20x5 ซม." />
+              </div>
+              <div className="grid gap-2">
+                <Label>ตำแหน่งจัดเก็บ</Label>
+                <Input value={form.location} onChange={(e) => setForm(f => ({ ...f, location: e.target.value }))} placeholder="เช่น ชั้น A-01" />
+              </div>
             </div>
+
             <div className="grid gap-2">
               <Label>รูปสินค้า</Label>
               <Input type="file" accept="image/*" onChange={handleImageUpload} />

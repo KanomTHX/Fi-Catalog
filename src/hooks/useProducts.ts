@@ -45,10 +45,11 @@ export function useCreateProduct() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (product: {
-      name: string; sku?: string; barcode?: string; category_id?: string;
+      name: string; sku?: string; category_id?: string;
       cost_price?: number; selling_price?: number; unit?: string; min_stock_level?: number; image_url?: string;
+      description?: string; brand?: string; weight?: number; dimensions?: string; location?: string;
     }) => {
-      const { error } = await supabase.from("products").insert({ ...product, created_by: user!.id });
+      const { error } = await supabase.from("products").insert({ ...product, created_by: user!.id } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -64,8 +65,8 @@ export function useUpdateProduct() {
   const qc = useQueryClient();
   const { toast } = useToast();
   return useMutation({
-    mutationFn: async ({ id, ...product }: { id: string; name?: string; sku?: string; barcode?: string; category_id?: string | null; cost_price?: number; selling_price?: number; unit?: string; min_stock_level?: number; image_url?: string }) => {
-      const { error } = await supabase.from("products").update(product).eq("id", id);
+    mutationFn: async ({ id, ...product }: { id: string; name?: string; sku?: string; category_id?: string | null; cost_price?: number; selling_price?: number; unit?: string; min_stock_level?: number; image_url?: string; description?: string; brand?: string; weight?: number; dimensions?: string; location?: string }) => {
+      const { error } = await supabase.from("products").update(product as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
