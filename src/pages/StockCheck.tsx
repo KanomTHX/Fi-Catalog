@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckCircle2, XCircle, ScanBarcode, RotateCcw, FileCheck } from "lucide-react";
+import { CameraScanner } from "@/components/CameraScanner";
 
 interface ScannedItem {
   code: string;
