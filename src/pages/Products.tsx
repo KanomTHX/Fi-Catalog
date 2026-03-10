@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useProducts, useCategories, useCreateProduct, useUpdateProduct, useDeleteProduct, useProductStock } from "@/hooks/useProducts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,11 +26,14 @@ export default function Products() {
   const deleteProduct = useDeleteProduct();
   const { toast } = useToast();
 
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
+  const [newCatName, setNewCatName] = useState("");
+  const [creatingCat, setCreatingCat] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -210,6 +214,36 @@ export default function Products() {
                     {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                <div className="flex gap-1.5">
+                  <Input
+                    placeholder="New category..."
+                    value={newCatName}
+                    onChange={(e) => setNewCatName(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 shrink-0 text-xs"
+                    disabled={!newCatName.trim() || creatingCat}
+                    onClick={async () => {
+                      setCreatingCat(true);
+                      const { data, error } = await supabase.from("categories").insert({ name: newCatName.trim() }).select("id").single();
+                      if (error) {
+                        toast({ title: "Error", description: error.message, variant: "destructive" });
+                      } else {
+                        await queryClient.invalidateQueries({ queryKey: ["categories"] });
+                        setForm(f => ({ ...f, category_id: data.id }));
+                        setNewCatName("");
+                        toast({ title: "Category created" });
+                      }
+                      setCreatingCat(false);
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-0.5" /> Add
+                  </Button>
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label>Unit</Label>
