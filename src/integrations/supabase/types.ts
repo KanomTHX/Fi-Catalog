@@ -59,6 +59,33 @@ export type Database = {
         }
         Relationships: []
       }
+      line_settings: {
+        Row: {
+          channel_access_token: string | null
+          created_at: string
+          id: string
+          liff_id: string | null
+          rich_menu_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          channel_access_token?: string | null
+          created_at?: string
+          id?: string
+          liff_id?: string | null
+          rich_menu_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          channel_access_token?: string | null
+          created_at?: string
+          id?: string
+          liff_id?: string | null
+          rich_menu_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           barcode: string | null
