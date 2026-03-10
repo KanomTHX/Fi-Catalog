@@ -1,14 +1,159 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Package, TrendingDown, TrendingUp, AlertTriangle } from "lucide-react";
+import { useProducts, useProductStock } from "@/hooks/useProducts";
+import { useStockMovements } from "@/hooks/useStockMovements";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { useMemo } from "react";
+import { format, subDays, startOfDay } from "date-fns";
 
-const Index = () => {
+export default function Dashboard() {
+  const { data: products = [] } = useProducts();
+  const { data: stock = [] } = useProductStock();
+  const { data: movements = [] } = useStockMovements();
+
+  const totalProducts = products.length;
+  const totalStock = stock.reduce((s, p) => s + (p.current_stock ?? 0), 0);
+  const lowStockCount = stock.filter(p => p.current_stock !== null && p.min_stock_level !== null && p.current_stock <= p.min_stock_level).length;
+
+  const todayStart = startOfDay(new Date()).toISOString();
+  const todayIn = movements.filter(m => m.type === "in" && m.created_at >= todayStart).reduce((s, m) => s + m.quantity, 0);
+  const todayOut = movements.filter(m => m.type === "out" && m.created_at >= todayStart).reduce((s, m) => s + m.quantity, 0);
+
+  const chartData = useMemo(() => {
+    const days = 14;
+    return Array.from({ length: days }, (_, i) => {
+      const date = subDays(new Date(), days - 1 - i);
+      const dayStr = format(date, "yyyy-MM-dd");
+      const label = format(date, "MMM dd");
+      const dayMovements = movements.filter(m => m.created_at.startsWith(dayStr));
+      return {
+        date: label,
+        "Stock In": dayMovements.filter(m => m.type === "in").reduce((s, m) => s + m.quantity, 0),
+        "Stock Out": dayMovements.filter(m => m.type === "out").reduce((s, m) => s + m.quantity, 0),
+      };
+    });
+  }, [movements]);
+
+  const stats = [
+    { label: "Total Products", value: totalProducts, icon: Package, color: "text-primary" },
+    { label: "Total Stock", value: totalStock.toLocaleString(), icon: TrendingUp, color: "text-success" },
+    { label: "Low Stock Items", value: lowStockCount, icon: AlertTriangle, color: "text-warning" },
+    { label: "Today In / Out", value: `${todayIn} / ${todayOut}`, icon: TrendingDown, color: "text-chart-4" },
+  ];
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground">Overview of your inventory</p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((s) => (
+          <Card key={s.label}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{s.label}</p>
+                  <p className="text-2xl font-bold mt-1">{s.value}</p>
+                </div>
+                <s.icon className={`h-8 w-8 ${s.color} opacity-80`} />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Stock Movement Trend (14 Days)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="date" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "var(--radius)" }} />
+                <Legend />
+                <Bar dataKey="Stock In" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Stock Out" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Recent Movements</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead className="text-right">Qty</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {movements.slice(0, 8).map((m) => (
+                  <TableRow key={m.id}>
+                    <TableCell className="font-medium">{m.products?.name ?? "—"}</TableCell>
+                    <TableCell>
+                      <Badge variant={m.type === "in" ? "default" : m.type === "out" ? "destructive" : "secondary"} className="capitalize text-xs">
+                        {m.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-mono">{m.quantity}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "MMM dd, HH:mm")}</TableCell>
+                  </TableRow>
+                ))}
+                {movements.length === 0 && (
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No movements yet</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Low Stock Alerts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>SKU</TableHead>
+                  <TableHead className="text-right">Stock</TableHead>
+                  <TableHead className="text-right">Min</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {stock.filter(p => p.current_stock !== null && p.min_stock_level !== null && p.current_stock <= p.min_stock_level).slice(0, 8).map((p) => (
+                  <TableRow key={p.product_id}>
+                    <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell className="font-mono text-sm">{p.sku ?? "—"}</TableCell>
+                    <TableCell className="text-right font-mono text-destructive font-semibold">{p.current_stock}</TableCell>
+                    <TableCell className="text-right font-mono text-muted-foreground">{p.min_stock_level}</TableCell>
+                  </TableRow>
+                ))}
+                {stock.filter(p => p.current_stock !== null && p.min_stock_level !== null && p.current_stock <= p.min_stock_level).length === 0 && (
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">All products are stocked</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
-};
-
-export default Index;
+}
