@@ -88,11 +88,11 @@ export default function Products() {
             await createProduct.mutateAsync({
               name: row.name,
               sku: row.sku || undefined,
-              barcode: row.barcode || undefined,
               cost_price: Number(row.cost_price) || 0,
               selling_price: Number(row.selling_price) || 0,
               unit: row.unit || "pcs",
               min_stock_level: Number(row.min_stock_level) || 0,
+              brand: row.brand || undefined,
             });
             count++;
           } catch { /* skip duplicates */ }
