@@ -15,6 +15,8 @@ import Reports from "./pages/Reports";
 import UsersPage from "./pages/Users";
 import ActivityLog from "./pages/ActivityLog";
 import LineSettings from "./pages/LineSettings";
+import SerialPrint from "./pages/SerialPrint";
+import StockCheck from "./pages/StockCheck";
 import Showcase from "./pages/Showcase";
 import NotFound from "./pages/NotFound";
 
