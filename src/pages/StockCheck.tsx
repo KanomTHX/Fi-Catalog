@@ -108,7 +108,7 @@ export default function StockCheck() {
 
       {/* Scanner input */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 space-y-4">
           <form onSubmit={handleSubmit} className="flex gap-3 items-center">
             <ScanBarcode className="h-6 w-6 text-muted-foreground shrink-0" />
             <Input
@@ -120,6 +120,7 @@ export default function StockCheck() {
               autoFocus
             />
           </form>
+          <CameraScanner onScan={handleScan} />
         </CardContent>
       </Card>
 
