@@ -30,38 +30,38 @@ export default function StockIn() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Stock Receiving</h1>
-        <p className="text-muted-foreground">Receive products into your inventory</p>
+        <h1 className="text-2xl font-bold">รับสินค้าเข้า</h1>
+        <p className="text-muted-foreground">รับสินค้าเข้าคลังสินค้าของคุณ</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <ArrowDownToLine className="h-5 w-5 text-success" /> Receive Stock
+              <ArrowDownToLine className="h-5 w-5 text-success" /> รับเข้าสต็อก
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label>Product *</Label>
+                <Label>สินค้า *</Label>
                 <Select value={productId} onValueChange={setProductId}>
-                  <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="เลือกสินค้า" /></SelectTrigger>
                   <SelectContent>
                     {products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} {p.sku ? `(${p.sku})` : ""}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Quantity *</Label>
-                <Input type="number" min={1} value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Enter quantity" />
+                <Label>จำนวน *</Label>
+                <Input type="number" min={1} value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="กรอกจำนวน" />
               </div>
               <div className="space-y-2">
-                <Label>Note</Label>
-                <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note..." rows={3} />
+                <Label>หมายเหตุ</Label>
+                <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="หมายเหตุ (ไม่บังคับ)..." rows={3} />
               </div>
               <Button type="submit" className="w-full" disabled={!productId || !quantity || createMovement.isPending}>
-                {createMovement.isPending ? "Saving..." : "Receive Stock"}
+                {createMovement.isPending ? "กำลังบันทึก..." : "รับเข้าสต็อก"}
               </Button>
             </form>
           </CardContent>
@@ -69,16 +69,16 @@ export default function StockIn() {
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg">Receiving History</CardTitle>
+            <CardTitle className="text-lg">ประวัติการรับเข้า</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead>Note</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>สินค้า</TableHead>
+                  <TableHead className="text-right">จำนวน</TableHead>
+                  <TableHead>หมายเหตุ</TableHead>
+                  <TableHead>วันที่</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -89,11 +89,11 @@ export default function StockIn() {
                       <Badge variant="default" className="bg-success text-success-foreground">+{m.quantity}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm max-w-48 truncate">{m.note ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "MMM dd, HH:mm")}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "dd/MM, HH:mm")}</TableCell>
                   </TableRow>
                 ))}
                 {movements.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No receiving history</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">ยังไม่มีประวัติการรับเข้า</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>

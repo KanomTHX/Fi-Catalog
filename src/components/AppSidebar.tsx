@@ -13,18 +13,18 @@ import {
 import { Button } from "@/components/ui/button";
 
 const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Products", url: "/products", icon: Package },
-  { title: "Stock In", url: "/stock-in", icon: ArrowDownToLine },
-  { title: "Stock Out", url: "/stock-out", icon: ArrowUpFromLine },
-  { title: "Adjustments", url: "/adjustments", icon: SlidersHorizontal },
-  { title: "Reports", url: "/reports", icon: FileBarChart },
+  { title: "แดชบอร์ด", url: "/", icon: LayoutDashboard },
+  { title: "สินค้า", url: "/products", icon: Package },
+  { title: "รับเข้า", url: "/stock-in", icon: ArrowDownToLine },
+  { title: "เบิกออก", url: "/stock-out", icon: ArrowUpFromLine },
+  { title: "ปรับปรุง", url: "/adjustments", icon: SlidersHorizontal },
+  { title: "รายงาน", url: "/reports", icon: FileBarChart },
 ];
 
 const adminItems = [
-  { title: "Users", url: "/users", icon: Users },
-  { title: "Activity Log", url: "/activity-log", icon: Activity },
-  { title: "LINE Settings", url: "/settings/line", icon: MessageSquare },
+  { title: "ผู้ใช้", url: "/users", icon: Users },
+  { title: "บันทึกกิจกรรม", url: "/activity-log", icon: Activity },
+  { title: "ตั้งค่า LINE", url: "/settings/line", icon: MessageSquare },
 ];
 
 export function AppSidebar() {
@@ -46,7 +46,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel>เมนู</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
@@ -64,7 +64,7 @@ export function AppSidebar() {
         </SidebarGroup>
         {role === "admin" && (
           <SidebarGroup>
-            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupLabel>ผู้ดูแลระบบ</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminItems.map((item) => (
@@ -85,7 +85,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-2 border-t border-sidebar-border">
         <Button variant="ghost" size="sm" onClick={signOut} className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
           <LogOut className="mr-2 h-4 w-4" />
-          {!collapsed && "Sign Out"}
+          {!collapsed && "ออกจากระบบ"}
         </Button>
       </SidebarFooter>
     </Sidebar>

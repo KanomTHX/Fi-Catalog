@@ -87,7 +87,7 @@ export default function Products() {
             count++;
           } catch { /* skip duplicates */ }
         }
-        toast({ title: `Imported ${count} products` });
+        toast({ title: `นำเข้าสำเร็จ ${count} รายการ` });
         if (fileRef.current) fileRef.current.value = "";
       },
     });
@@ -99,7 +99,7 @@ export default function Products() {
     const ext = file.name.split('.').pop();
     const path = `${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from("product-images").upload(path, file);
-    if (error) { toast({ title: "Upload failed", description: error.message, variant: "destructive" }); return; }
+    if (error) { toast({ title: "อัปโหลดล้มเหลว", description: error.message, variant: "destructive" }); return; }
     const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(path);
     setForm(f => ({ ...f, image_url: publicUrl }));
   };
@@ -108,16 +108,16 @@ export default function Products() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Products</h1>
-          <p className="text-muted-foreground">Manage your product catalog</p>
+          <h1 className="text-2xl font-bold">สินค้า</h1>
+          <p className="text-muted-foreground">จัดการรายการสินค้าของคุณ</p>
         </div>
         <div className="flex gap-2">
           <input ref={fileRef} type="file" accept=".csv" onChange={handleCSV} className="hidden" />
           <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-            <Upload className="h-4 w-4 mr-1" /> Import CSV
+            <Upload className="h-4 w-4 mr-1" /> นำเข้า CSV
           </Button>
           <Button size="sm" onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-1" /> Add Product
+            <Plus className="h-4 w-4 mr-1" /> เพิ่มสินค้า
           </Button>
         </div>
       </div>
@@ -127,14 +127,14 @@ export default function Products() {
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+              <Input placeholder="ค้นหาสินค้า..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
             <Select value={catFilter} onValueChange={setCatFilter}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Category" />
+                <SelectValue placeholder="หมวดหมู่" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="all">ทุกหมวดหมู่</SelectItem>
                 {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -144,12 +144,12 @@ export default function Products() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Product</TableHead>
+                <TableHead>สินค้า</TableHead>
                 <TableHead>SKU</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead className="text-right">Cost</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead className="text-right">Stock</TableHead>
+                <TableHead>หมวดหมู่</TableHead>
+                <TableHead className="text-right">ต้นทุน</TableHead>
+                <TableHead className="text-right">ราคาขาย</TableHead>
+                <TableHead className="text-right">สต็อก</TableHead>
                 <TableHead className="w-24"></TableHead>
               </TableRow>
             </TableHeader>
@@ -177,22 +177,22 @@ export default function Products() {
                 );
               })}
               {!isLoading && filtered.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-12">No products found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-12">ไม่พบสินค้า</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* Product form dialog */}
+      {/* ฟอร์มสินค้า */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editId ? "Edit Product" : "Add Product"}</DialogTitle>
+            <DialogTitle>{editId ? "แก้ไขสินค้า" : "เพิ่มสินค้า"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-2">
-              <Label>Product Name *</Label>
+              <Label>ชื่อสินค้า *</Label>
               <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -201,22 +201,22 @@ export default function Products() {
                 <Input value={form.sku} onChange={(e) => setForm(f => ({ ...f, sku: e.target.value }))} />
               </div>
               <div className="grid gap-2">
-                <Label>Barcode</Label>
+                <Label>บาร์โค้ด</Label>
                 <Input value={form.barcode} onChange={(e) => setForm(f => ({ ...f, barcode: e.target.value }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label>Category</Label>
+                <Label>หมวดหมู่</Label>
                 <Select value={form.category_id} onValueChange={(v) => setForm(f => ({ ...f, category_id: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="เลือก" /></SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <div className="flex gap-1.5">
                   <Input
-                    placeholder="New category..."
+                    placeholder="หมวดหมู่ใหม่..."
                     value={newCatName}
                     onChange={(e) => setNewCatName(e.target.value)}
                     className="h-8 text-xs"
@@ -231,62 +231,62 @@ export default function Products() {
                       setCreatingCat(true);
                       const { data, error } = await supabase.from("categories").insert({ name: newCatName.trim() }).select("id").single();
                       if (error) {
-                        toast({ title: "Error", description: error.message, variant: "destructive" });
+                        toast({ title: "เกิดข้อผิดพลาด", description: error.message, variant: "destructive" });
                       } else {
                         await queryClient.invalidateQueries({ queryKey: ["categories"] });
                         setForm(f => ({ ...f, category_id: data.id }));
                         setNewCatName("");
-                        toast({ title: "Category created" });
+                        toast({ title: "สร้างหมวดหมู่สำเร็จ" });
                       }
                       setCreatingCat(false);
                     }}
                   >
-                    <Plus className="h-3 w-3 mr-0.5" /> Add
+                    <Plus className="h-3 w-3 mr-0.5" /> เพิ่ม
                   </Button>
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label>Unit</Label>
+                <Label>หน่วย</Label>
                 <Input value={form.unit} onChange={(e) => setForm(f => ({ ...f, unit: e.target.value }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label>Cost Price</Label>
+                <Label>ราคาต้นทุน</Label>
                 <Input type="number" min={0} step={0.01} value={form.cost_price} onChange={(e) => setForm(f => ({ ...f, cost_price: Number(e.target.value) }))} />
               </div>
               <div className="grid gap-2">
-                <Label>Selling Price</Label>
+                <Label>ราคาขาย</Label>
                 <Input type="number" min={0} step={0.01} value={form.selling_price} onChange={(e) => setForm(f => ({ ...f, selling_price: Number(e.target.value) }))} />
               </div>
             </div>
             <div className="grid gap-2">
-              <Label>Minimum Stock Level</Label>
+              <Label>สต็อกขั้นต่ำ</Label>
               <Input type="number" min={0} value={form.min_stock_level} onChange={(e) => setForm(f => ({ ...f, min_stock_level: Number(e.target.value) }))} />
             </div>
             <div className="grid gap-2">
-              <Label>Product Image</Label>
+              <Label>รูปสินค้า</Label>
               <Input type="file" accept="image/*" onChange={handleImageUpload} />
               {form.image_url && <img src={form.image_url} alt="" className="h-20 w-20 object-cover rounded-md border border-border" />}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!form.name}>{editId ? "Update" : "Create"}</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>ยกเลิก</Button>
+            <Button onClick={handleSave} disabled={!form.name}>{editId ? "อัปเดต" : "สร้าง"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
+      {/* ยืนยันการลบ */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Product?</AlertDialogTitle>
-            <AlertDialogDescription>This will permanently delete this product and all its stock history.</AlertDialogDescription>
+            <AlertDialogTitle>ลบสินค้า?</AlertDialogTitle>
+            <AlertDialogDescription>การดำเนินการนี้จะลบสินค้าและประวัติสต็อกทั้งหมดอย่างถาวร</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { deleteProduct.mutate(deleteId!); setDeleteId(null); }}>Delete</AlertDialogAction>
+            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { deleteProduct.mutate(deleteId!); setDeleteId(null); }}>ลบ</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

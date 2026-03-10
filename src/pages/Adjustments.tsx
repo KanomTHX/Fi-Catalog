@@ -30,38 +30,38 @@ export default function Adjustments() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Stock Adjustments</h1>
-        <p className="text-muted-foreground">Manual stock corrections with audit trail</p>
+        <h1 className="text-2xl font-bold">ปรับปรุงสต็อก</h1>
+        <p className="text-muted-foreground">แก้ไขจำนวนสต็อกพร้อมบันทึกเหตุผล</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <SlidersHorizontal className="h-5 w-5 text-chart-4" /> Adjust Stock
+              <SlidersHorizontal className="h-5 w-5 text-chart-4" /> ปรับปรุงสต็อก
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label>Product *</Label>
+                <Label>สินค้า *</Label>
                 <Select value={productId} onValueChange={setProductId}>
-                  <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="เลือกสินค้า" /></SelectTrigger>
                   <SelectContent>
                     {products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Quantity (use negative to deduct) *</Label>
-                <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="e.g., 5 or -3" />
+                <Label>จำนวน (ใช้ค่าลบเพื่อหัก) *</Label>
+                <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="เช่น 5 หรือ -3" />
               </div>
               <div className="space-y-2">
-                <Label>Reason *</Label>
-                <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Reason for adjustment..." rows={3} />
+                <Label>เหตุผล *</Label>
+                <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="เหตุผลในการปรับปรุง..." rows={3} />
               </div>
               <Button type="submit" className="w-full" disabled={!productId || !quantity || !note.trim() || createMovement.isPending}>
-                {createMovement.isPending ? "Saving..." : "Submit Adjustment"}
+                {createMovement.isPending ? "กำลังบันทึก..." : "บันทึกการปรับปรุง"}
               </Button>
             </form>
           </CardContent>
@@ -69,16 +69,16 @@ export default function Adjustments() {
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg">Adjustment History</CardTitle>
+            <CardTitle className="text-lg">ประวัติการปรับปรุง</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>สินค้า</TableHead>
+                  <TableHead className="text-right">จำนวน</TableHead>
+                  <TableHead>เหตุผล</TableHead>
+                  <TableHead>วันที่</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -89,11 +89,11 @@ export default function Adjustments() {
                       <Badge variant="secondary">{m.quantity > 0 ? `+${m.quantity}` : m.quantity}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm max-w-48 truncate">{m.note ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "MMM dd, HH:mm")}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "dd/MM, HH:mm")}</TableCell>
                   </TableRow>
                 ))}
                 {movements.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No adjustments</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">ยังไม่มีการปรับปรุง</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
