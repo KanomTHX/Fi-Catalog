@@ -24,6 +24,7 @@ const mainItems = [
 const adminItems = [
   { title: "Users", url: "/users", icon: Users },
   { title: "Activity Log", url: "/activity-log", icon: Activity },
+  { title: "LINE Settings", url: "/settings/line", icon: MessageSquare },
 ];
 
 export function AppSidebar() {
