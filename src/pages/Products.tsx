@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Upload, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Upload, Pencil, Trash2, Hash } from "lucide-react";
+import { SerialNumberDialog } from "@/components/SerialNumberDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
@@ -36,6 +37,7 @@ export default function Products() {
   const [creatingCat, setCreatingCat] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [serialDialogProduct, setSerialDialogProduct] = useState<{ id: string; name: string } | null>(null);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -169,6 +171,7 @@ export default function Products() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1 justify-end">
+                        <Button variant="ghost" size="icon" onClick={() => setSerialDialogProduct({ id: p.id, name: p.name })} title="Serial Numbers"><Hash className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => setDeleteId(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>
@@ -290,6 +293,15 @@ export default function Products() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Serial Number Dialog */}
+      {serialDialogProduct && (
+        <SerialNumberDialog
+          open={!!serialDialogProduct}
+          onOpenChange={(o) => !o && setSerialDialogProduct(null)}
+          productId={serialDialogProduct.id}
+          productName={serialDialogProduct.name}
+        />
+      )}
     </div>
   );
 }
