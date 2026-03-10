@@ -171,6 +171,7 @@ export default function Products() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1 justify-end">
+                        <Button variant="ghost" size="icon" onClick={() => setSerialDialogProduct({ id: p.id, name: p.name })} title="Serial Numbers"><Hash className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => setDeleteId(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>
