@@ -21,6 +21,7 @@ const mainItems = [
   { title: "ปรับปรุง", url: "/adjustments", icon: SlidersHorizontal },
   { title: "พิมพ์ฉลาก", url: "/serial-print", icon: Printer },
   { title: "เช็คสต็อก", url: "/stock-check", icon: ScanBarcode },
+  { title: "คำสั่งจอง", url: "/orders", icon: ShoppingCart },
   { title: "รายงาน", url: "/reports", icon: FileBarChart },
 ];
 
