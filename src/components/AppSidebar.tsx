@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Package, ArrowDownToLine, ArrowUpFromLine,
   SlidersHorizontal, FileBarChart, Users, Activity, LogOut, MessageSquare,
-  Printer, ScanBarcode
+  Printer, ScanBarcode, ShoppingCart
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
