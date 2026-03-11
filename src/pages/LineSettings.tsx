@@ -19,7 +19,9 @@ export default function LineSettings() {
   const [channelAccessToken, setChannelAccessToken] = useState("");
   const [richMenuId, setRichMenuId] = useState<string | null>(null);
 
-  const showcaseUrl = `${window.location.origin}/showcase`;
+  const showcaseUrl = liffId
+    ? `https://liff.line.me/${liffId}`
+    : `${window.location.origin}/showcase`;
 
   useEffect(() => {
     async function load() {
