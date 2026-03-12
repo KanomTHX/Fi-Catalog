@@ -29,6 +29,7 @@ const adminItems = [
   { title: "ผู้ใช้", url: "/users", icon: Users },
   { title: "บันทึกกิจกรรม", url: "/activity-log", icon: Activity },
   { title: "ตั้งค่า LINE", url: "/settings/line", icon: MessageSquare },
+  { title: "ตั้งค่าระบบ", url: "/settings/site", icon: Settings },
 ];
 
 export function AppSidebar() {

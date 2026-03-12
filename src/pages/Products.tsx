@@ -301,6 +301,30 @@ export default function Products() {
                 <Input value={form.location} onChange={(e) => setForm(f => ({ ...f, location: e.target.value }))} placeholder="เช่น ชั้น A-01" />
               </div>
             </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label>สี</Label>
+                <Input value={form.color} onChange={(e) => setForm(f => ({ ...f, color: e.target.value }))} placeholder="เช่น ขาว, ดำ, ลายไม้" />
+              </div>
+              <div className="grid gap-2">
+                <Label>วัสดุ</Label>
+                <Input value={form.material} onChange={(e) => setForm(f => ({ ...f, material: e.target.value }))} placeholder="เช่น ไม้สัก, MDF, เหล็ก" />
+              </div>
+              <div className="grid gap-2">
+                <Label>ราคาลดพิเศษ</Label>
+                <Input type="number" min={0} step={0.01} value={form.discount_price} onChange={(e) => setForm(f => ({ ...f, discount_price: Number(e.target.value) }))} placeholder="0.00" />
+              </div>
+            </div>
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox checked={form.is_new} onCheckedChange={(v) => setForm(f => ({ ...f, is_new: !!v }))} />
+                <span className="text-sm">สินค้าใหม่</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox checked={form.is_featured} onCheckedChange={(v) => setForm(f => ({ ...f, is_featured: !!v }))} />
+                <span className="text-sm">สินค้าแนะนำ</span>
+              </label>
+            </div>
             <div className="grid gap-2">
               <Label>รูปสินค้า</Label>
               <Input type="file" accept="image/*" onChange={handleImageUpload} />
