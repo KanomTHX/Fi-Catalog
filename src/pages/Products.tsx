@@ -68,7 +68,7 @@ export default function Products() {
   };
 
   const handleSave = async () => {
-    const payload = { ...form, category_id: form.category_id || undefined, cost_price: Number(form.cost_price), selling_price: Number(form.selling_price), min_stock_level: Number(form.min_stock_level) };
+    const payload = { ...form, category_id: form.category_id || undefined, cost_price: Number(form.cost_price), selling_price: Number(form.selling_price), min_stock_level: Number(form.min_stock_level), discount_price: Number(form.discount_price) || undefined, weight: Number(form.weight) || undefined };
     if (editId) {
       await updateProduct.mutateAsync({ id: editId, ...payload });
     } else {
