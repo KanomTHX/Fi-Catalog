@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
 
-const emptyForm = { name: "", sku: "", category_id: "", cost_price: 0, selling_price: 0, unit: "pcs", min_stock_level: 0, image_url: "", description: "", brand: "", weight: 0, dimensions: "", location: "" };
+const emptyForm = { name: "", sku: "", category_id: "", cost_price: 0, selling_price: 0, unit: "pcs", min_stock_level: 0, image_url: "", description: "", brand: "", weight: 0, dimensions: "", location: "", color: "", material: "", discount_price: 0, is_new: false, is_featured: false };
 
 export default function Products() {
   const { data: products = [], isLoading } = useProducts();
