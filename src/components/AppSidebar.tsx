@@ -4,6 +4,7 @@ import {
   Printer, ScanBarcode, ShoppingCart, Settings
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
