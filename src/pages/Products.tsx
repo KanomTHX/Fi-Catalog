@@ -60,6 +60,9 @@ export default function Products() {
       description: (p as any).description ?? "", brand: (p as any).brand ?? "",
       weight: (p as any).weight ?? 0, dimensions: (p as any).dimensions ?? "",
       location: (p as any).location ?? "",
+      color: (p as any).color ?? "", material: (p as any).material ?? "",
+      discount_price: (p as any).discount_price ?? 0,
+      is_new: (p as any).is_new ?? false, is_featured: (p as any).is_featured ?? false,
     });
     setDialogOpen(true);
   };
