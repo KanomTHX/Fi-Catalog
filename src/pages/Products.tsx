@@ -12,12 +12,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Upload, Pencil, Trash2, Hash, Barcode, MapPin, Weight } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { SerialNumberDialog } from "@/components/SerialNumberDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
 
-const emptyForm = { name: "", sku: "", category_id: "", cost_price: 0, selling_price: 0, unit: "pcs", min_stock_level: 0, image_url: "", description: "", brand: "", weight: 0, dimensions: "", location: "" };
+const emptyForm = { name: "", sku: "", category_id: "", cost_price: 0, selling_price: 0, unit: "pcs", min_stock_level: 0, image_url: "", description: "", brand: "", weight: 0, dimensions: "", location: "", color: "", material: "", discount_price: 0, is_new: false, is_featured: false };
 
 export default function Products() {
   const { data: products = [], isLoading } = useProducts();
@@ -60,12 +61,15 @@ export default function Products() {
       description: (p as any).description ?? "", brand: (p as any).brand ?? "",
       weight: (p as any).weight ?? 0, dimensions: (p as any).dimensions ?? "",
       location: (p as any).location ?? "",
+      color: (p as any).color ?? "", material: (p as any).material ?? "",
+      discount_price: (p as any).discount_price ?? 0,
+      is_new: (p as any).is_new ?? false, is_featured: (p as any).is_featured ?? false,
     });
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    const payload = { ...form, category_id: form.category_id || undefined, cost_price: Number(form.cost_price), selling_price: Number(form.selling_price), min_stock_level: Number(form.min_stock_level) };
+    const payload = { ...form, category_id: form.category_id || undefined, cost_price: Number(form.cost_price), selling_price: Number(form.selling_price), min_stock_level: Number(form.min_stock_level), discount_price: Number(form.discount_price) || undefined, weight: Number(form.weight) || undefined };
     if (editId) {
       await updateProduct.mutateAsync({ id: editId, ...payload });
     } else {
@@ -296,6 +300,30 @@ export default function Products() {
                 <Label>ตำแหน่งจัดเก็บ</Label>
                 <Input value={form.location} onChange={(e) => setForm(f => ({ ...f, location: e.target.value }))} placeholder="เช่น ชั้น A-01" />
               </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label>สี</Label>
+                <Input value={form.color} onChange={(e) => setForm(f => ({ ...f, color: e.target.value }))} placeholder="เช่น ขาว, ดำ, ลายไม้" />
+              </div>
+              <div className="grid gap-2">
+                <Label>วัสดุ</Label>
+                <Input value={form.material} onChange={(e) => setForm(f => ({ ...f, material: e.target.value }))} placeholder="เช่น ไม้สัก, MDF, เหล็ก" />
+              </div>
+              <div className="grid gap-2">
+                <Label>ราคาลดพิเศษ</Label>
+                <Input type="number" min={0} step={0.01} value={form.discount_price} onChange={(e) => setForm(f => ({ ...f, discount_price: Number(e.target.value) }))} placeholder="0.00" />
+              </div>
+            </div>
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox checked={form.is_new} onCheckedChange={(v) => setForm(f => ({ ...f, is_new: !!v }))} />
+                <span className="text-sm">สินค้าใหม่</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox checked={form.is_featured} onCheckedChange={(v) => setForm(f => ({ ...f, is_featured: !!v }))} />
+                <span className="text-sm">สินค้าแนะนำ</span>
+              </label>
             </div>
             <div className="grid gap-2">
               <Label>รูปสินค้า</Label>

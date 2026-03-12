@@ -205,14 +205,19 @@ export type Database = {
           barcode: string | null
           brand: string | null
           category_id: string | null
+          color: string | null
           cost_price: number | null
           created_at: string
           created_by: string | null
           description: string | null
           dimensions: string | null
+          discount_price: number | null
           id: string
           image_url: string | null
+          is_featured: boolean | null
+          is_new: boolean | null
           location: string | null
+          material: string | null
           min_stock_level: number | null
           name: string
           selling_price: number | null
@@ -225,14 +230,19 @@ export type Database = {
           barcode?: string | null
           brand?: string | null
           category_id?: string | null
+          color?: string | null
           cost_price?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           dimensions?: string | null
+          discount_price?: number | null
           id?: string
           image_url?: string | null
+          is_featured?: boolean | null
+          is_new?: boolean | null
           location?: string | null
+          material?: string | null
           min_stock_level?: number | null
           name: string
           selling_price?: number | null
@@ -245,14 +255,19 @@ export type Database = {
           barcode?: string | null
           brand?: string | null
           category_id?: string | null
+          color?: string | null
           cost_price?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           dimensions?: string | null
+          discount_price?: number | null
           id?: string
           image_url?: string | null
+          is_featured?: boolean | null
+          is_new?: boolean | null
           location?: string | null
+          material?: string | null
           min_stock_level?: number | null
           name?: string
           selling_price?: number | null
@@ -339,6 +354,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      site_settings: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          site_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          site_name?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          site_name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       stock_movements: {
         Row: {
@@ -429,6 +468,28 @@ export type Database = {
       }
     }
     Views: {
+      product_order_counts: {
+        Row: {
+          order_count: number | null
+          product_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_stock"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_stock: {
         Row: {
           current_stock: number | null

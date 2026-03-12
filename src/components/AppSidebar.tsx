@@ -1,9 +1,10 @@
 import {
   LayoutDashboard, Package, ArrowDownToLine, ArrowUpFromLine,
   SlidersHorizontal, FileBarChart, Users, Activity, LogOut, MessageSquare,
-  Printer, ScanBarcode, ShoppingCart
+  Printer, ScanBarcode, ShoppingCart, Settings
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -29,6 +30,7 @@ const adminItems = [
   { title: "ผู้ใช้", url: "/users", icon: Users },
   { title: "บันทึกกิจกรรม", url: "/activity-log", icon: Activity },
   { title: "ตั้งค่า LINE", url: "/settings/line", icon: MessageSquare },
+  { title: "ตั้งค่าระบบ", url: "/settings/site", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -36,16 +38,23 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { role, signOut } = useAuth();
+  const { data: siteSettings } = useSiteSettings();
   const isActive = (path: string) => location.pathname === path;
+  const displayName = siteSettings?.site_name || "StockFlow";
+  const logoUrl = siteSettings?.logo_url;
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
-            SF
-          </div>
-          {!collapsed && <span className="text-lg font-bold text-sidebar-primary-foreground">StockFlow</span>}
+          {logoUrl ? (
+            <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
+          ) : (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
+              {displayName.slice(0, 2).toUpperCase()}
+            </div>
+          )}
+          {!collapsed && <span className="text-lg font-bold text-sidebar-primary-foreground">{displayName}</span>}
         </div>
       </SidebarHeader>
       <SidebarContent>

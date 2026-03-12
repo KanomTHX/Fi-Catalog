@@ -19,6 +19,7 @@ import Orders from "./pages/Orders";
 import SerialPrint from "./pages/SerialPrint";
 import StockCheck from "./pages/StockCheck";
 import Showcase from "./pages/Showcase";
+import SiteSettings from "./pages/SiteSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ function ProtectedRoutes() {
         <Route path="/users" element={<UsersPage />} />
         <Route path="/activity-log" element={<ActivityLog />} />
         <Route path="/settings/line" element={<LineSettings />} />
+        <Route path="/settings/site" element={<SiteSettings />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
