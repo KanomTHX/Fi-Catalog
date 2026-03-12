@@ -38,7 +38,10 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { role, signOut } = useAuth();
+  const { data: siteSettings } = useSiteSettings();
   const isActive = (path: string) => location.pathname === path;
+  const displayName = siteSettings?.site_name || "StockFlow";
+  const logoUrl = siteSettings?.logo_url;
 
   return (
     <Sidebar collapsible="icon">
