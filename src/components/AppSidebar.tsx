@@ -47,10 +47,14 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
-            SF
-          </div>
-          {!collapsed && <span className="text-lg font-bold text-sidebar-primary-foreground">StockFlow</span>}
+          {logoUrl ? (
+            <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
+          ) : (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
+              {displayName.slice(0, 2).toUpperCase()}
+            </div>
+          )}
+          {!collapsed && <span className="text-lg font-bold text-sidebar-primary-foreground">{displayName}</span>}
         </div>
       </SidebarHeader>
       <SidebarContent>
