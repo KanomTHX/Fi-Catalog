@@ -359,29 +359,63 @@ export default function Showcase() {
     try {
       let customerId: string;
       if (liffProfile?.userId) {
-        const { data: existing } = await supabase.from("customers").select("id").eq("line_user_id", liffProfile.userId).single();
+        const { data: existing, error: existingErr } = await supabase
+          .from("customers")
+          .select("id")
+          .eq("line_user_id", liffProfile.userId)
+          .maybeSingle();
+
+        if (existingErr) throw existingErr;
+
         if (existing) {
-          await supabase.from("customers").update({ display_name: custName, phone: custPhone || null, address: custAddress || null, picture_url: liffProfile.pictureUrl || null }).eq("id", existing.id);
           customerId = existing.id;
+          const { error: updateErr } = await supabase
+            .from("customers")
+            .update({
+              display_name: custName,
+              phone: custPhone || null,
+              address: custAddress || null,
+              picture_url: liffProfile.pictureUrl || null,
+            })
+            .eq("id", existing.id);
+          if (updateErr) console.warn("Customer update skipped:", updateErr.message);
         } else {
-          const { data: newCust, error } = await supabase.from("customers").insert({ line_user_id: liffProfile.userId, display_name: custName, phone: custPhone || null, address: custAddress || null, picture_url: liffProfile.pictureUrl || null }).select("id").single();
+          customerId = crypto.randomUUID();
+          const { error } = await supabase.from("customers").insert({
+            id: customerId,
+            line_user_id: liffProfile.userId,
+            display_name: custName,
+            phone: custPhone || null,
+            address: custAddress || null,
+            picture_url: liffProfile.pictureUrl || null,
+          });
           if (error) throw error;
-          customerId = newCust.id;
         }
       } else {
-        const { data: newCust, error } = await supabase.from("customers").insert({ display_name: custName, phone: custPhone || null, address: custAddress || null }).select("id").single();
+        customerId = crypto.randomUUID();
+        const { error } = await supabase.from("customers").insert({
+          id: customerId,
+          display_name: custName,
+          phone: custPhone || null,
+          address: custAddress || null,
+        });
         if (error) throw error;
-        customerId = newCust.id;
       }
 
-      const { data: order, error: orderErr } = await supabase.from("orders").insert({ customer_id: customerId, total_amount: cartTotal, note: custNote || null }).select("id").single();
+      const orderId = crypto.randomUUID();
+      const { error: orderErr } = await supabase.from("orders").insert({
+        id: orderId,
+        customer_id: customerId,
+        total_amount: cartTotal,
+        note: custNote || null,
+      });
       if (orderErr) throw orderErr;
 
-      const items = cart.map((c) => ({ order_id: order.id, product_id: c.product.id, quantity: c.qty, unit_price: c.product.discount_price ?? c.product.selling_price ?? 0 }));
+      const items = cart.map((c) => ({ order_id: orderId, product_id: c.product.id, quantity: c.qty, unit_price: c.product.discount_price ?? c.product.selling_price ?? 0 }));
       const { error: itemErr } = await supabase.from("order_items").insert(items);
       if (itemErr) throw itemErr;
 
-      setOrderSuccess(order.id);
+      setOrderSuccess(orderId);
       setCart([]);
       setCheckoutOpen(false);
       setCartOpen(false);
