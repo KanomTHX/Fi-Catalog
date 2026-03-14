@@ -282,6 +282,7 @@ export default function Showcase() {
           console.warn("[LIFF] No liff_id found in line_settings");
           return;
         }
+        setLiffId(data.liff_id);
         const liff = (await import("@line/liff")).default;
         await liff.init({ liffId: data.liff_id });
         console.log("[LIFF] Init success, isInClient:", liff.isInClient(), "isLoggedIn:", liff.isLoggedIn());
