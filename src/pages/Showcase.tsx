@@ -266,6 +266,7 @@ export default function Showcase() {
 
   const cartTotal = cart.reduce((sum, c) => sum + (c.product.discount_price ?? c.product.selling_price ?? 0) * c.qty, 0);
   const cartCount = cart.reduce((sum, c) => sum + c.qty, 0);
+  const liffLaunchUrl = liffId ? `https://liff.line.me/${liffId}` : null;
 
   const allBrands = useMemo(() => [...new Set(products.map(p => p.brand).filter(Boolean))] as string[], [products]);
   const allMaterials = useMemo(() => [...new Set(products.map(p => p.material).filter(Boolean))] as string[], [products]);
