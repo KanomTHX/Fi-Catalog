@@ -612,8 +612,13 @@ export default function Showcase() {
             {!liffProfile ? (
               <div className="text-center py-20">
                 <User className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
-                <p className="text-muted-foreground font-medium mb-1">กรุณาเปิดผ่าน LINE</p>
-                <p className="text-sm text-muted-foreground/70">เพื่อดูคำสั่งจองของคุณ</p>
+                <p className="text-muted-foreground font-medium mb-1">ยังไม่ได้เชื่อม LINE LIFF</p>
+                <p className="text-sm text-muted-foreground/70 mb-4">กรุณาเปิดผ่านลิงก์ LIFF เพื่อดูคำสั่งจองของคุณ</p>
+                {liffLaunchUrl && (
+                  <Button asChild variant="outline">
+                    <a href={liffLaunchUrl}>เปิดผ่าน LINE LIFF</a>
+                  </Button>
+                )}
               </div>
             ) : ordersLoading ? (
               <div className="space-y-3">
