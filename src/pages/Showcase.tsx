@@ -228,6 +228,7 @@ export default function Showcase() {
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [liffProfile, setLiffProfile] = useState<LiffProfile | null>(null);
+  const [liffId, setLiffId] = useState<string | null>(null);
   const [siteName, setSiteName] = useState("StockFlow");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
