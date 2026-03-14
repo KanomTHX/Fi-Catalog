@@ -67,6 +67,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<AuthRoute />} />
             <Route path="/showcase" element={<Showcase />} />
+            <Route path="/liff" element={<Showcase />} />
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>
         </AuthProvider>
