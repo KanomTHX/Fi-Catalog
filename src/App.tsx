@@ -66,7 +66,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<AuthRoute />} />
-            <Route path="/showcase" element={<Showcase />} />
+            <Route path="/showcase" element={<Navigate to="/liff" replace />} />
             <Route path="/liff" element={<Showcase />} />
             <Route path="/*" element={<ProtectedRoutes />} />
           </Routes>

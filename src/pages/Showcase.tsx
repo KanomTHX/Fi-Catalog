@@ -228,6 +228,7 @@ export default function Showcase() {
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [liffProfile, setLiffProfile] = useState<LiffProfile | null>(null);
+  const [liffId, setLiffId] = useState<string | null>(null);
   const [siteName, setSiteName] = useState("StockFlow");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
@@ -265,6 +266,7 @@ export default function Showcase() {
 
   const cartTotal = cart.reduce((sum, c) => sum + (c.product.discount_price ?? c.product.selling_price ?? 0) * c.qty, 0);
   const cartCount = cart.reduce((sum, c) => sum + c.qty, 0);
+  const liffLaunchUrl = liffId ? `https://liff.line.me/${liffId}` : null;
 
   const allBrands = useMemo(() => [...new Set(products.map(p => p.brand).filter(Boolean))] as string[], [products]);
   const allMaterials = useMemo(() => [...new Set(products.map(p => p.material).filter(Boolean))] as string[], [products]);
@@ -280,6 +282,7 @@ export default function Showcase() {
           console.warn("[LIFF] No liff_id found in line_settings");
           return;
         }
+        setLiffId(data.liff_id);
         const liff = (await import("@line/liff")).default;
         await liff.init({ liffId: data.liff_id });
         console.log("[LIFF] Init success, isInClient:", liff.isInClient(), "isLoggedIn:", liff.isLoggedIn());
@@ -609,8 +612,13 @@ export default function Showcase() {
             {!liffProfile ? (
               <div className="text-center py-20">
                 <User className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
-                <p className="text-muted-foreground font-medium mb-1">กรุณาเปิดผ่าน LINE</p>
-                <p className="text-sm text-muted-foreground/70">เพื่อดูคำสั่งจองของคุณ</p>
+                <p className="text-muted-foreground font-medium mb-1">ยังไม่ได้เชื่อม LINE LIFF</p>
+                <p className="text-sm text-muted-foreground/70 mb-4">กรุณาเปิดผ่านลิงก์ LIFF เพื่อดูคำสั่งจองของคุณ</p>
+                {liffLaunchUrl && (
+                  <Button asChild variant="outline">
+                    <a href={liffLaunchUrl}>เปิดผ่าน LINE LIFF</a>
+                  </Button>
+                )}
               </div>
             ) : ordersLoading ? (
               <div className="space-y-3">
@@ -668,8 +676,13 @@ export default function Showcase() {
             {!liffProfile ? (
               <div className="text-center py-20">
                 <User className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
-                <p className="text-muted-foreground font-medium mb-1">กรุณาเปิดผ่าน LINE</p>
-                <p className="text-sm text-muted-foreground/70">เพื่อดูโปรไฟล์ของคุณ</p>
+                <p className="text-muted-foreground font-medium mb-1">ยังไม่ได้เชื่อม LINE LIFF</p>
+                <p className="text-sm text-muted-foreground/70 mb-4">กรุณาเปิดผ่านลิงก์ LIFF เพื่อดูโปรไฟล์ของคุณ</p>
+                {liffLaunchUrl && (
+                  <Button asChild variant="outline">
+                    <a href={liffLaunchUrl}>เปิดผ่าน LINE LIFF</a>
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
