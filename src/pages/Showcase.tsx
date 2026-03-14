@@ -276,15 +276,27 @@ export default function Showcase() {
     async function initLiff() {
       try {
         const { data } = await supabase.from("line_settings").select("liff_id").limit(1).single();
-        if (data?.liff_id) {
-          const liff = (await import("@line/liff")).default;
-          await liff.init({ liffId: data.liff_id });
-          if (!liff.isLoggedIn()) { liff.login(); return; }
-          const profile = await liff.getProfile();
-          setLiffProfile({ displayName: profile.displayName, pictureUrl: profile.pictureUrl, userId: profile.userId });
-          setCustName(profile.displayName || "");
+        if (!data?.liff_id) {
+          console.warn("[LIFF] No liff_id found in line_settings");
+          return;
         }
-      } catch { }
+        const liff = (await import("@line/liff")).default;
+        await liff.init({ liffId: data.liff_id });
+        console.log("[LIFF] Init success, isInClient:", liff.isInClient(), "isLoggedIn:", liff.isLoggedIn());
+
+        if (!liff.isLoggedIn()) {
+          // When opened outside LINE browser, login with redirect back
+          liff.login({ redirectUri: window.location.href });
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        console.log("[LIFF] Got profile:", profile.displayName, profile.userId);
+        setLiffProfile({ displayName: profile.displayName, pictureUrl: profile.pictureUrl, userId: profile.userId });
+        setCustName(profile.displayName || "");
+      } catch (err) {
+        console.error("[LIFF] Init error:", err);
+      }
     }
     initLiff();
   }, []);
