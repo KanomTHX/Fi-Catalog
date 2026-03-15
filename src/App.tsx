@@ -27,7 +27,7 @@ const queryClient = new QueryClient();
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
   if (loading) return <div className="flex items-center justify-center min-h-screen text-muted-foreground">Loading...</div>;
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/admin/auth" replace />;
   return (
     <AppLayout>
       <Routes>
@@ -53,7 +53,7 @@ function ProtectedRoutes() {
 function AuthRoute() {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/admin" replace />;
   return <Auth />;
 }
 
@@ -65,10 +65,11 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/auth" element={<AuthRoute />} />
-            <Route path="/showcase" element={<Navigate to="/liff" replace />} />
-            <Route path="/liff" element={<Showcase />} />
-            <Route path="/*" element={<ProtectedRoutes />} />
+            <Route path="/" element={<Showcase />} />
+            <Route path="/liff" element={<Navigate to="/" replace />} />
+            <Route path="/showcase" element={<Navigate to="/" replace />} />
+            <Route path="/admin/auth" element={<AuthRoute />} />
+            <Route path="/admin/*" element={<ProtectedRoutes />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

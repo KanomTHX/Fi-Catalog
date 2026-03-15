@@ -15,22 +15,22 @@ import {
 import { Button } from "@/components/ui/button";
 
 const mainItems = [
-  { title: "แดชบอร์ด", url: "/", icon: LayoutDashboard },
-  { title: "สินค้า", url: "/products", icon: Package },
-  { title: "รับเข้า", url: "/stock-in", icon: ArrowDownToLine },
-  { title: "เบิกออก", url: "/stock-out", icon: ArrowUpFromLine },
-  { title: "ปรับปรุง", url: "/adjustments", icon: SlidersHorizontal },
-  { title: "พิมพ์ฉลาก", url: "/serial-print", icon: Printer },
-  { title: "เช็คสต็อก", url: "/stock-check", icon: ScanBarcode },
-  { title: "คำสั่งจอง", url: "/orders", icon: ShoppingCart },
-  { title: "รายงาน", url: "/reports", icon: FileBarChart },
+  { title: "แดชบอร์ด", url: "/admin", icon: LayoutDashboard },
+  { title: "สินค้า", url: "/admin/products", icon: Package },
+  { title: "รับเข้า", url: "/admin/stock-in", icon: ArrowDownToLine },
+  { title: "เบิกออก", url: "/admin/stock-out", icon: ArrowUpFromLine },
+  { title: "ปรับปรุง", url: "/admin/adjustments", icon: SlidersHorizontal },
+  { title: "พิมพ์ฉลาก", url: "/admin/serial-print", icon: Printer },
+  { title: "เช็คสต็อก", url: "/admin/stock-check", icon: ScanBarcode },
+  { title: "คำสั่งจอง", url: "/admin/orders", icon: ShoppingCart },
+  { title: "รายงาน", url: "/admin/reports", icon: FileBarChart },
 ];
 
 const adminItems = [
-  { title: "ผู้ใช้", url: "/users", icon: Users },
-  { title: "บันทึกกิจกรรม", url: "/activity-log", icon: Activity },
-  { title: "ตั้งค่า LINE", url: "/settings/line", icon: MessageSquare },
-  { title: "ตั้งค่าระบบ", url: "/settings/site", icon: Settings },
+  { title: "ผู้ใช้", url: "/admin/users", icon: Users },
+  { title: "บันทึกกิจกรรม", url: "/admin/activity-log", icon: Activity },
+  { title: "ตั้งค่า LINE", url: "/admin/settings/line", icon: MessageSquare },
+  { title: "ตั้งค่าระบบ", url: "/admin/settings/site", icon: Settings },
 ];
 
 export function AppSidebar() {
