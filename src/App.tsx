@@ -65,10 +65,11 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/auth" element={<AuthRoute />} />
-            <Route path="/showcase" element={<Navigate to="/liff" replace />} />
-            <Route path="/liff" element={<Showcase />} />
-            <Route path="/*" element={<ProtectedRoutes />} />
+            <Route path="/" element={<Showcase />} />
+            <Route path="/liff" element={<Navigate to="/" replace />} />
+            <Route path="/showcase" element={<Navigate to="/" replace />} />
+            <Route path="/admin/auth" element={<AuthRoute />} />
+            <Route path="/admin/*" element={<ProtectedRoutes />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
