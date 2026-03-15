@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
 import Auth from "./pages/Auth";
+import Home from "./pages/Home";
 import Dashboard from "./pages/Index";
 import Products from "./pages/Products";
 import StockIn from "./pages/StockIn";
@@ -65,8 +66,8 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<Showcase />} />
-            <Route path="/liff" element={<Navigate to="/" replace />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/liff" element={<Showcase />} />
             <Route path="/showcase" element={<Navigate to="/" replace />} />
             <Route path="/admin/auth" element={<AuthRoute />} />
             <Route path="/admin/*" element={<ProtectedRoutes />} />
