@@ -1,6 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface SiteSettings {
+  id: string;
+  site_name: string;
+  logo_url: string | null;
+  company_description: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  google_map_embed: string | null;
+  line_id: string | null;
+  facebook_url: string | null;
+  instagram_url: string | null;
+}
+
 export function useSiteSettings() {
   return useQuery({
     queryKey: ["site-settings"],
@@ -11,7 +25,7 @@ export function useSiteSettings() {
         .limit(1)
         .single();
       if (error) throw error;
-      return data as { id: string; site_name: string; logo_url: string | null };
+      return data as unknown as SiteSettings;
     },
     staleTime: 60_000,
   });

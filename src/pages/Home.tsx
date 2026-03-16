@@ -1,223 +1,371 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useCallback } from "react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { HomeNavbar } from "@/components/HomeNavbar";
+import { PromoBanners } from "@/components/PromoBanners";
+import { ProductCatalog } from "@/components/ProductCatalog";
+import { WebOrderCart, type CartItem } from "@/components/WebOrderCart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShoppingBag, MessageCircle, Truck, Shield, ArrowRight, ExternalLink } from "lucide-react";
-import { motion } from "framer-motion";
+import {
+  ShoppingBag, MessageCircle, Truck, Shield, ArrowRight, MapPin, Phone, Mail,
+  Clock, Star, Users, Package,
+} from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const formatPrice = (price: number | null) =>
   price != null ? `฿${price.toLocaleString()}` : "";
 
 const features = [
-  { icon: ShoppingBag, title: "สินค้าคุณภาพ", desc: "คัดสรรสินค้าคุณภาพดี ได้มาตรฐาน" },
-  { icon: MessageCircle, title: "สั่งง่ายผ่าน LINE", desc: "เพิ่มเพื่อน LINE แล้วสั่งซื้อได้ทันที" },
-  { icon: Truck, title: "จัดส่งรวดเร็ว", desc: "บริการจัดส่งรวดเร็ว ทั่วประเทศ" },
-  { icon: Shield, title: "รับประกันคุณภาพ", desc: "มั่นใจในคุณภาพสินค้าทุกชิ้น" },
+  { icon: Star, num: "01", title: "ให้คำปรึกษา", desc: "ทีมงานพร้อมให้คำปรึกษาเกี่ยวกับสินค้าที่เหมาะกับคุณ" },
+  { icon: Package, num: "02", title: "เลือกสินค้า", desc: "คัดสรรสินค้าคุณภาพดี ได้มาตรฐาน ตรงตามความต้องการ" },
+  { icon: Truck, num: "03", title: "จัดส่งรวดเร็ว", desc: "บริการจัดส่งรวดเร็ว ทั่วประเทศ ปลอดภัยทุกชิ้น" },
+  { icon: Shield, num: "04", title: "รับประกันคุณภาพ", desc: "มั่นใจในคุณภาพสินค้าทุกชิ้น พร้อมบริการหลังการขาย" },
 ];
 
-function useFeaturedProducts() {
-  return useQuery({
-    queryKey: ["featured-products"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, name, image_url, selling_price, discount_price, is_new, is_featured")
-        .or("is_featured.eq.true,is_new.eq.true")
-        .limit(8);
-      if (error) throw error;
-      return data;
-    },
-  });
-}
+function CounterAnimation({ target, suffix = "" }: { target: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true });
+  const [count, setCount] = useState(0);
 
-function useLiffUrl() {
-  return useQuery({
-    queryKey: ["liff-url-home"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("line_settings")
-        .select("liff_id")
-        .limit(1)
-        .single();
-      if (data?.liff_id) return `https://liff.line.me/${data.liff_id}`;
-      return "/liff";
-    },
-    staleTime: 60_000,
-  });
+  if (inView && count < target) {
+    setTimeout(() => {
+      setCount(Math.min(count + Math.ceil(target / 30), target));
+    }, 30);
+  }
+
+  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 }
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
+    opacity: 1, y: 0,
     transition: { delay: i * 0.1, duration: 0.5, ease: "easeOut" as const },
   }),
 };
 
 export default function Home() {
   const { data: settings, isLoading: settingsLoading } = useSiteSettings();
-  const { data: products, isLoading: productsLoading } = useFeaturedProducts();
-  const { data: liffUrl } = useLiffUrl();
+  const { toast } = useToast();
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
 
   const siteName = settings?.site_name || "StockFlow";
-  const logoUrl = settings?.logo_url;
+  const logoUrl = settings?.logo_url || null;
+
+  const addToCart = useCallback((product: { id: string; name: string; image_url: string | null; selling_price: number | null; discount_price: number | null }) => {
+    const price = product.discount_price || product.selling_price || 0;
+    setCart((prev) => {
+      const existing = prev.find((i) => i.id === product.id);
+      if (existing) {
+        return prev.map((i) => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+      }
+      return [...prev, { id: product.id, name: product.name, image_url: product.image_url, price, quantity: 1 }];
+    });
+    toast({ title: "เพิ่มสินค้าลงตะกร้าแล้ว", description: product.name });
+  }, [toast]);
+
+  const updateQty = (id: string, qty: number) => {
+    if (qty <= 0) { setCart((p) => p.filter((i) => i.id !== id)); return; }
+    setCart((p) => p.map((i) => i.id === id ? { ...i, quantity: qty } : i));
+  };
+
+  const removeItem = (id: string) => setCart((p) => p.filter((i) => i.id !== id));
+  const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <HomeNavbar siteName={siteName} logoUrl={logoUrl} cartCount={cartCount} onCartOpen={() => setCartOpen(true)} />
+
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/30">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.08),transparent_60%)]" />
-        <div className="relative mx-auto max-w-6xl px-4 py-24 sm:py-32 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
-            className="flex flex-col items-center gap-6"
-          >
-            {settingsLoading ? (
-              <Skeleton className="h-20 w-20 rounded-2xl" />
-            ) : logoUrl ? (
-              <img src={logoUrl} alt={siteName} className="h-20 w-20 rounded-2xl object-cover shadow-lg" />
-            ) : (
-              <div className="h-20 w-20 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold shadow-lg">
-                {siteName.slice(0, 2).toUpperCase()}
+      <section id="hero" className="relative overflow-hidden pt-20 sm:pt-24">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/20" />
+        <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/10 rounded-full blur-3xl" />
+
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7 }}
+              className="space-y-6"
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                <Star className="h-4 w-4" />
+                สินค้าคุณภาพ รับประกัน
               </div>
-            )}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
-              {settingsLoading ? <Skeleton className="h-14 w-64" /> : siteName}
-            </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-xl">
-              ยินดีต้อนรับ! เลือกชมสินค้าคุณภาพและสั่งจองได้ง่ายๆ ผ่าน LINE
-            </p>
-            <div className="flex flex-wrap gap-3 justify-center mt-4">
-              <Button size="lg" className="gap-2 text-base px-8" asChild>
-                <a href={liffUrl || "/liff"} target="_blank" rel="noopener noreferrer">
+              {settingsLoading ? (
+                <Skeleton className="h-16 w-80" />
+              ) : (
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
+                  ยินดีต้อนรับสู่
+                  <br />
+                  <span className="text-primary">{siteName}</span>
+                </h1>
+              )}
+              <p className="text-lg text-muted-foreground max-w-lg">
+                {settings?.company_description || "เลือกชมสินค้าคุณภาพและสั่งจองได้ง่ายๆ ผ่านหน้าเว็บไซต์ของเรา"}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  size="lg"
+                  className="gap-2 text-base px-8"
+                  onClick={() => document.querySelector("#products")?.scrollIntoView({ behavior: "smooth" })}
+                >
                   <ShoppingBag className="h-5 w-5" />
-                  ดูสินค้าและสั่งจอง
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </Button>
-            </div>
-          </motion.div>
+                  ดูสินค้าทั้งหมด
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="gap-2 text-base px-8"
+                  onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}
+                >
+                  ติดต่อเรา
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {/* Stats */}
+              <div className="flex gap-8 pt-4">
+                <div>
+                  <div className="text-2xl sm:text-3xl font-bold text-foreground">
+                    <CounterAnimation target={500} suffix="+" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">สินค้าพร้อมขาย</p>
+                </div>
+                <div>
+                  <div className="text-2xl sm:text-3xl font-bold text-foreground">
+                    <CounterAnimation target={1000} suffix="+" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">ลูกค้าที่ไว้วางใจ</p>
+                </div>
+                <div>
+                  <div className="text-2xl sm:text-3xl font-bold text-foreground">
+                    <CounterAnimation target={99} suffix="%" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">ความพึงพอใจ</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="relative hidden lg:block"
+            >
+              {logoUrl ? (
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl scale-105" />
+                  <img
+                    src={logoUrl}
+                    alt={siteName}
+                    className="relative w-full max-w-md mx-auto rounded-3xl shadow-2xl object-cover aspect-square"
+                  />
+                </div>
+              ) : (
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl scale-105" />
+                  <div className="relative w-full max-w-md mx-auto rounded-3xl bg-gradient-to-br from-primary to-primary/70 aspect-square flex items-center justify-center shadow-2xl">
+                    <span className="text-7xl font-bold text-primary-foreground">{siteName.slice(0, 2).toUpperCase()}</span>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Featured Products */}
-      {(productsLoading || (products && products.length > 0)) && (
-        <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-          <motion.h2
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-            custom={0}
-            className="text-2xl sm:text-3xl font-bold text-center mb-10"
-          >
-            สินค้าแนะนำ
-          </motion.h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {productsLoading
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <Card key={i} className="overflow-hidden">
-                    <Skeleton className="aspect-square w-full" />
-                    <CardContent className="p-4 space-y-2">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </CardContent>
-                  </Card>
-                ))
-              : products?.map((p, i) => (
-                  <motion.div
-                    key={p.id}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    variants={fadeUp}
-                    custom={i}
-                  >
-                    <Card className="overflow-hidden group hover:shadow-md transition-shadow">
-                      <div className="aspect-square bg-muted relative overflow-hidden">
-                        {p.image_url ? (
-                          <img
-                            src={p.image_url}
-                            alt={p.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
-                            <ShoppingBag className="h-12 w-12" />
-                          </div>
-                        )}
-                        {p.is_new && (
-                          <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-semibold px-2 py-0.5 rounded-full">
-                            ใหม่
-                          </span>
-                        )}
-                      </div>
-                      <CardContent className="p-3 sm:p-4">
-                        <h3 className="font-medium text-sm sm:text-base line-clamp-2">{p.name}</h3>
-                        <div className="mt-1 flex items-baseline gap-2">
-                          {p.discount_price ? (
-                            <>
-                              <span className="text-primary font-bold">{formatPrice(p.discount_price)}</span>
-                              <span className="text-muted-foreground text-xs line-through">{formatPrice(p.selling_price)}</span>
-                            </>
-                          ) : (
-                            <span className="text-primary font-bold">{formatPrice(p.selling_price)}</span>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-          </div>
-        </section>
-      )}
+      {/* Promo banners */}
+      <PromoBanners />
 
-      {/* Features */}
-      <section className="bg-muted/50">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-          <motion.h2
-            initial="hidden"
-            whileInView="visible"
+      {/* Product catalog (featured + all) */}
+      <ProductCatalog onAddToCart={addToCart} />
+
+      {/* Why choose us */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:py-24">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-14"
+        >
+          <h2 className="text-2xl sm:text-3xl font-bold">ทำไมต้องเลือกเรา</h2>
+          <p className="text-muted-foreground mt-2">ขั้นตอนการบริการของเรา</p>
+        </motion.div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {features.map((f, i) => (
+            <motion.div
+              key={f.title}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+              custom={i}
+            >
+              <Card className="p-6 hover:shadow-xl transition-all duration-300 border-border/50 group h-full relative overflow-hidden">
+                <span className="absolute top-4 right-4 text-5xl font-extrabold text-muted/40 group-hover:text-primary/10 transition-colors">
+                  {f.num}
+                </span>
+                <CardContent className="p-0 flex flex-col gap-4 relative">
+                  <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
+                    <f.icon className="h-7 w-7" />
+                  </div>
+                  <h3 className="font-semibold text-lg">{f.title}</h3>
+                  <p className="text-muted-foreground text-sm">{f.desc}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* About us */}
+      <section id="about" className="bg-muted/30 scroll-mt-20">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:py-24">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              {logoUrl ? (
+                <img src={logoUrl} alt={siteName} className="rounded-3xl shadow-lg w-full max-w-md mx-auto object-cover aspect-[4/3]" />
+              ) : (
+                <div className="rounded-3xl bg-gradient-to-br from-primary/20 to-accent/30 w-full max-w-md mx-auto aspect-[4/3] flex items-center justify-center">
+                  <Users className="h-24 w-24 text-primary/30" />
+                </div>
+              )}
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="space-y-6"
+            >
+              <h2 className="text-2xl sm:text-3xl font-bold">เกี่ยวกับเรา</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                {settings?.company_description || `${siteName} คือร้านค้าที่มุ่งมั่นให้บริการสินค้าคุณภาพ พร้อมทีมงานมืออาชีพที่พร้อมให้คำปรึกษาและบริการหลังการขายอย่างครบวงจร เราใส่ใจในทุกรายละเอียดเพื่อความพึงพอใจสูงสุดของลูกค้า`}
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
+                  <Clock className="h-5 w-5 text-primary" />
+                  <span className="text-sm">เปิดให้บริการทุกวัน</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
+                  <MessageCircle className="h-5 w-5 text-primary" />
+                  <span className="text-sm">ให้คำปรึกษาฟรี</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact + Map */}
+      <section id="contact" className="scroll-mt-20">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:py-24">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            variants={fadeUp}
-            custom={0}
-            className="text-2xl sm:text-3xl font-bold text-center mb-10"
+            transition={{ duration: 0.5 }}
+            className="text-center mb-14"
           >
-            ทำไมต้องเลือกเรา
-          </motion.h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((f, i) => (
-              <motion.div
-                key={f.title}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                custom={i}
-              >
-                <Card className="text-center p-6 hover:shadow-md transition-shadow h-full">
-                  <CardContent className="p-0 flex flex-col items-center gap-4">
-                    <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
-                      <f.icon className="h-7 w-7" />
-                    </div>
-                    <h3 className="font-semibold text-lg">{f.title}</h3>
-                    <p className="text-muted-foreground text-sm">{f.desc}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+            <h2 className="text-2xl sm:text-3xl font-bold">ติดต่อเรา</h2>
+            <p className="text-muted-foreground mt-2">ยินดีให้บริการ</p>
+          </motion.div>
+
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Contact info */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="space-y-6"
+            >
+              {settings?.address && (
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border">
+                  <MapPin className="h-6 w-6 text-primary mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="font-semibold">ที่อยู่</h4>
+                    <p className="text-muted-foreground text-sm mt-1">{settings.address}</p>
+                  </div>
+                </div>
+              )}
+              {settings?.phone && (
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border">
+                  <Phone className="h-6 w-6 text-primary mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="font-semibold">โทรศัพท์</h4>
+                    <a href={`tel:${settings.phone}`} className="text-muted-foreground text-sm mt-1 hover:text-primary transition-colors">
+                      {settings.phone}
+                    </a>
+                  </div>
+                </div>
+              )}
+              {settings?.email && (
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border">
+                  <Mail className="h-6 w-6 text-primary mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="font-semibold">อีเมล</h4>
+                    <a href={`mailto:${settings.email}`} className="text-muted-foreground text-sm mt-1 hover:text-primary transition-colors">
+                      {settings.email}
+                    </a>
+                  </div>
+                </div>
+              )}
+              {settings?.line_id && (
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border">
+                  <MessageCircle className="h-6 w-6 text-primary mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="font-semibold">LINE</h4>
+                    <p className="text-muted-foreground text-sm mt-1">{settings.line_id}</p>
+                  </div>
+                </div>
+              )}
+              {!settings?.address && !settings?.phone && !settings?.email && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>กรุณาเพิ่มข้อมูลติดต่อในหน้าตั้งค่าระบบ</p>
+                </div>
+              )}
+            </motion.div>
+
+            {/* Map */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              {settings?.google_map_embed ? (
+                <div className="rounded-2xl overflow-hidden border border-border shadow-lg aspect-[4/3]"
+                  dangerouslySetInnerHTML={{ __html: settings.google_map_embed }}
+                />
+              ) : (
+                <div className="rounded-2xl bg-muted/50 border border-border aspect-[4/3] flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <MapPin className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p>เพิ่ม Google Map embed ในหน้าตั้งค่า</p>
+                  </div>
+                </div>
+              )}
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:py-12">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -228,31 +376,73 @@ export default function Home() {
         >
           <h2 className="text-2xl sm:text-3xl font-bold mb-4">พร้อมสั่งจองแล้วหรือยัง?</h2>
           <p className="text-primary-foreground/80 mb-6 max-w-lg mx-auto">
-            เพิ่มเพื่อนทาง LINE แล้วเลือกชมสินค้าพร้อมสั่งจองได้เลย!
+            เลือกสินค้าที่ต้องการแล้วสั่งจองได้เลย เราจะติดต่อกลับเพื่อยืนยัน
           </p>
           <Button
             size="lg"
             variant="secondary"
             className="gap-2 text-base px-8"
-            asChild
+            onClick={() => document.querySelector("#products")?.scrollIntoView({ behavior: "smooth" })}
           >
-            <a href={liffUrl || "/liff"} target="_blank" rel="noopener noreferrer">
-              เปิด LINE เพื่อสั่งจอง
-              <ArrowRight className="h-5 w-5" />
-            </a>
+            เลือกสินค้าเลย
+            <ArrowRight className="h-5 w-5" />
           </Button>
         </motion.div>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-border bg-muted/30">
-        <div className="mx-auto max-w-6xl px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <span>© {new Date().getFullYear()} {siteName}</span>
-          <a href="/admin/auth" className="hover:text-foreground transition-colors">
-            ผู้ดูแลระบบ
-          </a>
+        <div className="mx-auto max-w-7xl px-4 py-12">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="" className="h-10 w-10 rounded-xl object-cover" />
+                ) : (
+                  <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                    {siteName.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-lg font-bold">{siteName}</span>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                {settings?.company_description?.slice(0, 100) || "สินค้าคุณภาพ บริการครบวงจร"}
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">ลิงก์ด่วน</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><button onClick={() => document.querySelector("#hero")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">หน้าแรก</button></li>
+                <li><button onClick={() => document.querySelector("#products")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">สินค้า</button></li>
+                <li><button onClick={() => document.querySelector("#about")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">เกี่ยวกับเรา</button></li>
+                <li><button onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">ติดต่อ</button></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">ติดต่อ</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {settings?.phone && <li>{settings.phone}</li>}
+                {settings?.email && <li>{settings.email}</li>}
+                {settings?.line_id && <li>LINE: {settings.line_id}</li>}
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-border mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+            <span>© {new Date().getFullYear()} {siteName}</span>
+            <a href="/admin/auth" className="hover:text-foreground transition-colors">ผู้ดูแลระบบ</a>
+          </div>
         </div>
       </footer>
+
+      {/* Cart sheet */}
+      <WebOrderCart
+        open={cartOpen}
+        onOpenChange={setCartOpen}
+        items={cart}
+        onUpdate={updateQty}
+        onRemove={removeItem}
+        onClear={() => setCart([])}
+      />
     </div>
   );
 }

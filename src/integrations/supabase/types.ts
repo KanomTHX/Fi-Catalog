@@ -38,6 +38,39 @@ export type Database = {
         }
         Relationships: []
       }
+      banners: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          link_url: string | null
+          sort_order: number | null
+          subtitle: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link_url?: string | null
+          sort_order?: number | null
+          subtitle?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link_url?: string | null
+          sort_order?: number | null
+          subtitle?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -357,23 +390,47 @@ export type Database = {
       }
       site_settings: {
         Row: {
+          address: string | null
+          company_description: string | null
           created_at: string
+          email: string | null
+          facebook_url: string | null
+          google_map_embed: string | null
           id: string
+          instagram_url: string | null
+          line_id: string | null
           logo_url: string | null
+          phone: string | null
           site_name: string
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          company_description?: string | null
           created_at?: string
+          email?: string | null
+          facebook_url?: string | null
+          google_map_embed?: string | null
           id?: string
+          instagram_url?: string | null
+          line_id?: string | null
           logo_url?: string | null
+          phone?: string | null
           site_name?: string
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          company_description?: string | null
           created_at?: string
+          email?: string | null
+          facebook_url?: string | null
+          google_map_embed?: string | null
           id?: string
+          instagram_url?: string | null
+          line_id?: string | null
           logo_url?: string | null
+          phone?: string | null
           site_name?: string
           updated_at?: string
         }
