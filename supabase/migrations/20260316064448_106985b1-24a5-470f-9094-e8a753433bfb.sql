@@ -1,0 +1,1 @@
+CREATE POLICY "Anon can view active banners" ON public.banners FOR SELECT TO anon USING (is_active = true);
