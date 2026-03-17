@@ -96,11 +96,11 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
             transition={{ duration: 0.5 }}
             className="text-center mb-10"
           >
-            <Badge variant="secondary" className="mb-3">แนะนำ</Badge>
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">สินค้าแนะนำ</h2>
+            <Badge variant="secondary" className="mb-3 bg-primary/10 text-primary border-primary/20">แนะนำ</Badge>
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-heading">สินค้าแนะนำ</h2>
             <p className="text-muted-foreground mt-2">คัดสรรสินค้าคุณภาพดีเยี่ยมสำหรับคุณ</p>
           </motion.div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-7">
             {featured.map((p, i) => (
               <ProductCard key={p.id} product={p} index={i} onAdd={onAddToCart} />
             ))}
@@ -109,7 +109,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
       )}
 
       {/* All products */}
-      <section id="products" className="bg-muted/30 scroll-mt-20">
+      <section id="products" className="bg-secondary/40 scroll-mt-20">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -118,7 +118,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
             transition={{ duration: 0.5 }}
             className="text-center mb-10"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">สินค้าทั้งหมด</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-heading">สินค้าทั้งหมด</h2>
           </motion.div>
 
           {/* Filters */}
@@ -154,11 +154,11 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
           </div>
 
           {productsLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-7">
               {Array.from({ length: 8 }).map((_, i) => (
                 <Card key={i} className="overflow-hidden">
                   <Skeleton className="aspect-square w-full" />
-                  <CardContent className="p-4 space-y-2">
+                  <CardContent className="p-5 space-y-2">
                     <Skeleton className="h-4 w-3/4" />
                     <Skeleton className="h-4 w-1/2" />
                   </CardContent>
@@ -171,7 +171,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
               <p>ไม่พบสินค้า</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-7">
               {filtered.map((p, i) => (
                 <ProductCard key={p.id} product={p} index={i} onAdd={onAddToCart} />
               ))}
@@ -200,13 +200,13 @@ function ProductCard({
       variants={fadeUp}
       custom={index}
     >
-      <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 border-border/50">
-        <div className="aspect-square bg-muted relative overflow-hidden">
+      <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-border/60 shadow-sm bg-card">
+        <div className="aspect-square bg-secondary/30 relative overflow-hidden">
           {p.image_url ? (
             <img
               src={p.image_url}
               alt={p.name}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               loading="lazy"
             />
           ) : (
@@ -215,17 +215,17 @@ function ProductCard({
             </div>
           )}
           {p.is_new && (
-            <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs">
+            <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs shadow-sm">
               ใหม่
             </Badge>
           )}
           {p.discount_price && p.selling_price && p.discount_price < p.selling_price && (
-            <Badge variant="destructive" className="absolute top-2 right-2 text-xs">
+            <Badge variant="destructive" className="absolute top-3 right-3 text-xs">
               -{Math.round(((p.selling_price - p.discount_price) / p.selling_price) * 100)}%
             </Badge>
           )}
           {/* Hover overlay */}
-          <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors duration-300 flex items-center justify-center">
+          <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-300 flex items-center justify-center">
             <Button
               size="sm"
               className="opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 gap-1"
@@ -236,9 +236,9 @@ function ProductCard({
             </Button>
           </div>
         </div>
-        <CardContent className="p-3 sm:p-4">
-          <h3 className="font-medium text-sm sm:text-base line-clamp-2 text-foreground">{p.name}</h3>
-          <div className="mt-1.5 flex items-baseline gap-2">
+        <CardContent className="p-4 sm:p-5">
+          <h3 className="font-medium text-sm sm:text-base line-clamp-2 text-foreground font-heading">{p.name}</h3>
+          <div className="mt-2 flex items-baseline gap-2">
             {p.discount_price ? (
               <>
                 <span className="text-primary font-bold text-base">{formatPrice(p.discount_price)}</span>
