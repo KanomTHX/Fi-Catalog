@@ -41,7 +41,7 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
       transition={{ duration: 0.5 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-background/90 backdrop-blur-xl shadow-lg border-b border-border"
+          ? "bg-background/85 backdrop-blur-xl shadow-lg border-b border-primary/25"
           : "bg-transparent"
       }`}
     >
@@ -52,11 +52,11 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
             {logoUrl ? (
               <img src={logoUrl} alt={siteName} className="h-10 w-10 rounded-xl object-cover" />
             ) : (
-              <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+              <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm font-heading">
                 {siteName.slice(0, 2).toUpperCase()}
               </div>
             )}
-            <span className="text-lg font-bold text-foreground">{siteName}</span>
+            <span className="text-lg font-bold text-foreground font-heading">{siteName}</span>
           </button>
 
           {/* Desktop nav */}
@@ -65,7 +65,7 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
               <button
                 key={l.href}
                 onClick={() => scrollTo(l.href)}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-300"
               >
                 {l.label}
               </button>
@@ -74,10 +74,10 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
 
           {/* Cart + Mobile menu */}
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="relative" onClick={onCartOpen}>
+            <Button variant="outline" size="icon" className="relative border-primary/30 hover:border-primary" onClick={onCartOpen}>
               <ShoppingBag className="h-5 w-5" />
               {cartCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-primary text-primary-foreground">
                   {cartCount}
                 </Badge>
               )}
@@ -101,14 +101,14 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-background/95 backdrop-blur-xl border-b border-border"
+            className="md:hidden bg-background/95 backdrop-blur-xl border-b border-primary/20"
           >
             <div className="px-4 py-4 space-y-2">
               {navLinks.map((l) => (
                 <button
                   key={l.href}
                   onClick={() => scrollTo(l.href)}
-                  className="block w-full text-left px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+                  className="block w-full text-left px-4 py-3 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-accent rounded-lg transition-colors duration-300"
                 >
                   {l.label}
                 </button>

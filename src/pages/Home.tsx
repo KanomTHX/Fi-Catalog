@@ -53,7 +53,7 @@ export default function Home() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
 
-  const siteName = settings?.site_name || "StockFlow";
+  const siteName = settings?.site_name || "AKK Furniture";
   const logoUrl = settings?.logo_url || null;
 
   const addToCart = useCallback((product: { id: string; name: string; image_url: string | null; selling_price: number | null; discount_price: number | null }) => {
@@ -82,7 +82,7 @@ export default function Home() {
 
       {/* Hero */}
       <section id="hero" className="relative overflow-hidden pt-20 sm:pt-24">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/10" />
         <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/10 rounded-full blur-3xl" />
 
@@ -94,21 +94,21 @@ export default function Home() {
               transition={{ duration: 0.7 }}
               className="space-y-6"
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20">
                 <Star className="h-4 w-4" />
-                สินค้าคุณภาพ รับประกัน
+                เฟอร์นิเจอร์คุณภาพ รับประกัน
               </div>
               {settingsLoading ? (
                 <Skeleton className="h-16 w-80" />
               ) : (
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight font-heading">
                   ยินดีต้อนรับสู่
                   <br />
                   <span className="text-primary">{siteName}</span>
                 </h1>
               )}
               <p className="text-lg text-muted-foreground max-w-lg">
-                {settings?.company_description || "เลือกชมสินค้าคุณภาพและสั่งจองได้ง่ายๆ ผ่านหน้าเว็บไซต์ของเรา"}
+                {settings?.company_description || "เลือกชมเฟอร์นิเจอร์คุณภาพและสั่งจองได้ง่ายๆ ผ่านหน้าเว็บไซต์ของเรา"}
               </p>
               <div className="flex flex-wrap gap-3">
                 <Button
@@ -133,19 +133,19 @@ export default function Home() {
               {/* Stats */}
               <div className="flex gap-8 pt-4">
                 <div>
-                  <div className="text-2xl sm:text-3xl font-bold text-foreground">
+                  <div className="text-2xl sm:text-3xl font-bold text-primary font-heading">
                     <CounterAnimation target={500} suffix="+" />
                   </div>
                   <p className="text-sm text-muted-foreground">สินค้าพร้อมขาย</p>
                 </div>
                 <div>
-                  <div className="text-2xl sm:text-3xl font-bold text-foreground">
+                  <div className="text-2xl sm:text-3xl font-bold text-primary font-heading">
                     <CounterAnimation target={1000} suffix="+" />
                   </div>
                   <p className="text-sm text-muted-foreground">ลูกค้าที่ไว้วางใจ</p>
                 </div>
                 <div>
-                  <div className="text-2xl sm:text-3xl font-bold text-foreground">
+                  <div className="text-2xl sm:text-3xl font-bold text-primary font-heading">
                     <CounterAnimation target={99} suffix="%" />
                   </div>
                   <p className="text-sm text-muted-foreground">ความพึงพอใจ</p>
@@ -161,7 +161,7 @@ export default function Home() {
             >
               {logoUrl ? (
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/15 to-accent/15 rounded-3xl blur-2xl scale-105" />
                   <img
                     src={logoUrl}
                     alt={siteName}
@@ -170,9 +170,9 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/15 to-accent/15 rounded-3xl blur-2xl scale-105" />
                   <div className="relative w-full max-w-md mx-auto rounded-3xl bg-gradient-to-br from-primary to-primary/70 aspect-square flex items-center justify-center shadow-2xl">
-                    <span className="text-7xl font-bold text-primary-foreground">{siteName.slice(0, 2).toUpperCase()}</span>
+                    <span className="text-7xl font-bold text-primary-foreground font-heading">{siteName.slice(0, 3).toUpperCase()}</span>
                   </div>
                 </div>
               )}
@@ -196,7 +196,7 @@ export default function Home() {
           transition={{ duration: 0.5 }}
           className="text-center mb-14"
         >
-          <h2 className="text-2xl sm:text-3xl font-bold">ทำไมต้องเลือกเรา</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold font-heading">ทำไมต้องเลือกเรา</h2>
           <p className="text-muted-foreground mt-2">ขั้นตอนการบริการของเรา</p>
         </motion.div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -209,15 +209,15 @@ export default function Home() {
               variants={fadeUp}
               custom={i}
             >
-              <Card className="p-6 hover:shadow-xl transition-all duration-300 border-border/50 group h-full relative overflow-hidden">
-                <span className="absolute top-4 right-4 text-5xl font-extrabold text-muted/40 group-hover:text-primary/10 transition-colors">
+              <Card className="p-6 hover:shadow-xl transition-all duration-300 border-border/50 group h-full relative overflow-hidden bg-card shadow-sm">
+                <span className="absolute top-4 right-4 text-5xl font-extrabold text-muted/50 group-hover:text-primary/15 transition-colors font-heading">
                   {f.num}
                 </span>
                 <CardContent className="p-0 flex flex-col gap-4 relative">
                   <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
                     <f.icon className="h-7 w-7" />
                   </div>
-                  <h3 className="font-semibold text-lg">{f.title}</h3>
+                  <h3 className="font-semibold text-lg font-heading">{f.title}</h3>
                   <p className="text-muted-foreground text-sm">{f.desc}</p>
                 </CardContent>
               </Card>
@@ -227,7 +227,7 @@ export default function Home() {
       </section>
 
       {/* About us */}
-      <section id="about" className="bg-muted/30 scroll-mt-20">
+      <section id="about" className="bg-secondary/40 scroll-mt-20">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:py-24">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -239,7 +239,7 @@ export default function Home() {
               {logoUrl ? (
                 <img src={logoUrl} alt={siteName} className="rounded-3xl shadow-lg w-full max-w-md mx-auto object-cover aspect-[4/3]" />
               ) : (
-                <div className="rounded-3xl bg-gradient-to-br from-primary/20 to-accent/30 w-full max-w-md mx-auto aspect-[4/3] flex items-center justify-center">
+                <div className="rounded-3xl bg-gradient-to-br from-primary/15 to-accent/20 w-full max-w-md mx-auto aspect-[4/3] flex items-center justify-center">
                   <Users className="h-24 w-24 text-primary/30" />
                 </div>
               )}
@@ -251,16 +251,16 @@ export default function Home() {
               transition={{ duration: 0.6 }}
               className="space-y-6"
             >
-              <h2 className="text-2xl sm:text-3xl font-bold">เกี่ยวกับเรา</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold font-heading">เกี่ยวกับเรา</h2>
               <p className="text-muted-foreground leading-relaxed">
-                {settings?.company_description || `${siteName} คือร้านค้าที่มุ่งมั่นให้บริการสินค้าคุณภาพ พร้อมทีมงานมืออาชีพที่พร้อมให้คำปรึกษาและบริการหลังการขายอย่างครบวงจร เราใส่ใจในทุกรายละเอียดเพื่อความพึงพอใจสูงสุดของลูกค้า`}
+                {settings?.company_description || `${siteName} คือร้านเฟอร์นิเจอร์ที่มุ่งมั่นให้บริการสินค้าคุณภาพ พร้อมทีมงานมืออาชีพที่พร้อมให้คำปรึกษาและบริการหลังการขายอย่างครบวงจร เราใส่ใจในทุกรายละเอียดเพื่อความพึงพอใจสูงสุดของลูกค้า`}
               </p>
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border shadow-sm">
                   <Clock className="h-5 w-5 text-primary" />
                   <span className="text-sm">เปิดให้บริการทุกวัน</span>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border shadow-sm">
                   <MessageCircle className="h-5 w-5 text-primary" />
                   <span className="text-sm">ให้คำปรึกษาฟรี</span>
                 </div>
@@ -280,7 +280,7 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             className="text-center mb-14"
           >
-            <h2 className="text-2xl sm:text-3xl font-bold">ติดต่อเรา</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold font-heading">ติดต่อเรา</h2>
             <p className="text-muted-foreground mt-2">ยินดีให้บริการ</p>
           </motion.div>
 
@@ -294,41 +294,41 @@ export default function Home() {
               className="space-y-6"
             >
               {settings?.address && (
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border">
+                <div className="flex items-start gap-4 p-5 rounded-xl bg-card border border-border shadow-sm">
                   <MapPin className="h-6 w-6 text-primary mt-0.5 shrink-0" />
                   <div>
-                    <h4 className="font-semibold">ที่อยู่</h4>
+                    <h4 className="font-semibold font-heading">ที่อยู่</h4>
                     <p className="text-muted-foreground text-sm mt-1">{settings.address}</p>
                   </div>
                 </div>
               )}
               {settings?.phone && (
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border">
+                <div className="flex items-start gap-4 p-5 rounded-xl bg-card border border-border shadow-sm">
                   <Phone className="h-6 w-6 text-primary mt-0.5 shrink-0" />
                   <div>
-                    <h4 className="font-semibold">โทรศัพท์</h4>
-                    <a href={`tel:${settings.phone}`} className="text-muted-foreground text-sm mt-1 hover:text-primary transition-colors">
+                    <h4 className="font-semibold font-heading">โทรศัพท์</h4>
+                    <a href={`tel:${settings.phone}`} className="text-muted-foreground text-sm mt-1 hover:text-primary transition-colors duration-300">
                       {settings.phone}
                     </a>
                   </div>
                 </div>
               )}
               {settings?.email && (
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border">
+                <div className="flex items-start gap-4 p-5 rounded-xl bg-card border border-border shadow-sm">
                   <Mail className="h-6 w-6 text-primary mt-0.5 shrink-0" />
                   <div>
-                    <h4 className="font-semibold">อีเมล</h4>
-                    <a href={`mailto:${settings.email}`} className="text-muted-foreground text-sm mt-1 hover:text-primary transition-colors">
+                    <h4 className="font-semibold font-heading">อีเมล</h4>
+                    <a href={`mailto:${settings.email}`} className="text-muted-foreground text-sm mt-1 hover:text-primary transition-colors duration-300">
                       {settings.email}
                     </a>
                   </div>
                 </div>
               )}
               {settings?.line_id && (
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50 border border-border">
+                <div className="flex items-start gap-4 p-5 rounded-xl bg-card border border-border shadow-sm">
                   <MessageCircle className="h-6 w-6 text-primary mt-0.5 shrink-0" />
                   <div>
-                    <h4 className="font-semibold">LINE</h4>
+                    <h4 className="font-semibold font-heading">LINE</h4>
                     <p className="text-muted-foreground text-sm mt-1">{settings.line_id}</p>
                   </div>
                 </div>
@@ -352,7 +352,7 @@ export default function Home() {
                   dangerouslySetInnerHTML={{ __html: settings.google_map_embed }}
                 />
               ) : (
-                <div className="rounded-2xl bg-muted/50 border border-border aspect-[4/3] flex items-center justify-center">
+                <div className="rounded-2xl bg-card border border-border aspect-[4/3] flex items-center justify-center shadow-sm">
                   <div className="text-center text-muted-foreground">
                     <MapPin className="h-12 w-12 mx-auto mb-3 opacity-30" />
                     <p>เพิ่ม Google Map embed ในหน้าตั้งค่า</p>
@@ -372,11 +372,11 @@ export default function Home() {
           viewport={{ once: true }}
           variants={fadeUp}
           custom={0}
-          className="rounded-3xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-8 sm:p-12 text-center"
+          className="rounded-3xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-8 sm:p-12 text-center shadow-xl"
         >
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4">พร้อมสั่งจองแล้วหรือยัง?</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 font-heading">พร้อมสั่งจองแล้วหรือยัง?</h2>
           <p className="text-primary-foreground/80 mb-6 max-w-lg mx-auto">
-            เลือกสินค้าที่ต้องการแล้วสั่งจองได้เลย เราจะติดต่อกลับเพื่อยืนยัน
+            เลือกเฟอร์นิเจอร์ที่ต้องการแล้วสั่งจองได้เลย เราจะติดต่อกลับเพื่อยืนยัน
           </p>
           <Button
             size="lg"
@@ -391,7 +391,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-muted/30">
+      <footer className="border-t border-border bg-foreground text-background">
         <div className="mx-auto max-w-7xl px-4 py-12">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             <div>
@@ -399,37 +399,37 @@ export default function Home() {
                 {logoUrl ? (
                   <img src={logoUrl} alt="" className="h-10 w-10 rounded-xl object-cover" />
                 ) : (
-                  <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                  <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm font-heading">
                     {siteName.slice(0, 2).toUpperCase()}
                   </div>
                 )}
-                <span className="text-lg font-bold">{siteName}</span>
+                <span className="text-lg font-bold font-heading">{siteName}</span>
               </div>
-              <p className="text-muted-foreground text-sm">
-                {settings?.company_description?.slice(0, 100) || "สินค้าคุณภาพ บริการครบวงจร"}
+              <p className="text-background/60 text-sm">
+                {settings?.company_description?.slice(0, 100) || "เฟอร์นิเจอร์คุณภาพ บริการครบวงจร"}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">ลิงก์ด่วน</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><button onClick={() => document.querySelector("#hero")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">หน้าแรก</button></li>
-                <li><button onClick={() => document.querySelector("#products")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">สินค้า</button></li>
-                <li><button onClick={() => document.querySelector("#about")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">เกี่ยวกับเรา</button></li>
-                <li><button onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-foreground transition-colors">ติดต่อ</button></li>
+              <h4 className="font-semibold mb-4 text-primary font-heading">ลิงก์ด่วน</h4>
+              <ul className="space-y-2 text-sm text-background/60">
+                <li><button onClick={() => document.querySelector("#hero")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-primary transition-colors duration-300">หน้าแรก</button></li>
+                <li><button onClick={() => document.querySelector("#products")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-primary transition-colors duration-300">สินค้า</button></li>
+                <li><button onClick={() => document.querySelector("#about")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-primary transition-colors duration-300">เกี่ยวกับเรา</button></li>
+                <li><button onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-primary transition-colors duration-300">ติดต่อ</button></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">ติดต่อ</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <h4 className="font-semibold mb-4 text-primary font-heading">ติดต่อ</h4>
+              <ul className="space-y-2 text-sm text-background/60">
                 {settings?.phone && <li>{settings.phone}</li>}
                 {settings?.email && <li>{settings.email}</li>}
                 {settings?.line_id && <li>LINE: {settings.line_id}</li>}
               </ul>
             </div>
           </div>
-          <div className="border-t border-border mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <div className="border-t border-background/10 mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-background/50">
             <span>© {new Date().getFullYear()} {siteName}</span>
-            <a href="/admin/auth" className="hover:text-foreground transition-colors">ผู้ดูแลระบบ</a>
+            <a href="/admin/auth" className="hover:text-primary transition-colors duration-300">ผู้ดูแลระบบ</a>
           </div>
         </div>
       </footer>

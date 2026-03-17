@@ -54,11 +54,11 @@ export function PromoBanners() {
             <CarouselItem key={b.id}>
               <a
                 href={b.link_url || "#"}
-                className="block relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 to-accent/30 group"
+                className="block relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 to-accent/40 group"
               >
                 <div className="flex flex-col sm:flex-row items-center min-h-[200px] sm:min-h-[280px]">
                   <div className="flex-1 p-6 sm:p-10 space-y-3">
-                    <h3 className="text-xl sm:text-3xl font-bold text-foreground">{b.title}</h3>
+                    <h3 className="text-xl sm:text-3xl font-bold text-foreground font-heading">{b.title}</h3>
                     {b.subtitle && (
                       <p className="text-muted-foreground text-sm sm:text-base">{b.subtitle}</p>
                     )}
