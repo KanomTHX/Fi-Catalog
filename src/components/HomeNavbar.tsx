@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { ShoppingBag, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,31 +9,26 @@ interface HomeNavbarProps {
   siteName: string;
   logoUrl: string | null;
   cartCount: number;
-  onCartOpen: () => void;
+  onCartOpen?: () => void;
 }
 
 const navLinks = [
-  { label: "หน้าแรก", href: "#hero" },
-  { label: "สินค้า", href: "#products" },
-  { label: "เกี่ยวกับเรา", href: "#about" },
-  { label: "ติดต่อ", href: "#contact" },
+  { label: "หน้าแรก", href: "/" },
+  { label: "สินค้า", href: "/products" },
+  { label: "เกี่ยวกับเรา", href: "/about" },
+  { label: "ติดต่อ", href: "/contact" },
 ];
 
 export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
   }, []);
-
-  const scrollTo = (href: string) => {
-    setMobileOpen(false);
-    const el = document.querySelector(href);
-    el?.scrollIntoView({ behavior: "smooth" });
-  };
 
   return (
     <motion.nav
@@ -47,8 +43,7 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 sm:h-20 items-center justify-between">
-          {/* Logo */}
-          <button onClick={() => scrollTo("#hero")} className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             {logoUrl ? (
               <img src={logoUrl} alt={siteName} className="h-10 w-10 rounded-xl object-cover" />
             ) : (
@@ -57,44 +52,50 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
               </div>
             )}
             <span className="text-lg font-bold text-foreground font-heading">{siteName}</span>
-          </button>
+          </Link>
 
-          {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((l) => (
-              <button
+              <Link
                 key={l.href}
-                onClick={() => scrollTo(l.href)}
-                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-300"
+                to={l.href}
+                className={`text-sm font-medium transition-colors duration-300 ${
+                  location.pathname === l.href ? "text-primary" : "text-muted-foreground hover:text-primary"
+                }`}
               >
                 {l.label}
-              </button>
+              </Link>
             ))}
           </div>
 
-          {/* Cart + Mobile menu */}
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="relative border-primary/30 hover:border-primary" onClick={onCartOpen}>
-              <ShoppingBag className="h-5 w-5" />
-              {cartCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-primary text-primary-foreground">
-                  {cartCount}
-                </Badge>
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setMobileOpen(!mobileOpen)}
-            >
+            {onCartOpen && (
+              <Button variant="outline" size="icon" className="relative border-primary/30 hover:border-primary" onClick={onCartOpen}>
+                <ShoppingBag className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-primary text-primary-foreground">
+                    {cartCount}
+                  </Badge>
+                )}
+              </Button>
+            )}
+            {!onCartOpen && cartCount > 0 && (
+              <Link to="/products">
+                <Button variant="outline" size="icon" className="relative border-primary/30 hover:border-primary">
+                  <ShoppingBag className="h-5 w-5" />
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-primary text-primary-foreground">
+                    {cartCount}
+                  </Badge>
+                </Button>
+              </Link>
+            )}
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
@@ -105,13 +106,16 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
           >
             <div className="px-4 py-4 space-y-2">
               {navLinks.map((l) => (
-                <button
+                <Link
                   key={l.href}
-                  onClick={() => scrollTo(l.href)}
-                  className="block w-full text-left px-4 py-3 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-accent rounded-lg transition-colors duration-300"
+                  to={l.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`block w-full text-left px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-300 ${
+                    location.pathname === l.href ? "text-primary bg-accent" : "text-muted-foreground hover:text-primary hover:bg-accent"
+                  }`}
                 >
                   {l.label}
-                </button>
+                </Link>
               ))}
             </div>
           </motion.div>
