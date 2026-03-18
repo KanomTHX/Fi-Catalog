@@ -4,9 +4,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { CartProvider } from "@/contexts/CartContext";
 import { AppLayout } from "@/components/AppLayout";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
+import PublicProducts from "./pages/PublicProducts";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Checkout from "./pages/Checkout";
 import Dashboard from "./pages/Index";
 import Products from "./pages/Products";
 import StockIn from "./pages/StockIn";
@@ -65,13 +70,19 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/liff" element={<Showcase />} />
-            <Route path="/showcase" element={<Navigate to="/" replace />} />
-            <Route path="/admin/auth" element={<AuthRoute />} />
-            <Route path="/admin/*" element={<ProtectedRoutes />} />
-          </Routes>
+          <CartProvider>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/products" element={<PublicProducts />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/liff" element={<Showcase />} />
+              <Route path="/showcase" element={<Navigate to="/" replace />} />
+              <Route path="/admin/auth" element={<AuthRoute />} />
+              <Route path="/admin/*" element={<ProtectedRoutes />} />
+            </Routes>
+          </CartProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
