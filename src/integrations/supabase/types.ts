@@ -122,6 +122,30 @@ export type Database = {
         }
         Relationships: []
       }
+      installment_plans: {
+        Row: {
+          created_at: string | null
+          id: string
+          interest_rate: number | null
+          is_active: boolean | null
+          months: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interest_rate?: number | null
+          is_active?: boolean | null
+          months: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interest_rate?: number | null
+          is_active?: boolean | null
+          months?: number
+        }
+        Relationships: []
+      }
       line_settings: {
         Row: {
           channel_access_token: string | null
@@ -199,6 +223,7 @@ export type Database = {
         Row: {
           created_at: string
           customer_id: string
+          delivery_method: string | null
           id: string
           note: string | null
           status: string
@@ -208,6 +233,7 @@ export type Database = {
         Insert: {
           created_at?: string
           customer_id: string
+          delivery_method?: string | null
           id?: string
           note?: string | null
           status?: string
@@ -217,6 +243,7 @@ export type Database = {
         Update: {
           created_at?: string
           customer_id?: string
+          delivery_method?: string | null
           id?: string
           note?: string | null
           status?: string
@@ -229,6 +256,90 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_images: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string
+          product_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url: string
+          product_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          product_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_stock"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_variants: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string | null
+          price_adjustment: number | null
+          product_id: string
+          variant_name: string
+          variant_value: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          price_adjustment?: number | null
+          product_id: string
+          variant_name: string
+          variant_value: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          price_adjustment?: number | null
+          product_id?: string
+          variant_name?: string
+          variant_value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_stock"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
