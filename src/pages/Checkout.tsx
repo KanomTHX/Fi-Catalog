@@ -27,6 +27,7 @@ export default function Checkout() {
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", address: "", note: "" });
+  const [deliveryMethod, setDeliveryMethod] = useState("pickup");
 
   const siteName = settings?.site_name || "AKK Furniture";
   const logoUrl = settings?.logo_url || null;
