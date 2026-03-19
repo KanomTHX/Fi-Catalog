@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ShoppingBag, Loader2, CheckCircle2, ArrowLeft, User, Trash2, Minus, Plus } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ShoppingBag, Loader2, CheckCircle2, ArrowLeft, User, Trash2, Minus, Plus, Store, Truck } from "lucide-react";
 import { motion } from "framer-motion";
 
 const formatPrice = (n: number) => `฿${n.toLocaleString()}`;
