@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ShoppingBag, Loader2, CheckCircle2, ArrowLeft, User, Trash2, Minus, Plus } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ShoppingBag, Loader2, CheckCircle2, ArrowLeft, User, Trash2, Minus, Plus, Store, Truck } from "lucide-react";
 import { motion } from "framer-motion";
 
 const formatPrice = (n: number) => `฿${n.toLocaleString()}`;
@@ -27,6 +28,7 @@ export default function Checkout() {
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", address: "", note: "" });
+  const [deliveryMethod, setDeliveryMethod] = useState("pickup");
 
   const siteName = settings?.site_name || "AKK Furniture";
   const logoUrl = settings?.logo_url || null;
@@ -49,7 +51,7 @@ export default function Checkout() {
 
       const { data: order, error: orderErr } = await supabase
         .from("orders")
-        .insert({ customer_id: customer.id, total_amount: total, note: form.note.trim() || null, status: "pending" })
+        .insert({ customer_id: customer.id, total_amount: total, note: form.note.trim() || null, status: "pending", delivery_method: deliveryMethod })
         .select("id")
         .single();
       if (orderErr) throw orderErr;
@@ -169,6 +171,23 @@ export default function Checkout() {
                       <div className="space-y-1.5">
                         <Label className="text-xs">เบอร์โทรศัพท์ *</Label>
                         <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="0xx-xxx-xxxx" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">วิธีรับสินค้า</Label>
+                        <RadioGroup value={deliveryMethod} onValueChange={setDeliveryMethod} className="flex gap-3">
+                          <div className="flex items-center gap-1.5">
+                            <RadioGroupItem value="pickup" id="ch-pickup" />
+                            <Label htmlFor="ch-pickup" className="flex items-center gap-1 text-xs cursor-pointer">
+                              <Store className="h-3.5 w-3.5 text-primary" /> รับหน้าร้าน
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <RadioGroupItem value="delivery" id="ch-delivery" />
+                            <Label htmlFor="ch-delivery" className="flex items-center gap-1 text-xs cursor-pointer">
+                              <Truck className="h-3.5 w-3.5 text-primary" /> จัดส่งถึงบ้าน
+                            </Label>
+                          </div>
+                        </RadioGroup>
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs">ที่อยู่จัดส่ง</Label>

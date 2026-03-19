@@ -9,9 +9,11 @@ import { AppLayout } from "@/components/AppLayout";
 import Auth from "./pages/Auth";
 import Home from "./pages/Home";
 import PublicProducts from "./pages/PublicProducts";
+import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Checkout from "./pages/Checkout";
+import OrderTracking from "./pages/OrderTracking";
 import Dashboard from "./pages/Index";
 import Products from "./pages/Products";
 import StockIn from "./pages/StockIn";
@@ -74,9 +76,11 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/products" element={<PublicProducts />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/order-tracking" element={<OrderTracking />} />
               <Route path="/liff" element={<Showcase />} />
               <Route path="/showcase" element={<Navigate to="/" replace />} />
               <Route path="/admin/auth" element={<AuthRoute />} />

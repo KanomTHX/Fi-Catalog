@@ -184,6 +184,7 @@ function ProductCard({
   index: number;
   onAdd: (p: Product) => void;
 }) {
+  const navigate = useNavigate();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -191,7 +192,7 @@ function ProductCard({
       viewport={{ once: true }}
       transition={{ delay: index * 0.03, duration: 0.4 }}
     >
-      <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-border/60 shadow-sm bg-card h-full flex flex-col">
+      <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-border/60 shadow-sm bg-card h-full flex flex-col cursor-pointer" onClick={() => navigate(`/products/${p.id}`)}>
         <div className="aspect-square bg-secondary/30 relative overflow-hidden">
           {p.image_url ? (
             <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
@@ -222,7 +223,7 @@ function ProductCard({
                 <span className="text-primary font-bold text-sm sm:text-base">{formatPrice(p.selling_price)}</span>
               )}
             </div>
-            <Button variant="outline" size="sm" className="w-full mt-2 gap-1 text-xs" onClick={() => onAdd(p)}>
+            <Button variant="outline" size="sm" className="w-full mt-2 gap-1 text-xs" onClick={(e) => { e.stopPropagation(); onAdd(p); }}>
               <Plus className="h-3.5 w-3.5" />
               เพิ่มลงตะกร้า
             </Button>
