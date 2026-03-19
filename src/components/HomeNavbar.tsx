@@ -15,6 +15,7 @@ interface HomeNavbarProps {
 const navLinks = [
   { label: "หน้าแรก", href: "/" },
   { label: "สินค้า", href: "/products" },
+  { label: "ตรวจสอบใบจอง", href: "/order-tracking" },
   { label: "เกี่ยวกับเรา", href: "/about" },
   { label: "ติดต่อ", href: "/contact" },
 ];
