@@ -173,6 +173,23 @@ export default function Checkout() {
                         <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="0xx-xxx-xxxx" />
                       </div>
                       <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">วิธีรับสินค้า</Label>
+                        <RadioGroup value={deliveryMethod} onValueChange={setDeliveryMethod} className="flex gap-3">
+                          <div className="flex items-center gap-1.5">
+                            <RadioGroupItem value="pickup" id="ch-pickup" />
+                            <Label htmlFor="ch-pickup" className="flex items-center gap-1 text-xs cursor-pointer">
+                              <Store className="h-3.5 w-3.5 text-primary" /> รับหน้าร้าน
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <RadioGroupItem value="delivery" id="ch-delivery" />
+                            <Label htmlFor="ch-delivery" className="flex items-center gap-1 text-xs cursor-pointer">
+                              <Truck className="h-3.5 w-3.5 text-primary" /> จัดส่งถึงบ้าน
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                      <div className="space-y-1.5">
                         <Label className="text-xs">ที่อยู่จัดส่ง</Label>
                         <Textarea value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="ที่อยู่" rows={2} />
                       </div>
