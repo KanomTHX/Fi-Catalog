@@ -50,7 +50,7 @@ export default function Checkout() {
 
       const { data: order, error: orderErr } = await supabase
         .from("orders")
-        .insert({ customer_id: customer.id, total_amount: total, note: form.note.trim() || null, status: "pending" })
+        .insert({ customer_id: customer.id, total_amount: total, note: form.note.trim() || null, status: "pending", delivery_method: deliveryMethod })
         .select("id")
         .single();
       if (orderErr) throw orderErr;
