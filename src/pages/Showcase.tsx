@@ -989,7 +989,16 @@ export default function Showcase() {
               <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
             </motion.div>
             <h2 className="text-xl font-bold text-foreground">สั่งจองสำเร็จ!</h2>
-            <p className="text-sm text-muted-foreground">หมายเลข: #{orderSuccess?.slice(0, 8)}</p>
+            <div className="bg-muted rounded-lg p-3">
+              <p className="text-xs text-muted-foreground">เลขใบจอง</p>
+              <p className="font-mono text-sm font-bold text-foreground mt-1">#{orderSuccess?.slice(0, 8).toUpperCase()}</p>
+            </div>
+            <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-left">
+              <p className="text-xs font-medium text-yellow-800 dark:text-yellow-200">📌 กรุณาจดหรือ screenshot เลขใบจองนี้ไว้เพื่อตรวจสอบสถานะ</p>
+            </div>
+            <Button variant="outline" size="sm" className="w-full" onClick={() => { if (orderSuccess) { navigator.clipboard.writeText(orderSuccess.slice(0, 8).toUpperCase()); toast({ title: "คัดลอกเลขใบจองแล้ว" }); } }}>
+              คัดลอกเลขใบจอง
+            </Button>
             <p className="text-sm text-muted-foreground">ทางร้านจะติดต่อกลับเพื่อยืนยันคำสั่งจอง</p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => { setOrderSuccess(null); setActiveTab("orders"); }} className="flex-1">
