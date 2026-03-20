@@ -229,6 +229,22 @@ export default function Checkout() {
                   <p className="font-mono text-sm font-bold text-foreground mt-1">{orderId.slice(0, 8).toUpperCase()}</p>
                 </div>
               )}
+              <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-left">
+                <p className="text-xs font-medium text-yellow-800 dark:text-yellow-200">📌 กรุณาจดหรือ screenshot เลขใบจองนี้ไว้เพื่อตรวจสอบสถานะ</p>
+              </div>
+              {orderId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    navigator.clipboard.writeText(orderId.slice(0, 8).toUpperCase());
+                    toast({ title: "คัดลอกเลขใบจองแล้ว" });
+                  }}
+                >
+                  คัดลอกเลขใบจอง
+                </Button>
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 mt-4">

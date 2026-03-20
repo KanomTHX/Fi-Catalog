@@ -37,7 +37,7 @@ export default function OrderTracking() {
   const [error, setError] = useState("");
 
   const handleSearch = async () => {
-    const code = trackingCode.trim().toUpperCase();
+    const code = trackingCode.trim();
     if (code.length < 4) {
       setError("กรุณากรอกเลขใบจองอย่างน้อย 4 ตัวอักษร");
       return;
@@ -47,11 +47,10 @@ export default function OrderTracking() {
     setOrder(null);
 
     try {
-      // Search by first 8 chars of UUID
       const { data, error: err } = await supabase
         .from("orders")
         .select("id, status, total_amount, note, created_at, delivery_method, customers(display_name), order_items(id, quantity, unit_price, products(name, image_url))")
-        .ilike("id", `${code.toLowerCase()}%`)
+        .ilike("id", `%${code.toLowerCase()}%`)
         .limit(1)
         .maybeSingle();
 

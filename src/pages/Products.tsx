@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useProducts, useCategories, useCreateProduct, useUpdateProduct, useDeleteProduct, useProductStock } from "@/hooks/useProducts";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Upload, Pencil, Trash2, Hash, Barcode, MapPin, Weight } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Plus, Search, Upload, Pencil, Trash2, Hash, Barcode, MapPin, Weight, X, ImagePlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SerialNumberDialog } from "@/components/SerialNumberDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +20,9 @@ import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
 
 const emptyForm = { name: "", sku: "", category_id: "", cost_price: 0, selling_price: 0, unit: "pcs", min_stock_level: 0, image_url: "", description: "", brand: "", weight: 0, dimensions: "", location: "", color: "", material: "", discount_price: 0, is_new: false, is_featured: false };
+
+interface VariantRow { id?: string; variant_name: string; variant_value: string; }
+interface ExtraImage { id?: string; image_url: string; sort_order: number; }
 
 export default function Products() {
   const { data: products = [], isLoading } = useProducts();
@@ -41,6 +45,25 @@ export default function Products() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [serialDialogProduct, setSerialDialogProduct] = useState<{ id: string; name: string } | null>(null);
 
+  // Extra images & variants state
+  const [extraImages, setExtraImages] = useState<ExtraImage[]>([]);
+  const [variants, setVariants] = useState<VariantRow[]>([]);
+  const [newVariantName, setNewVariantName] = useState("");
+  const [newVariantValue, setNewVariantValue] = useState("");
+
+  // Fetch extra images & variants when editing
+  useEffect(() => {
+    if (!editId) { setExtraImages([]); setVariants([]); return; }
+    (async () => {
+      const [imgRes, varRes] = await Promise.all([
+        supabase.from("product_images").select("*").eq("product_id", editId).order("sort_order"),
+        supabase.from("product_variants").select("*").eq("product_id", editId).order("variant_name"),
+      ]);
+      setExtraImages((imgRes.data ?? []).map((i: any) => ({ id: i.id, image_url: i.image_url, sort_order: i.sort_order })));
+      setVariants((varRes.data ?? []).map((v: any) => ({ id: v.id, variant_name: v.variant_name, variant_value: v.variant_value })));
+    })();
+  }, [editId]);
+
   const filtered = useMemo(() => {
     return products.filter((p) => {
       const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || (p.sku ?? "").toLowerCase().includes(search.toLowerCase());
@@ -51,7 +74,7 @@ export default function Products() {
 
   const getStock = (id: string) => stock.find((s) => s.product_id === id)?.current_stock ?? 0;
 
-  const openCreate = () => { setEditId(null); setForm(emptyForm); setDialogOpen(true); };
+  const openCreate = () => { setEditId(null); setForm(emptyForm); setExtraImages([]); setVariants([]); setDialogOpen(true); };
   const openEdit = (p: typeof products[0]) => {
     setEditId(p.id);
     setForm({
@@ -70,11 +93,33 @@ export default function Products() {
 
   const handleSave = async () => {
     const payload = { ...form, category_id: form.category_id || undefined, cost_price: Number(form.cost_price), selling_price: Number(form.selling_price), min_stock_level: Number(form.min_stock_level), discount_price: Number(form.discount_price) || undefined, weight: Number(form.weight) || undefined };
+    let productId = editId;
     if (editId) {
       await updateProduct.mutateAsync({ id: editId, ...payload });
     } else {
-      await createProduct.mutateAsync(payload);
+      const result = await createProduct.mutateAsync(payload);
+      productId = (result as any)?.id;
     }
+
+    // Save extra images & variants for edit mode
+    if (editId && productId) {
+      // Sync extra images: delete removed, insert new
+      const existingImgIds = extraImages.filter(i => i.id).map(i => i.id!);
+      await supabase.from("product_images").delete().eq("product_id", productId).not("id", "in", `(${existingImgIds.join(",") || "00000000-0000-0000-0000-000000000000"})`);
+      const newImages = extraImages.filter(i => !i.id);
+      if (newImages.length > 0) {
+        await supabase.from("product_images").insert(newImages.map((i, idx) => ({ product_id: productId!, image_url: i.image_url, sort_order: idx })));
+      }
+
+      // Sync variants: delete removed, insert new
+      const existingVarIds = variants.filter(v => v.id).map(v => v.id!);
+      await supabase.from("product_variants").delete().eq("product_id", productId).not("id", "in", `(${existingVarIds.join(",") || "00000000-0000-0000-0000-000000000000"})`);
+      const newVariants = variants.filter(v => !v.id);
+      if (newVariants.length > 0) {
+        await supabase.from("product_variants").insert(newVariants.map(v => ({ product_id: productId!, variant_name: v.variant_name, variant_value: v.variant_value })));
+      }
+    }
+
     setDialogOpen(false);
   };
 
@@ -90,13 +135,9 @@ export default function Products() {
           if (!row.name) continue;
           try {
             await createProduct.mutateAsync({
-              name: row.name,
-              sku: row.sku || undefined,
-              cost_price: Number(row.cost_price) || 0,
-              selling_price: Number(row.selling_price) || 0,
-              unit: row.unit || "pcs",
-              min_stock_level: Number(row.min_stock_level) || 0,
-              brand: row.brand || undefined,
+              name: row.name, sku: row.sku || undefined,
+              cost_price: Number(row.cost_price) || 0, selling_price: Number(row.selling_price) || 0,
+              unit: row.unit || "pcs", min_stock_level: Number(row.min_stock_level) || 0, brand: row.brand || undefined,
             });
             count++;
           } catch { /* skip duplicates */ }
@@ -116,6 +157,24 @@ export default function Products() {
     if (error) { toast({ title: "อัปโหลดล้มเหลว", description: error.message, variant: "destructive" }); return; }
     const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(path);
     setForm(f => ({ ...f, image_url: publicUrl }));
+  };
+
+  const handleExtraImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (extraImages.length >= 5) { toast({ title: "สูงสุด 5 รูป", variant: "destructive" }); return; }
+    const ext = file.name.split('.').pop();
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("product-images").upload(path, file);
+    if (error) { toast({ title: "อัปโหลดล้มเหลว", description: error.message, variant: "destructive" }); return; }
+    const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(path);
+    setExtraImages(prev => [...prev, { image_url: publicUrl, sort_order: prev.length }]);
+  };
+
+  const addVariant = () => {
+    if (!newVariantName.trim() || !newVariantValue.trim()) return;
+    setVariants(prev => [...prev, { variant_name: newVariantName.trim(), variant_value: newVariantValue.trim() }]);
+    setNewVariantValue("");
   };
 
   return (
@@ -144,9 +203,7 @@ export default function Products() {
               <Input placeholder="ค้นหาสินค้า..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
             <Select value={catFilter} onValueChange={setCatFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="หมวดหมู่" />
-              </SelectTrigger>
+              <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="หมวดหมู่" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">ทุกหมวดหมู่</SelectItem>
                 {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -162,15 +219,9 @@ export default function Products() {
                 <TableHead>SKU</TableHead>
                 <TableHead className="hidden md:table-cell">แบรนด์</TableHead>
                 <TableHead>หมวดหมู่</TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  <span className="inline-flex items-center gap-1"><Barcode className="h-3.5 w-3.5" /> บาร์โค้ด</span>
-                </TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> ตำแหน่ง</span>
-                </TableHead>
-                <TableHead className="hidden xl:table-cell">
-                  <span className="inline-flex items-center gap-1"><Weight className="h-3.5 w-3.5" /> น้ำหนัก</span>
-                </TableHead>
+                <TableHead className="hidden lg:table-cell"><span className="inline-flex items-center gap-1"><Barcode className="h-3.5 w-3.5" /> บาร์โค้ด</span></TableHead>
+                <TableHead className="hidden lg:table-cell"><span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> ตำแหน่ง</span></TableHead>
+                <TableHead className="hidden xl:table-cell"><span className="inline-flex items-center gap-1"><Weight className="h-3.5 w-3.5" /> น้ำหนัก</span></TableHead>
                 <TableHead className="text-right">ต้นทุน</TableHead>
                 <TableHead className="text-right">ราคาขาย</TableHead>
                 <TableHead className="text-right">สต็อก</TableHead>
@@ -325,10 +376,59 @@ export default function Products() {
                 <span className="text-sm">สินค้าแนะนำ</span>
               </label>
             </div>
+
+            {/* Main Image */}
             <div className="grid gap-2">
-              <Label>รูปสินค้า</Label>
+              <Label>รูปสินค้าหลัก</Label>
               <Input type="file" accept="image/*" onChange={handleImageUpload} />
               {form.image_url && <img src={form.image_url} alt="" className="h-20 w-20 object-cover rounded-md border border-border" />}
+            </div>
+
+            {/* Extra Images */}
+            <Separator />
+            <div className="grid gap-2">
+              <Label className="flex items-center gap-2"><ImagePlus className="h-4 w-4" /> รูปสินค้าเพิ่มเติม (สูงสุด 5 รูป)</Label>
+              <div className="flex flex-wrap gap-2">
+                {extraImages.map((img, i) => (
+                  <div key={i} className="relative">
+                    <img src={img.image_url} alt="" className="h-20 w-20 object-cover rounded-md border border-border" />
+                    <button
+                      onClick={() => setExtraImages(prev => prev.filter((_, idx) => idx !== i))}
+                      className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full h-5 w-5 flex items-center justify-center"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {extraImages.length < 5 && (
+                <Input type="file" accept="image/*" onChange={handleExtraImageUpload} />
+              )}
+            </div>
+
+            {/* Variants */}
+            <Separator />
+            <div className="grid gap-2">
+              <Label>ตัวเลือกสินค้า (Variants)</Label>
+              {variants.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {variants.map((v, i) => (
+                    <Badge key={i} variant="secondary" className="gap-1 px-3 py-1">
+                      {v.variant_name}: {v.variant_value}
+                      <button onClick={() => setVariants(prev => prev.filter((_, idx) => idx !== i))}>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Input placeholder="ชื่อ เช่น สี" value={newVariantName} onChange={(e) => setNewVariantName(e.target.value)} className="h-8 text-xs flex-1" />
+                <Input placeholder="ค่า เช่น ขาว" value={newVariantValue} onChange={(e) => setNewVariantValue(e.target.value)} className="h-8 text-xs flex-1" />
+                <Button type="button" size="sm" variant="outline" className="h-8 shrink-0 text-xs" onClick={addVariant} disabled={!newVariantName.trim() || !newVariantValue.trim()}>
+                  <Plus className="h-3 w-3 mr-0.5" /> เพิ่ม
+                </Button>
+              </div>
             </div>
           </div>
           <DialogFooter>

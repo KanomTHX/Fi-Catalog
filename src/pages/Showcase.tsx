@@ -63,8 +63,7 @@ const statusConfig: Record<string, { label: string; color: string; step: number 
 };
 
 // ─── Product Card ───
-function ProductCard({ product, onClick, onAddCart, index }: { product: Product; onClick: () => void; onAddCart: () => void; index: number }) {
-  const hasDiscount = product.discount_price != null && product.discount_price < (product.selling_price || 0);
+function ProductCard({ product, onClick, onAddCart, index, monthlyPrice, maxMonths }: { product: Product; onClick: () => void; onAddCart: () => void; index: number; monthlyPrice?: number | null; maxMonths?: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -83,28 +82,22 @@ function ProductCard({ product, onClick, onAddCart, index }: { product: Product;
         )}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {product.is_new && <Badge className="text-[10px] bg-green-500 text-white border-0 shadow-sm">ใหม่</Badge>}
-          {hasDiscount && <Badge className="text-[10px] bg-red-500 text-white border-0 shadow-sm">-{Math.round((1 - product.discount_price! / (product.selling_price || 1)) * 100)}%</Badge>}
         </div>
       </div>
-      <div className="p-3">
-        <h3 onClick={onClick} className="font-medium text-sm text-foreground line-clamp-2 leading-snug mb-1">
+      <div className="p-3" onClick={onClick}>
+        <h3 className="font-medium text-sm text-foreground line-clamp-2 leading-snug mb-1">
           {product.name}
         </h3>
         {product.brand && <p className="text-[11px] text-muted-foreground mb-1.5">{product.brand}</p>}
-        <div className="flex items-end justify-between">
-          <div>
-            {hasDiscount ? (
-              <>
-                <p className="text-primary font-bold text-base leading-none">{formatPrice(product.discount_price)}</p>
-                <p className="text-muted-foreground text-[11px] line-through">{formatPrice(product.selling_price)}</p>
-              </>
-            ) : (
-              <p className="text-primary font-bold text-base leading-none">{formatPrice(product.selling_price)}</p>
-            )}
-          </div>
-          <Button size="icon" variant="outline" className="h-8 w-8 rounded-full shrink-0" onClick={(e) => { e.stopPropagation(); onAddCart(); }}>
-            <Plus className="h-4 w-4" />
-          </Button>
+        <div>
+          {monthlyPrice ? (
+            <div>
+              <p className="text-[10px] text-muted-foreground">เริ่มต้น</p>
+              <p className="text-primary font-bold text-base leading-none">{formatPrice(monthlyPrice)}<span className="text-[11px] text-muted-foreground font-normal">/เดือน</span></p>
+            </div>
+          ) : (
+            <p className="text-primary font-bold text-base leading-none">{formatPrice(product.discount_price ?? product.selling_price)}</p>
+          )}
         </div>
       </div>
     </motion.div>
@@ -112,14 +105,32 @@ function ProductCard({ product, onClick, onAddCart, index }: { product: Product;
 }
 
 // ─── Product Detail Dialog ───
-function ProductDetailDialog({ product, open, onClose, onAddCart }: { product: Product | null; open: boolean; onClose: () => void; onAddCart: (p: Product) => void }) {
+function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPlans }: { product: Product | null; open: boolean; onClose: () => void; onAddCart: (p: Product) => void; installmentPlans: { months: number; interest_rate: number | null }[] }) {
+  const [images, setImages] = useState<string[]>([]);
+  const [selectedImg, setSelectedImg] = useState(0);
+
+  useEffect(() => {
+    if (!product) return;
+    (async () => {
+      const imgs: string[] = [];
+      if (product.image_url) imgs.push(product.image_url);
+      const { data } = await supabase.from("product_images").select("image_url").eq("product_id", product.id).order("sort_order");
+      if (data) imgs.push(...data.map((d: any) => d.image_url));
+      setImages(imgs);
+      setSelectedImg(0);
+    })();
+  }, [product?.id]);
+
   if (!product) return null;
-  const hasDiscount = product.discount_price != null && product.discount_price < (product.selling_price || 0);
+  const effectivePrice = product.discount_price ?? product.selling_price ?? 0;
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl">
         <div className="relative">
-          {product.image_url ? (
+          {images.length > 0 ? (
+            <img src={images[selectedImg]} alt={product.name} className="w-full aspect-square object-cover" />
+          ) : product.image_url ? (
             <img src={product.image_url} alt={product.name} className="w-full aspect-square object-cover" />
           ) : (
             <div className="w-full aspect-square bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
@@ -129,9 +140,17 @@ function ProductDetailDialog({ product, open, onClose, onAddCart }: { product: P
           <div className="absolute top-4 left-4 flex gap-2">
             {product.categories?.name && <Badge className="backdrop-blur-sm bg-background/80 text-foreground" variant="outline">{product.categories.name}</Badge>}
             {product.is_new && <Badge className="bg-green-500 text-white border-0">ใหม่</Badge>}
-            {hasDiscount && <Badge className="bg-red-500 text-white border-0">ลดราคา</Badge>}
           </div>
         </div>
+        {images.length > 1 && (
+          <div className="flex gap-1.5 px-4 pt-2 overflow-x-auto">
+            {images.map((img, i) => (
+              <button key={i} onClick={() => setSelectedImg(i)} className={`shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 ${selectedImg === i ? "border-primary" : "border-border"}`}>
+                <img src={img} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
         <div className="p-6 space-y-3">
           <h2 className="text-xl font-bold text-foreground">{product.name}</h2>
           {product.brand && <p className="text-sm text-muted-foreground">{product.brand}</p>}
@@ -141,15 +160,26 @@ function ProductDetailDialog({ product, open, onClose, onAddCart }: { product: P
             {product.color && <Badge variant="secondary">สี: {product.color}</Badge>}
             {product.dimensions && <Badge variant="secondary">ขนาด: {product.dimensions}</Badge>}
           </div>
-          <div className="flex items-center justify-between pt-1">
-            {hasDiscount ? (
-              <div>
-                <span className="text-2xl font-bold text-primary">{formatPrice(product.discount_price)}</span>
-                <span className="text-sm text-muted-foreground line-through ml-2">{formatPrice(product.selling_price)}</span>
+          {/* Installment plans */}
+          {installmentPlans.length > 0 && effectivePrice > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">แผนผ่อนชำระ</p>
+              <div className="flex flex-wrap gap-2">
+                {installmentPlans.map((plan, i) => {
+                  const monthly = Math.ceil(effectivePrice * (1 + (plan.interest_rate || 0) / 100) / plan.months);
+                  return (
+                    <div key={i} className="bg-muted rounded-lg px-3 py-2 text-center min-w-[70px]">
+                      <p className="text-[10px] text-muted-foreground">{plan.months} เดือน</p>
+                      <p className="text-sm font-bold text-primary">{formatPrice(monthly)}</p>
+                      <p className="text-[9px] text-muted-foreground">/เดือน</p>
+                    </div>
+                  );
+                })}
               </div>
-            ) : (
-              <span className="text-2xl font-bold text-primary">{formatPrice(product.selling_price)}</span>
-            )}
+            </div>
+          )}
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-2xl font-bold text-primary">{formatPrice(effectivePrice)}</span>
             <Button onClick={() => { onAddCart(product); onClose(); }}>
               <ShoppingCart className="h-4 w-4 mr-2" /> เพิ่มลงตะกร้า
             </Button>
@@ -223,6 +253,7 @@ export default function Showcase() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orderCounts, setOrderCounts] = useState<OrderCount[]>([]);
+  const [installmentPlans, setInstallmentPlans] = useState<{ months: number; interest_rate: number | null }[]>([]);
   const [selectedCat, setSelectedCat] = useState("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -307,15 +338,17 @@ export default function Showcase() {
   // ─── Fetch products & site settings ───
   useEffect(() => {
     async function fetchData() {
-      const [prodRes, catRes, orderCountRes, siteRes] = await Promise.all([
+      const [prodRes, catRes, orderCountRes, siteRes, planRes] = await Promise.all([
         supabase.from("products").select("id, name, sku, selling_price, discount_price, image_url, category_id, brand, description, weight, location, color, material, dimensions, is_new, is_featured, created_at, categories(name)").order("created_at", { ascending: false }),
         supabase.from("categories").select("*").order("name"),
         supabase.from("product_order_counts" as any).select("*"),
         supabase.from("site_settings").select("*").limit(1).single(),
+        supabase.from("installment_plans").select("months, interest_rate").eq("is_active", true).order("months", { ascending: false }),
       ]);
       if (prodRes.data) setProducts(prodRes.data as any);
       if (catRes.data) setCategories(catRes.data);
       if (orderCountRes.data) setOrderCounts(orderCountRes.data as any);
+      if (planRes.data) setInstallmentPlans(planRes.data as any);
       if (siteRes.data) {
         setSiteName((siteRes.data as any).site_name || "StockFlow");
         setLogoUrl((siteRes.data as any).logo_url || null);
@@ -361,6 +394,14 @@ export default function Showcase() {
   const bestSellers = useMemo(() => [...products].sort((a, b) => getOrderCount(b.id) - getOrderCount(a.id)).filter(p => getOrderCount(p.id) > 0).slice(0, 10), [products, orderCounts]);
   const newArrivals = useMemo(() => products.filter(p => p.is_new).slice(0, 10), [products]);
   const specialOffers = useMemo(() => products.filter(p => p.discount_price != null && p.discount_price < (p.selling_price || 0)), [products]);
+
+  const maxMonthsPlan = useMemo(() => installmentPlans.length > 0 ? installmentPlans[0] : null, [installmentPlans]);
+  const getMonthlyPrice = (p: Product) => {
+    if (!maxMonthsPlan) return null;
+    const price = p.discount_price ?? p.selling_price;
+    if (!price || price <= 0) return null;
+    return Math.ceil(price * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months);
+  };
 
   const filtered = useMemo(() => {
     let result = products.filter((p) => {
@@ -593,7 +634,7 @@ export default function Showcase() {
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {filtered.map((product, i) => (
-                      <ProductCard key={product.id} product={product} index={i} onClick={() => setSelectedProduct(product)} onAddCart={() => addToCart(product)} />
+                      <ProductCard key={product.id} product={product} index={i} onClick={() => setSelectedProduct(product)} onAddCart={() => addToCart(product)} monthlyPrice={getMonthlyPrice(product)} maxMonths={maxMonthsPlan?.months} />
                     ))}
                   </div>
                 )}
@@ -948,7 +989,16 @@ export default function Showcase() {
               <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
             </motion.div>
             <h2 className="text-xl font-bold text-foreground">สั่งจองสำเร็จ!</h2>
-            <p className="text-sm text-muted-foreground">หมายเลข: #{orderSuccess?.slice(0, 8)}</p>
+            <div className="bg-muted rounded-lg p-3">
+              <p className="text-xs text-muted-foreground">เลขใบจอง</p>
+              <p className="font-mono text-sm font-bold text-foreground mt-1">#{orderSuccess?.slice(0, 8).toUpperCase()}</p>
+            </div>
+            <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-left">
+              <p className="text-xs font-medium text-yellow-800 dark:text-yellow-200">📌 กรุณาจดหรือ screenshot เลขใบจองนี้ไว้เพื่อตรวจสอบสถานะ</p>
+            </div>
+            <Button variant="outline" size="sm" className="w-full" onClick={() => { if (orderSuccess) { navigator.clipboard.writeText(orderSuccess.slice(0, 8).toUpperCase()); toast({ title: "คัดลอกเลขใบจองแล้ว" }); } }}>
+              คัดลอกเลขใบจอง
+            </Button>
             <p className="text-sm text-muted-foreground">ทางร้านจะติดต่อกลับเพื่อยืนยันคำสั่งจอง</p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => { setOrderSuccess(null); setActiveTab("orders"); }} className="flex-1">
@@ -960,7 +1010,7 @@ export default function Showcase() {
         </DialogContent>
       </Dialog>
 
-      <ProductDetailDialog product={selectedProduct} open={!!selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={addToCart} />
+      <ProductDetailDialog product={selectedProduct} open={!!selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={addToCart} installmentPlans={installmentPlans} />
     </div>
   );
 }

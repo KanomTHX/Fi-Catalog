@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Package, ArrowDownToLine, ArrowUpFromLine,
   SlidersHorizontal, FileBarChart, Users, Activity, LogOut, MessageSquare,
-  Printer, ScanBarcode, ShoppingCart, Settings
+  Printer, ScanBarcode, ShoppingCart, Settings, CreditCard
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
@@ -31,6 +31,7 @@ const adminItems = [
   { title: "บันทึกกิจกรรม", url: "/admin/activity-log", icon: Activity },
   { title: "ตั้งค่า LINE", url: "/admin/settings/line", icon: MessageSquare },
   { title: "ตั้งค่าระบบ", url: "/admin/settings/site", icon: Settings },
+  { title: "แผนผ่อนชำระ", url: "/admin/settings/installments", icon: CreditCard },
 ];
 
 export function AppSidebar() {
