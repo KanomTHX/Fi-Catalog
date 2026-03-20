@@ -338,15 +338,17 @@ export default function Showcase() {
   // ─── Fetch products & site settings ───
   useEffect(() => {
     async function fetchData() {
-      const [prodRes, catRes, orderCountRes, siteRes] = await Promise.all([
+      const [prodRes, catRes, orderCountRes, siteRes, planRes] = await Promise.all([
         supabase.from("products").select("id, name, sku, selling_price, discount_price, image_url, category_id, brand, description, weight, location, color, material, dimensions, is_new, is_featured, created_at, categories(name)").order("created_at", { ascending: false }),
         supabase.from("categories").select("*").order("name"),
         supabase.from("product_order_counts" as any).select("*"),
         supabase.from("site_settings").select("*").limit(1).single(),
+        supabase.from("installment_plans").select("months, interest_rate").eq("is_active", true).order("months", { ascending: false }),
       ]);
       if (prodRes.data) setProducts(prodRes.data as any);
       if (catRes.data) setCategories(catRes.data);
       if (orderCountRes.data) setOrderCounts(orderCountRes.data as any);
+      if (planRes.data) setInstallmentPlans(planRes.data as any);
       if (siteRes.data) {
         setSiteName((siteRes.data as any).site_name || "StockFlow");
         setLogoUrl((siteRes.data as any).logo_url || null);
