@@ -395,6 +395,14 @@ export default function Showcase() {
   const newArrivals = useMemo(() => products.filter(p => p.is_new).slice(0, 10), [products]);
   const specialOffers = useMemo(() => products.filter(p => p.discount_price != null && p.discount_price < (p.selling_price || 0)), [products]);
 
+  const maxMonthsPlan = useMemo(() => installmentPlans.length > 0 ? installmentPlans[0] : null, [installmentPlans]);
+  const getMonthlyPrice = (p: Product) => {
+    if (!maxMonthsPlan) return null;
+    const price = p.discount_price ?? p.selling_price;
+    if (!price || price <= 0) return null;
+    return Math.ceil(price * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months);
+  };
+
   const filtered = useMemo(() => {
     let result = products.filter((p) => {
       const matchCat = selectedCat === "all" || p.category_id === selectedCat;
