@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { ShoppingBag, Plus, Search, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ShoppingBag, Search, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface Product {
@@ -25,6 +25,12 @@ interface Product {
 interface Category {
   id: string;
   name: string;
+}
+
+interface InstallmentPlan {
+  id: string;
+  months: number;
+  interest_rate: number | null;
 }
 
 interface ProductCatalogProps {
@@ -62,6 +68,25 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     staleTime: 60_000,
   });
 
+  const { data: installmentPlans } = useQuery({
+    queryKey: ["public-installment-plans"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("installment_plans")
+        .select("id, months, interest_rate")
+        .eq("is_active", true)
+        .order("months", { ascending: false });
+      if (error) throw error;
+      return data as InstallmentPlan[];
+    },
+    staleTime: 60_000,
+  });
+
+  const maxMonthsPlan = useMemo(() => {
+    if (!installmentPlans || installmentPlans.length === 0) return null;
+    return installmentPlans[0]; // already sorted desc
+  }, [installmentPlans]);
+
   const featured = useMemo(
     () => products?.filter((p) => p.is_featured || p.is_new)?.slice(0, 8) ?? [],
     [products]
@@ -77,7 +102,6 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     return list;
   }, [products, selectedCat, search]);
 
-  // Group products by category
   const productsByCategory = useMemo(() => {
     if (!categories || !products) return [];
     return categories
@@ -87,6 +111,14 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
       }))
       .filter((cat) => cat.items.length > 0);
   }, [categories, products]);
+
+  const getMonthlyPrice = (product: Product) => {
+    if (!maxMonthsPlan) return null;
+    const price = product.discount_price ?? product.selling_price;
+    if (!price || price <= 0) return null;
+    const monthly = Math.ceil(price * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months);
+    return monthly;
+  };
 
   return (
     <>
@@ -101,7 +133,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
           </motion.div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {featured.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} onAdd={onAddToCart} />
+              <ProductCard key={p.id} product={p} index={i} monthlyPrice={getMonthlyPrice(p)} maxMonths={maxMonthsPlan?.months} />
             ))}
           </div>
         </section>
@@ -118,7 +150,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {cat.items.slice(0, 4).map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} onAdd={onAddToCart} />
+              <ProductCard key={p.id} product={p} index={i} monthlyPrice={getMonthlyPrice(p)} maxMonths={maxMonthsPlan?.months} />
             ))}
           </div>
         </section>
@@ -165,7 +197,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {filtered.map((p, i) => (
-                <ProductCard key={p.id} product={p} index={i} onAdd={onAddToCart} />
+                <ProductCard key={p.id} product={p} index={i} monthlyPrice={getMonthlyPrice(p)} maxMonths={maxMonthsPlan?.months} />
               ))}
             </div>
           )}
@@ -178,11 +210,13 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
 function ProductCard({
   product: p,
   index,
-  onAdd,
+  monthlyPrice,
+  maxMonths,
 }: {
   product: Product;
   index: number;
-  onAdd: (p: Product) => void;
+  monthlyPrice: number | null;
+  maxMonths?: number;
 }) {
   const navigate = useNavigate();
   return (
@@ -204,29 +238,19 @@ function ProductCard({
           {p.is_new && (
             <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs shadow-sm">ใหม่</Badge>
           )}
-          {p.discount_price && p.selling_price && p.discount_price < p.selling_price && (
-            <Badge variant="destructive" className="absolute top-2 right-2 text-xs">
-              -{Math.round(((p.selling_price - p.discount_price) / p.selling_price) * 100)}%
-            </Badge>
-          )}
         </div>
         <CardContent className="p-3 sm:p-4 flex flex-col flex-1">
           <h3 className="font-medium text-sm line-clamp-2 text-foreground font-heading min-h-[2.5rem]">{p.name}</h3>
           <div className="mt-auto pt-2">
-            <div className="flex items-baseline gap-2">
-              {p.discount_price ? (
-                <>
-                  <span className="text-primary font-bold text-sm sm:text-base">{formatPrice(p.discount_price)}</span>
-                  <span className="text-muted-foreground text-xs line-through">{formatPrice(p.selling_price)}</span>
-                </>
-              ) : (
-                <span className="text-primary font-bold text-sm sm:text-base">{formatPrice(p.selling_price)}</span>
-              )}
-            </div>
-            <Button variant="outline" size="sm" className="w-full mt-2 gap-1 text-xs" onClick={(e) => { e.stopPropagation(); onAdd(p); }}>
-              <Plus className="h-3.5 w-3.5" />
-              เพิ่มลงตะกร้า
-            </Button>
+            {monthlyPrice ? (
+              <div>
+                <p className="text-xs text-muted-foreground">เริ่มต้น</p>
+                <span className="text-primary font-bold text-sm sm:text-base">{formatPrice(monthlyPrice)}</span>
+                <span className="text-xs text-muted-foreground">/เดือน</span>
+              </div>
+            ) : (
+              <span className="text-primary font-bold text-sm sm:text-base">{formatPrice(p.discount_price ?? p.selling_price)}</span>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -284,7 +284,7 @@ export default function ProductDetail() {
               {/* Installment Plans */}
               {installmentPlans && installmentPlans.length > 0 && effectivePrice > 0 && (
                 <div className="mt-3 space-y-1.5">
-                  <p className="text-xs font-medium text-muted-foreground">ผ่อนชำระ 0%</p>
+                  <p className="text-xs font-medium text-muted-foreground">แผนผ่อนชำระ</p>
                   <div className="flex flex-wrap gap-2">
                     {installmentPlans.map((plan: any) => {
                       const monthly = Math.ceil(effectivePrice * (1 + (plan.interest_rate || 0) / 100) / plan.months);
