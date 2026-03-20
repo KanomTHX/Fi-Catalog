@@ -53,6 +53,7 @@ function ProtectedRoutes() {
         <Route path="/activity-log" element={<ActivityLog />} />
         <Route path="/settings/line" element={<LineSettings />} />
         <Route path="/settings/site" element={<SiteSettings />} />
+        <Route path="/settings/installments" element={<InstallmentPlans />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
