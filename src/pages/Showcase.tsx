@@ -63,8 +63,7 @@ const statusConfig: Record<string, { label: string; color: string; step: number 
 };
 
 // ─── Product Card ───
-function ProductCard({ product, onClick, onAddCart, index }: { product: Product; onClick: () => void; onAddCart: () => void; index: number }) {
-  const hasDiscount = product.discount_price != null && product.discount_price < (product.selling_price || 0);
+function ProductCard({ product, onClick, onAddCart, index, monthlyPrice, maxMonths }: { product: Product; onClick: () => void; onAddCart: () => void; index: number; monthlyPrice?: number | null; maxMonths?: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -83,28 +82,22 @@ function ProductCard({ product, onClick, onAddCart, index }: { product: Product;
         )}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {product.is_new && <Badge className="text-[10px] bg-green-500 text-white border-0 shadow-sm">ใหม่</Badge>}
-          {hasDiscount && <Badge className="text-[10px] bg-red-500 text-white border-0 shadow-sm">-{Math.round((1 - product.discount_price! / (product.selling_price || 1)) * 100)}%</Badge>}
         </div>
       </div>
-      <div className="p-3">
-        <h3 onClick={onClick} className="font-medium text-sm text-foreground line-clamp-2 leading-snug mb-1">
+      <div className="p-3" onClick={onClick}>
+        <h3 className="font-medium text-sm text-foreground line-clamp-2 leading-snug mb-1">
           {product.name}
         </h3>
         {product.brand && <p className="text-[11px] text-muted-foreground mb-1.5">{product.brand}</p>}
-        <div className="flex items-end justify-between">
-          <div>
-            {hasDiscount ? (
-              <>
-                <p className="text-primary font-bold text-base leading-none">{formatPrice(product.discount_price)}</p>
-                <p className="text-muted-foreground text-[11px] line-through">{formatPrice(product.selling_price)}</p>
-              </>
-            ) : (
-              <p className="text-primary font-bold text-base leading-none">{formatPrice(product.selling_price)}</p>
-            )}
-          </div>
-          <Button size="icon" variant="outline" className="h-8 w-8 rounded-full shrink-0" onClick={(e) => { e.stopPropagation(); onAddCart(); }}>
-            <Plus className="h-4 w-4" />
-          </Button>
+        <div>
+          {monthlyPrice ? (
+            <div>
+              <p className="text-[10px] text-muted-foreground">เริ่มต้น</p>
+              <p className="text-primary font-bold text-base leading-none">{formatPrice(monthlyPrice)}<span className="text-[11px] text-muted-foreground font-normal">/เดือน</span></p>
+            </div>
+          ) : (
+            <p className="text-primary font-bold text-base leading-none">{formatPrice(product.discount_price ?? product.selling_price)}</p>
+          )}
         </div>
       </div>
     </motion.div>
