@@ -253,6 +253,7 @@ export default function Showcase() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orderCounts, setOrderCounts] = useState<OrderCount[]>([]);
+  const [installmentPlans, setInstallmentPlans] = useState<{ months: number; interest_rate: number | null }[]>([]);
   const [selectedCat, setSelectedCat] = useState("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
