@@ -224,7 +224,7 @@ export default function ProductDetail() {
             {categoryName && (
               <>
                 <BreadcrumbSeparator />
-                <BreadcrumbItem><span className="text-muted-foreground">{categoryName}</span></BreadcrumbItem>
+                <BreadcrumbItem><BreadcrumbLink asChild><Link to={`/products?category=${product.category_id}`}>{categoryName}</Link></BreadcrumbLink></BreadcrumbItem>
               </>
             )}
             <BreadcrumbSeparator />
