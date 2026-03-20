@@ -28,6 +28,7 @@ import SerialPrint from "./pages/SerialPrint";
 import StockCheck from "./pages/StockCheck";
 import Showcase from "./pages/Showcase";
 import SiteSettings from "./pages/SiteSettings";
+import InstallmentPlans from "./pages/InstallmentPlans";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
