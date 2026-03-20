@@ -993,7 +993,7 @@ export default function Showcase() {
         </DialogContent>
       </Dialog>
 
-      <ProductDetailDialog product={selectedProduct} open={!!selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={addToCart} />
+      <ProductDetailDialog product={selectedProduct} open={!!selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={addToCart} installmentPlans={installmentPlans} />
     </div>
   );
 }
