@@ -105,14 +105,32 @@ function ProductCard({ product, onClick, onAddCart, index, monthlyPrice, maxMont
 }
 
 // ─── Product Detail Dialog ───
-function ProductDetailDialog({ product, open, onClose, onAddCart }: { product: Product | null; open: boolean; onClose: () => void; onAddCart: (p: Product) => void }) {
+function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPlans }: { product: Product | null; open: boolean; onClose: () => void; onAddCart: (p: Product) => void; installmentPlans: { months: number; interest_rate: number | null }[] }) {
+  const [images, setImages] = useState<string[]>([]);
+  const [selectedImg, setSelectedImg] = useState(0);
+
+  useEffect(() => {
+    if (!product) return;
+    (async () => {
+      const imgs: string[] = [];
+      if (product.image_url) imgs.push(product.image_url);
+      const { data } = await supabase.from("product_images").select("image_url").eq("product_id", product.id).order("sort_order");
+      if (data) imgs.push(...data.map((d: any) => d.image_url));
+      setImages(imgs);
+      setSelectedImg(0);
+    })();
+  }, [product?.id]);
+
   if (!product) return null;
-  const hasDiscount = product.discount_price != null && product.discount_price < (product.selling_price || 0);
+  const effectivePrice = product.discount_price ?? product.selling_price ?? 0;
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl">
         <div className="relative">
-          {product.image_url ? (
+          {images.length > 0 ? (
+            <img src={images[selectedImg]} alt={product.name} className="w-full aspect-square object-cover" />
+          ) : product.image_url ? (
             <img src={product.image_url} alt={product.name} className="w-full aspect-square object-cover" />
           ) : (
             <div className="w-full aspect-square bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
@@ -122,9 +140,17 @@ function ProductDetailDialog({ product, open, onClose, onAddCart }: { product: P
           <div className="absolute top-4 left-4 flex gap-2">
             {product.categories?.name && <Badge className="backdrop-blur-sm bg-background/80 text-foreground" variant="outline">{product.categories.name}</Badge>}
             {product.is_new && <Badge className="bg-green-500 text-white border-0">ใหม่</Badge>}
-            {hasDiscount && <Badge className="bg-red-500 text-white border-0">ลดราคา</Badge>}
           </div>
         </div>
+        {images.length > 1 && (
+          <div className="flex gap-1.5 px-4 pt-2 overflow-x-auto">
+            {images.map((img, i) => (
+              <button key={i} onClick={() => setSelectedImg(i)} className={`shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 ${selectedImg === i ? "border-primary" : "border-border"}`}>
+                <img src={img} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
         <div className="p-6 space-y-3">
           <h2 className="text-xl font-bold text-foreground">{product.name}</h2>
           {product.brand && <p className="text-sm text-muted-foreground">{product.brand}</p>}
@@ -134,15 +160,26 @@ function ProductDetailDialog({ product, open, onClose, onAddCart }: { product: P
             {product.color && <Badge variant="secondary">สี: {product.color}</Badge>}
             {product.dimensions && <Badge variant="secondary">ขนาด: {product.dimensions}</Badge>}
           </div>
-          <div className="flex items-center justify-between pt-1">
-            {hasDiscount ? (
-              <div>
-                <span className="text-2xl font-bold text-primary">{formatPrice(product.discount_price)}</span>
-                <span className="text-sm text-muted-foreground line-through ml-2">{formatPrice(product.selling_price)}</span>
+          {/* Installment plans */}
+          {installmentPlans.length > 0 && effectivePrice > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">แผนผ่อนชำระ</p>
+              <div className="flex flex-wrap gap-2">
+                {installmentPlans.map((plan, i) => {
+                  const monthly = Math.ceil(effectivePrice * (1 + (plan.interest_rate || 0) / 100) / plan.months);
+                  return (
+                    <div key={i} className="bg-muted rounded-lg px-3 py-2 text-center min-w-[70px]">
+                      <p className="text-[10px] text-muted-foreground">{plan.months} เดือน</p>
+                      <p className="text-sm font-bold text-primary">{formatPrice(monthly)}</p>
+                      <p className="text-[9px] text-muted-foreground">/เดือน</p>
+                    </div>
+                  );
+                })}
               </div>
-            ) : (
-              <span className="text-2xl font-bold text-primary">{formatPrice(product.selling_price)}</span>
-            )}
+            </div>
+          )}
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-2xl font-bold text-primary">{formatPrice(effectivePrice)}</span>
             <Button onClick={() => { onAddCart(product); onClose(); }}>
               <ShoppingCart className="h-4 w-4 mr-2" /> เพิ่มลงตะกร้า
             </Button>
