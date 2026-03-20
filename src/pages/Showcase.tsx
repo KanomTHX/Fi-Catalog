@@ -634,7 +634,7 @@ export default function Showcase() {
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {filtered.map((product, i) => (
-                      <ProductCard key={product.id} product={product} index={i} onClick={() => setSelectedProduct(product)} onAddCart={() => addToCart(product)} />
+                      <ProductCard key={product.id} product={product} index={i} onClick={() => setSelectedProduct(product)} onAddCart={() => addToCart(product)} monthlyPrice={getMonthlyPrice(product)} maxMonths={maxMonthsPlan?.months} />
                     ))}
                   </div>
                 )}
