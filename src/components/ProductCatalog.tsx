@@ -248,9 +248,7 @@ function ProductCard({
                 <span className="text-primary font-bold text-sm sm:text-base">{formatPrice(monthlyPrice)}</span>
                 <span className="text-xs text-muted-foreground">/เดือน</span>
               </div>
-            ) : (
-              <span className="text-primary font-bold text-sm sm:text-base">{formatPrice(p.discount_price ?? p.selling_price)}</span>
-            )}
+            ) : null}
           </div>
         </CardContent>
       </Card>

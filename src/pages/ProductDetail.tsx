@@ -414,7 +414,17 @@ export default function ProductDetail() {
 
 function MiniProductCard({ product: p }: { product: any }) {
   const navigate = useNavigate();
-  const hasDiscount = p.discount_price != null && p.discount_price < (p.selling_price || 0);
+  const { data: plans } = useQuery({
+    queryKey: ["mini-installment-plans"],
+    queryFn: async () => {
+      const { data } = await supabase.from("installment_plans").select("months, interest_rate").eq("is_active", true).order("months", { ascending: false }).limit(1);
+      return data ?? [];
+    },
+    staleTime: 60_000,
+  });
+  const price = p.discount_price ?? p.selling_price;
+  const monthlyPrice = plans && plans.length > 0 && price ? Math.ceil(price * (1 + (plans[0].interest_rate || 0) / 100) / plans[0].months) : null;
+
   return (
     <Card
       className="overflow-hidden group hover:shadow-lg transition-all duration-300 cursor-pointer bg-card h-full flex flex-col"
@@ -433,14 +443,13 @@ function MiniProductCard({ product: p }: { product: any }) {
       <CardContent className="p-3 flex flex-col flex-1">
         <h3 className="font-medium text-sm line-clamp-2 font-heading min-h-[2.5rem]">{p.name}</h3>
         <div className="mt-auto pt-2">
-          {hasDiscount ? (
-            <div className="flex items-baseline gap-2">
-              <span className="text-primary font-bold text-sm">{formatPrice(p.discount_price)}</span>
-              <span className="text-muted-foreground text-xs line-through">{formatPrice(p.selling_price)}</span>
+          {monthlyPrice ? (
+            <div>
+              <p className="text-xs text-muted-foreground">เริ่มต้น</p>
+              <span className="text-primary font-bold text-sm">{formatPrice(monthlyPrice)}</span>
+              <span className="text-xs text-muted-foreground">/เดือน</span>
             </div>
-          ) : (
-            <span className="text-primary font-bold text-sm">{formatPrice(p.selling_price)}</span>
-          )}
+          ) : null}
         </div>
       </CardContent>
     </Card>

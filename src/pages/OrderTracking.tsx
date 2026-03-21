@@ -47,14 +47,23 @@ export default function OrderTracking() {
     setOrder(null);
 
     try {
-      const { data, error: err } = await supabase
-        .from("orders")
-        .select("id, status, total_amount, note, created_at, delivery_method, customers(display_name), order_items(id, quantity, unit_price, products(name, image_url))")
-        .ilike("id", `%${code.toLowerCase()}%`)
-        .limit(1)
-        .maybeSingle();
+      // Use RPC to cast UUID to text for partial search
+      const { data: rpcData, error: rpcErr } = await supabase.rpc("search_order_by_code", { code });
+      if (rpcErr) throw rpcErr;
+      const matchedOrder = Array.isArray(rpcData) ? rpcData[0] : rpcData;
 
-      if (err) throw err;
+      let data = null;
+      if (matchedOrder) {
+        const { data: fullOrder, error: fetchErr } = await supabase
+          .from("orders")
+          .select("id, status, total_amount, note, created_at, delivery_method, installment_months, customers(display_name), order_items(id, quantity, unit_price, products(name, image_url))")
+          .eq("id", matchedOrder.id)
+          .single();
+        if (fetchErr) throw fetchErr;
+        data = fullOrder;
+      }
+
+      const err = null;
       if (!data) {
         setError("ไม่พบใบจองที่ตรงกับเลขที่ระบุ");
       } else {

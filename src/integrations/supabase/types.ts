@@ -225,6 +225,7 @@ export type Database = {
           customer_id: string
           delivery_method: string | null
           id: string
+          installment_months: number | null
           note: string | null
           status: string
           total_amount: number | null
@@ -235,6 +236,7 @@ export type Database = {
           customer_id: string
           delivery_method?: string | null
           id?: string
+          installment_months?: number | null
           note?: string | null
           status?: string
           total_amount?: number | null
@@ -245,6 +247,7 @@ export type Database = {
           customer_id?: string
           delivery_method?: string | null
           id?: string
+          installment_months?: number | null
           note?: string | null
           status?: string
           total_amount?: number | null
@@ -676,6 +679,26 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      search_order_by_code: {
+        Args: { code: string }
+        Returns: {
+          created_at: string
+          customer_id: string
+          delivery_method: string | null
+          id: string
+          installment_months: number | null
+          note: string | null
+          status: string
+          total_amount: number | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
     }
     Enums: {

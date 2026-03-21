@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { HomeNavbar } from "@/components/HomeNavbar";
@@ -13,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ShoppingBag, Loader2, CheckCircle2, ArrowLeft, User, Trash2, Minus, Plus, Store, Truck } from "lucide-react";
+import { ShoppingBag, Loader2, CheckCircle2, ArrowLeft, User, Trash2, Minus, Plus, Store, Truck, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 
 const formatPrice = (n: number) => `฿${n.toLocaleString()}`;
@@ -29,9 +30,23 @@ export default function Checkout() {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", address: "", note: "" });
   const [deliveryMethod, setDeliveryMethod] = useState("pickup");
+  const [selectedPlanMonths, setSelectedPlanMonths] = useState<number | null>(null);
 
   const siteName = settings?.site_name || "AKK Furniture";
   const logoUrl = settings?.logo_url || null;
+
+  const { data: installmentPlans } = useQuery({
+    queryKey: ["checkout-installment-plans"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("installment_plans")
+        .select("id, months, interest_rate")
+        .eq("is_active", true)
+        .order("months");
+      return data ?? [];
+    },
+    staleTime: 60_000,
+  });
 
   const handleGuestCheckout = () => setStep("form");
 
@@ -51,7 +66,14 @@ export default function Checkout() {
 
       const { data: order, error: orderErr } = await supabase
         .from("orders")
-        .insert({ customer_id: customer.id, total_amount: total, note: form.note.trim() || null, status: "pending", delivery_method: deliveryMethod })
+        .insert({
+          customer_id: customer.id,
+          total_amount: total,
+          note: form.note.trim() || null,
+          status: "pending",
+          delivery_method: deliveryMethod,
+          installment_months: selectedPlanMonths,
+        } as any)
         .select("id")
         .single();
       if (orderErr) throw orderErr;
@@ -154,6 +176,32 @@ export default function Checkout() {
                     <span>รวมทั้งหมด</span>
                     <span className="text-primary">{formatPrice(total)}</span>
                   </div>
+
+                  {/* Installment Plan Selection */}
+                  {installmentPlans && installmentPlans.length > 0 && total > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium flex items-center gap-1">
+                        <CreditCard className="h-3.5 w-3.5 text-primary" /> เลือกแผนผ่อนชำระ
+                      </Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {installmentPlans.map((plan: any) => {
+                          const monthly = Math.ceil(total * (1 + (plan.interest_rate || 0) / 100) / plan.months);
+                          const isSelected = selectedPlanMonths === plan.months;
+                          return (
+                            <button
+                              key={plan.id}
+                              onClick={() => setSelectedPlanMonths(isSelected ? null : plan.months)}
+                              className={`border rounded-lg p-2 text-center transition-colors ${isSelected ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}
+                            >
+                              <p className="text-xs text-muted-foreground">{plan.months} เดือน</p>
+                              <p className="text-sm font-bold text-primary">{formatPrice(monthly)}</p>
+                              <p className="text-[10px] text-muted-foreground">/เดือน</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {step === "summary" ? (
                     <div className="space-y-3 pt-2">
