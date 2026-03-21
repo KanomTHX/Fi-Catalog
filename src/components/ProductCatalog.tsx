@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Search, ChevronRight } from "lucide-react";
+import { ShoppingBag, Search } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface Product {
