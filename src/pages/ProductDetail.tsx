@@ -265,7 +265,6 @@ export default function ProductDetail() {
             <div>
               <div className="flex flex-wrap gap-2 mb-2">
                 {product.is_new && <Badge className="bg-green-500 text-white border-0">ใหม่</Badge>}
-                {hasDiscount && <Badge variant="destructive">ลดราคา</Badge>}
                 {product.brand && <Badge variant="secondary">{product.brand}</Badge>}
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold font-heading">{product.name}</h1>
