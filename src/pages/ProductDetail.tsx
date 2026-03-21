@@ -272,34 +272,24 @@ export default function ProductDetail() {
               {product.sku && <p className="text-sm text-muted-foreground mt-1">SKU: {product.sku}</p>}
             </div>
 
-            {/* Price */}
-            <div className="bg-secondary/50 rounded-xl p-4">
-              <div className="flex items-baseline gap-3">
-                <span className="text-3xl font-bold text-primary">{formatPrice(effectivePrice)}</span>
-                {hasDiscount && (
-                  <span className="text-lg text-muted-foreground line-through">{formatPrice(product.selling_price)}</span>
-                )}
-              </div>
-
-              {/* Installment Plans */}
-              {installmentPlans && installmentPlans.length > 0 && effectivePrice > 0 && (
-                <div className="mt-3 space-y-1.5">
-                  <p className="text-xs font-medium text-muted-foreground">แผนผ่อนชำระ</p>
-                  <div className="flex flex-wrap gap-2">
-                    {installmentPlans.map((plan: any) => {
-                      const monthly = Math.ceil(effectivePrice * (1 + (plan.interest_rate || 0) / 100) / plan.months);
-                      return (
-                        <div key={plan.id} className="bg-card border border-border rounded-lg px-3 py-2 text-center min-w-[80px]">
-                          <p className="text-xs text-muted-foreground">{plan.months} เดือน</p>
-                          <p className="text-sm font-bold text-primary">{formatPrice(monthly)}</p>
-                          <p className="text-[10px] text-muted-foreground">/เดือน</p>
-                        </div>
-                      );
-                    })}
-                  </div>
+            {/* Installment Plans */}
+            {installmentPlans && installmentPlans.length > 0 && effectivePrice > 0 && (
+              <div className="bg-secondary/50 rounded-xl p-4 space-y-2">
+                <p className="text-sm font-medium text-foreground">แผนผ่อนชำระ</p>
+                <div className="flex flex-wrap gap-2">
+                  {installmentPlans.map((plan: any) => {
+                    const monthly = Math.ceil(effectivePrice * (1 + (plan.interest_rate || 0) / 100) / plan.months);
+                    return (
+                      <div key={plan.id} className="bg-card border border-border rounded-lg px-3 py-2 text-center min-w-[80px]">
+                        <p className="text-xs text-muted-foreground">{plan.months} เดือน</p>
+                        <p className="text-sm font-bold text-primary">{formatPrice(monthly)}</p>
+                        <p className="text-[10px] text-muted-foreground">/เดือน</p>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Variants */}
             {variantGroups.length > 0 && (
