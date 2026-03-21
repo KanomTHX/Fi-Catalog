@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
-import { ShoppingCart, Check, PackageCheck, XCircle, Phone, MapPin } from "lucide-react";
+import { ShoppingCart, Phone, MapPin, Store, Truck, CreditCard } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -48,9 +49,10 @@ export default function Orders() {
                 <TableHead className="hidden sm:table-cell">เบอร์โทร</TableHead>
                 <TableHead>รายการ</TableHead>
                 <TableHead className="text-right">ยอดรวม</TableHead>
+                <TableHead>วิธีรับ</TableHead>
                 <TableHead>สถานะ</TableHead>
                 <TableHead>วันที่</TableHead>
-                <TableHead className="text-right">จัดการ</TableHead>
+                <TableHead className="text-right">เปลี่ยนสถานะ</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -75,6 +77,13 @@ export default function Orders() {
                     <TableCell className="text-right font-mono font-medium">
                       {formatPrice(order.total_amount)}
                     </TableCell>
+                    <TableCell className="text-sm">
+                      {order.delivery_method === "delivery" ? (
+                        <span className="flex items-center gap-1 text-muted-foreground"><Truck className="h-3.5 w-3.5" /> จัดส่ง</span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-muted-foreground"><Store className="h-3.5 w-3.5" /> หน้าร้าน</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={sc.variant}>{sc.label}</Badge>
                     </TableCell>
@@ -82,30 +91,31 @@ export default function Orders() {
                       {format(new Date(order.created_at), "dd/MM/yy HH:mm")}
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-1 justify-end">
-                        {order.status === "pending" && (
-                          <>
-                            <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ orderId: order.id, status: "confirmed" })} disabled={updateStatus.isPending}>
-                              <Check className="h-3.5 w-3.5 mr-1" /> ยืนยัน
-                            </Button>
-                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => updateStatus.mutate({ orderId: order.id, status: "cancelled" })} disabled={updateStatus.isPending}>
-                              <XCircle className="h-3.5 w-3.5" />
-                            </Button>
-                          </>
-                        )}
-                        {order.status === "confirmed" && (
-                          <Button size="sm" onClick={() => updateStatus.mutate({ orderId: order.id, status: "completed" })} disabled={updateStatus.isPending}>
-                            <PackageCheck className="h-3.5 w-3.5 mr-1" /> เบิกสินค้า
-                          </Button>
-                        )}
-                      </div>
+                      <Select
+                        value={order.status}
+                        onValueChange={(newStatus) => {
+                          if (newStatus !== order.status) {
+                            updateStatus.mutate({ orderId: order.id, status: newStatus });
+                          }
+                        }}
+                        disabled={updateStatus.isPending}
+                      >
+                        <SelectTrigger className="w-[140px] h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(statusConfig).map(([key, cfg]) => (
+                            <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                   </TableRow>
                 );
               })}
               {orders.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
                     ยังไม่มีคำสั่งจอง
                   </TableCell>
                 </TableRow>
@@ -142,6 +152,16 @@ export default function Orders() {
                   <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" /> {detailOrder.customers.address}
                 </p>
               )}
+              <div className="flex gap-4 text-sm">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  {detailOrder.delivery_method === "delivery" ? <><Truck className="h-3.5 w-3.5" /> จัดส่งถึงบ้าน</> : <><Store className="h-3.5 w-3.5" /> รับหน้าร้าน</>}
+                </span>
+                {detailOrder.installment_months && (
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <CreditCard className="h-3.5 w-3.5" /> ผ่อน {detailOrder.installment_months} เดือน
+                  </span>
+                )}
+              </div>
               <div className="border rounded-lg divide-y">
                 {detailOrder.order_items?.map((item: any) => (
                   <div key={item.id} className="flex items-center gap-3 p-3">
@@ -159,7 +179,7 @@ export default function Orders() {
                 ))}
               </div>
               <div className="flex justify-between items-center pt-2 border-t">
-                <span className="font-medium">ยอมรวม</span>
+                <span className="font-medium">ยอดรวม</span>
                 <span className="text-lg font-bold text-primary">{formatPrice(detailOrder.total_amount)}</span>
               </div>
               {detailOrder.note && (

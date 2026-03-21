@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Search, ChevronRight } from "lucide-react";
+import { ShoppingBag, Search } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface Product {
@@ -139,22 +139,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
         </section>
       )}
 
-      {/* Category sections */}
-      {!selectedCat && !search.trim() && productsByCategory.map((cat) => (
-        <section key={cat.id} className="mx-auto max-w-7xl px-4 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold font-heading">{cat.name}</h2>
-            <Button variant="ghost" size="sm" className="gap-1 text-primary" onClick={() => setSelectedCat(cat.id)}>
-              ดูทั้งหมด <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {cat.items.slice(0, 4).map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} monthlyPrice={getMonthlyPrice(p)} maxMonths={maxMonthsPlan?.months} />
-            ))}
-          </div>
-        </section>
-      ))}
+
 
       {/* All products with filter */}
       <section id="products" className="bg-secondary/40 scroll-mt-20">
@@ -248,9 +233,7 @@ function ProductCard({
                 <span className="text-primary font-bold text-sm sm:text-base">{formatPrice(monthlyPrice)}</span>
                 <span className="text-xs text-muted-foreground">/เดือน</span>
               </div>
-            ) : (
-              <span className="text-primary font-bold text-sm sm:text-base">{formatPrice(p.discount_price ?? p.selling_price)}</span>
-            )}
+            ) : null}
           </div>
         </CardContent>
       </Card>
