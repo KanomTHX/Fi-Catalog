@@ -42,8 +42,26 @@ const formatPrice = (price: number | null) =>
 
 export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
   const [search, setSearch] = useState("");
-  const [selectedCat, setSelectedCat] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedCat, setSelectedCat] = useState<string | null>(searchParams.get("category") || null);
   const navigate = useNavigate();
+
+  // Sync category from URL params
+  useEffect(() => {
+    const cat = searchParams.get("category");
+    if (cat && cat !== selectedCat) {
+      setSelectedCat(cat);
+    }
+  }, [searchParams]);
+
+  const handleCategoryChange = (catId: string | null) => {
+    setSelectedCat(catId);
+    if (catId) {
+      setSearchParams({ category: catId });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ["public-products"],
