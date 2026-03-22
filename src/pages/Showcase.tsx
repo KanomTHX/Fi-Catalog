@@ -924,12 +924,17 @@ export default function Showcase() {
           <div className="flex-1 overflow-y-auto py-4 space-y-3">
             {cart.map((item) => {
               const price = item.product.discount_price ?? item.product.selling_price;
+              const monthlyP = getMonthlyPrice(item.product);
               return (
                 <div key={item.product.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
                   {item.product.image_url ? <img src={item.product.image_url} alt="" className="h-14 w-14 rounded-lg object-cover" /> : <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center"><Package className="h-6 w-6 text-muted-foreground/30" /></div>}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.product.name}</p>
-                    <p className="text-sm text-primary font-semibold">{formatPrice(price)}</p>
+                    {monthlyP ? (
+                      <p className="text-xs text-primary font-semibold">{formatPrice(monthlyP)}/เดือน</p>
+                    ) : (
+                      <p className="text-sm text-primary font-semibold">{formatPrice(price)}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-1">
                     <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => updateQty(item.product.id, -1)}><Minus className="h-3 w-3" /></Button>
