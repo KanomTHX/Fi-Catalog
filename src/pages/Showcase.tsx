@@ -126,7 +126,7 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto p-0 overflow-hidden rounded-2xl">
         <div className="relative">
           {images.length > 0 ? (
             <img src={images[selectedImg]} alt={product.name} className="w-full aspect-square object-cover" />
@@ -178,8 +178,7 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
               </div>
             </div>
           )}
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-2xl font-bold text-primary">{formatPrice(effectivePrice)}</span>
+          <div className="flex items-center justify-end pt-1">
             <Button onClick={() => { onAddCart(product); onClose(); }}>
               <ShoppingCart className="h-4 w-4 mr-2" /> เพิ่มลงตะกร้า
             </Button>
