@@ -963,10 +963,42 @@ export default function Showcase() {
             <DialogTitle>ข้อมูลสำหรับสั่งจอง</DialogTitle>
             <DialogDescription>กรอกข้อมูลติดต่อเพื่อจองสินค้า</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto">
             <div className="space-y-2"><Label>ชื่อ *</Label><Input value={custName} onChange={(e) => setCustName(e.target.value)} placeholder="ชื่อ-นามสกุล" /></div>
             <div className="space-y-2"><Label>เบอร์โทร</Label><Input value={custPhone} onChange={(e) => setCustPhone(e.target.value)} placeholder="08x-xxx-xxxx" type="tel" /></div>
             <div className="space-y-2"><Label>ที่อยู่จัดส่ง</Label><Textarea value={custAddress} onChange={(e) => setCustAddress(e.target.value)} placeholder="ที่อยู่สำหรับจัดส่ง..." rows={3} /></div>
+
+            {/* Delivery Method */}
+            <div className="space-y-2">
+              <Label className="font-semibold">วิธีรับสินค้า</Label>
+              <div className="flex gap-2">
+                <Button type="button" variant={liffDeliveryMethod === "pickup" ? "default" : "outline"} size="sm" className="flex-1" onClick={() => setLiffDeliveryMethod("pickup")}>
+                  <Store className="h-4 w-4 mr-1" /> รับหน้าร้าน
+                </Button>
+                <Button type="button" variant={liffDeliveryMethod === "delivery" ? "default" : "outline"} size="sm" className="flex-1" onClick={() => setLiffDeliveryMethod("delivery")}>
+                  <MapPin className="h-4 w-4 mr-1" /> จัดส่งถึงบ้าน
+                </Button>
+              </div>
+            </div>
+
+            {/* Installment Plan */}
+            {installmentPlans.length > 0 && (
+              <div className="space-y-2">
+                <Label className="font-semibold">แผนผ่อนชำระ</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {installmentPlans.map((plan) => {
+                    const monthly = cartTotal > 0 ? Math.ceil(cartTotal * (1 + (plan.interest_rate || 0) / 100) / plan.months) : 0;
+                    return (
+                      <Button key={plan.months} type="button" variant={liffSelectedPlan === plan.months ? "default" : "outline"} size="sm" className="flex flex-col h-auto py-2" onClick={() => setLiffSelectedPlan(plan.months)}>
+                        <span className="text-xs">{plan.months} เดือน</span>
+                        <span className="text-xs font-bold">{formatPrice(monthly)}/เดือน</span>
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2"><Label>หมายเหตุ</Label><Textarea value={custNote} onChange={(e) => setCustNote(e.target.value)} placeholder="หมายเหตุเพิ่มเติม..." rows={2} /></div>
             <div className="bg-muted rounded-lg p-3 space-y-1.5">
               {cart.map((c) => {
