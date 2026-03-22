@@ -173,9 +173,9 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
               <Input placeholder="ค้นหาสินค้า..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button variant={selectedCat === null ? "default" : "outline"} size="sm" onClick={() => setSelectedCat(null)}>ทั้งหมด</Button>
+              <Button variant={selectedCat === null ? "default" : "outline"} size="sm" onClick={() => handleCategoryChange(null)}>ทั้งหมด</Button>
               {categories?.map((c) => (
-                <Button key={c.id} variant={selectedCat === c.id ? "default" : "outline"} size="sm" onClick={() => setSelectedCat(c.id)}>{c.name}</Button>
+                <Button key={c.id} variant={selectedCat === c.id ? "default" : "outline"} size="sm" onClick={() => handleCategoryChange(c.id)}>{c.name}</Button>
               ))}
             </div>
           </div>
