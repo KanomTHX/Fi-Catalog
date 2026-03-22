@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,8 +42,26 @@ const formatPrice = (price: number | null) =>
 
 export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
   const [search, setSearch] = useState("");
-  const [selectedCat, setSelectedCat] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedCat, setSelectedCat] = useState<string | null>(searchParams.get("category") || null);
   const navigate = useNavigate();
+
+  // Sync category from URL params
+  useEffect(() => {
+    const cat = searchParams.get("category");
+    if (cat && cat !== selectedCat) {
+      setSelectedCat(cat);
+    }
+  }, [searchParams]);
+
+  const handleCategoryChange = (catId: string | null) => {
+    setSelectedCat(catId);
+    if (catId) {
+      setSearchParams({ category: catId });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ["public-products"],
@@ -155,9 +173,9 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
               <Input placeholder="ค้นหาสินค้า..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button variant={selectedCat === null ? "default" : "outline"} size="sm" onClick={() => setSelectedCat(null)}>ทั้งหมด</Button>
+              <Button variant={selectedCat === null ? "default" : "outline"} size="sm" onClick={() => handleCategoryChange(null)}>ทั้งหมด</Button>
               {categories?.map((c) => (
-                <Button key={c.id} variant={selectedCat === c.id ? "default" : "outline"} size="sm" onClick={() => setSelectedCat(c.id)}>{c.name}</Button>
+                <Button key={c.id} variant={selectedCat === c.id ? "default" : "outline"} size="sm" onClick={() => handleCategoryChange(c.id)}>{c.name}</Button>
               ))}
             </div>
           </div>

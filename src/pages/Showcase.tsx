@@ -95,9 +95,7 @@ function ProductCard({ product, onClick, onAddCart, index, monthlyPrice, maxMont
               <p className="text-[10px] text-muted-foreground">เริ่มต้น</p>
               <p className="text-primary font-bold text-base leading-none">{formatPrice(monthlyPrice)}<span className="text-[11px] text-muted-foreground font-normal">/เดือน</span></p>
             </div>
-          ) : (
-            <p className="text-primary font-bold text-base leading-none">{formatPrice(product.discount_price ?? product.selling_price)}</p>
-          )}
+          ) : null}
         </div>
       </div>
     </motion.div>
@@ -126,7 +124,7 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto p-0 overflow-hidden rounded-2xl">
         <div className="relative">
           {images.length > 0 ? (
             <img src={images[selectedImg]} alt={product.name} className="w-full aspect-square object-cover" />
@@ -178,8 +176,7 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
               </div>
             </div>
           )}
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-2xl font-bold text-primary">{formatPrice(effectivePrice)}</span>
+          <div className="flex items-center justify-end pt-1">
             <Button onClick={() => { onAddCart(product); onClose(); }}>
               <ShoppingCart className="h-4 w-4 mr-2" /> เพิ่มลงตะกร้า
             </Button>
@@ -282,6 +279,8 @@ export default function Showcase() {
   const [custPhone, setCustPhone] = useState("");
   const [custAddress, setCustAddress] = useState("");
   const [custNote, setCustNote] = useState("");
+  const [liffDeliveryMethod, setLiffDeliveryMethod] = useState("pickup");
+  const [liffSelectedPlan, setLiffSelectedPlan] = useState<number | null>(null);
 
   // Customer portal
   const [customer, setCustomer] = useState<CustomerRow | null>(null);
@@ -474,7 +473,7 @@ export default function Showcase() {
         if (error) throw error;
       }
       const orderId = crypto.randomUUID();
-      const { error: orderErr } = await supabase.from("orders").insert({ id: orderId, customer_id: customerId, total_amount: cartTotal, note: custNote || null });
+      const { error: orderErr } = await supabase.from("orders").insert({ id: orderId, customer_id: customerId, total_amount: cartTotal, note: custNote || null, delivery_method: liffDeliveryMethod, installment_months: liffSelectedPlan });
       if (orderErr) throw orderErr;
       const items = cart.map((c) => ({ order_id: orderId, product_id: c.product.id, quantity: c.qty, unit_price: c.product.discount_price ?? c.product.selling_price ?? 0 }));
       const { error: itemErr } = await supabase.from("order_items").insert(items);
@@ -925,12 +924,17 @@ export default function Showcase() {
           <div className="flex-1 overflow-y-auto py-4 space-y-3">
             {cart.map((item) => {
               const price = item.product.discount_price ?? item.product.selling_price;
+              const monthlyP = getMonthlyPrice(item.product);
               return (
                 <div key={item.product.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
                   {item.product.image_url ? <img src={item.product.image_url} alt="" className="h-14 w-14 rounded-lg object-cover" /> : <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center"><Package className="h-6 w-6 text-muted-foreground/30" /></div>}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.product.name}</p>
-                    <p className="text-sm text-primary font-semibold">{formatPrice(price)}</p>
+                    {monthlyP ? (
+                      <p className="text-xs text-primary font-semibold">{formatPrice(monthlyP)}/เดือน</p>
+                    ) : (
+                      <p className="text-sm text-primary font-semibold">{formatPrice(price)}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-1">
                     <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => updateQty(item.product.id, -1)}><Minus className="h-3 w-3" /></Button>
@@ -964,10 +968,42 @@ export default function Showcase() {
             <DialogTitle>ข้อมูลสำหรับสั่งจอง</DialogTitle>
             <DialogDescription>กรอกข้อมูลติดต่อเพื่อจองสินค้า</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto">
             <div className="space-y-2"><Label>ชื่อ *</Label><Input value={custName} onChange={(e) => setCustName(e.target.value)} placeholder="ชื่อ-นามสกุล" /></div>
             <div className="space-y-2"><Label>เบอร์โทร</Label><Input value={custPhone} onChange={(e) => setCustPhone(e.target.value)} placeholder="08x-xxx-xxxx" type="tel" /></div>
             <div className="space-y-2"><Label>ที่อยู่จัดส่ง</Label><Textarea value={custAddress} onChange={(e) => setCustAddress(e.target.value)} placeholder="ที่อยู่สำหรับจัดส่ง..." rows={3} /></div>
+
+            {/* Delivery Method */}
+            <div className="space-y-2">
+              <Label className="font-semibold">วิธีรับสินค้า</Label>
+              <div className="flex gap-2">
+                <Button type="button" variant={liffDeliveryMethod === "pickup" ? "default" : "outline"} size="sm" className="flex-1" onClick={() => setLiffDeliveryMethod("pickup")}>
+                  <Store className="h-4 w-4 mr-1" /> รับหน้าร้าน
+                </Button>
+                <Button type="button" variant={liffDeliveryMethod === "delivery" ? "default" : "outline"} size="sm" className="flex-1" onClick={() => setLiffDeliveryMethod("delivery")}>
+                  <MapPin className="h-4 w-4 mr-1" /> จัดส่งถึงบ้าน
+                </Button>
+              </div>
+            </div>
+
+            {/* Installment Plan */}
+            {installmentPlans.length > 0 && (
+              <div className="space-y-2">
+                <Label className="font-semibold">แผนผ่อนชำระ</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {installmentPlans.map((plan) => {
+                    const monthly = cartTotal > 0 ? Math.ceil(cartTotal * (1 + (plan.interest_rate || 0) / 100) / plan.months) : 0;
+                    return (
+                      <Button key={plan.months} type="button" variant={liffSelectedPlan === plan.months ? "default" : "outline"} size="sm" className="flex flex-col h-auto py-2" onClick={() => setLiffSelectedPlan(plan.months)}>
+                        <span className="text-xs">{plan.months} เดือน</span>
+                        <span className="text-xs font-bold">{formatPrice(monthly)}/เดือน</span>
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2"><Label>หมายเหตุ</Label><Textarea value={custNote} onChange={(e) => setCustNote(e.target.value)} placeholder="หมายเหตุเพิ่มเติม..." rows={2} /></div>
             <div className="bg-muted rounded-lg p-3 space-y-1.5">
               {cart.map((c) => {
