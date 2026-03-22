@@ -279,6 +279,8 @@ export default function Showcase() {
   const [custPhone, setCustPhone] = useState("");
   const [custAddress, setCustAddress] = useState("");
   const [custNote, setCustNote] = useState("");
+  const [liffDeliveryMethod, setLiffDeliveryMethod] = useState("pickup");
+  const [liffSelectedPlan, setLiffSelectedPlan] = useState<number | null>(null);
 
   // Customer portal
   const [customer, setCustomer] = useState<CustomerRow | null>(null);
