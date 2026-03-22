@@ -95,9 +95,7 @@ function ProductCard({ product, onClick, onAddCart, index, monthlyPrice, maxMont
               <p className="text-[10px] text-muted-foreground">เริ่มต้น</p>
               <p className="text-primary font-bold text-base leading-none">{formatPrice(monthlyPrice)}<span className="text-[11px] text-muted-foreground font-normal">/เดือน</span></p>
             </div>
-          ) : (
-            <p className="text-primary font-bold text-base leading-none">{formatPrice(product.discount_price ?? product.selling_price)}</p>
-          )}
+          ) : null}
         </div>
       </div>
     </motion.div>
