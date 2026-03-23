@@ -253,6 +253,58 @@ export default function SiteSettings() {
         </CardContent>
       </Card>
 
+      {/* Section Banners */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">แบนเนอร์หน้าสินค้า</CardTitle>
+          <CardDescription>รูปแบนเนอร์สำหรับส่วน "สินค้าแนะนำ" และ "สินค้าทั้งหมด" (แนะนำ 2048x448 px)</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>แบนเนอร์สินค้าแนะนำ</Label>
+            <div className="flex items-center gap-3">
+              {featuredBannerUrl && <img src={featuredBannerUrl} alt="" className="h-14 w-32 rounded-lg object-cover border border-border" />}
+              <Input type="file" accept="image/*" onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                try {
+                  const ext = file.name.split(".").pop();
+                  const path = `featured-banner-${Date.now()}.${ext}`;
+                  const { error } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true });
+                  if (error) throw error;
+                  const { data: { publicUrl } } = supabase.storage.from("site-assets").getPublicUrl(path);
+                  setFeaturedBannerUrl(publicUrl);
+                } catch (err: any) {
+                  toast({ title: "อัปโหลดล้มเหลว", description: err.message, variant: "destructive" });
+                }
+              }} />
+            </div>
+            {featuredBannerUrl && <Button variant="outline" size="sm" onClick={() => setFeaturedBannerUrl(null)}>ลบแบนเนอร์</Button>}
+          </div>
+          <div className="space-y-2">
+            <Label>แบนเนอร์สินค้าทั้งหมด</Label>
+            <div className="flex items-center gap-3">
+              {allProductsBannerUrl && <img src={allProductsBannerUrl} alt="" className="h-14 w-32 rounded-lg object-cover border border-border" />}
+              <Input type="file" accept="image/*" onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                try {
+                  const ext = file.name.split(".").pop();
+                  const path = `all-products-banner-${Date.now()}.${ext}`;
+                  const { error } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true });
+                  if (error) throw error;
+                  const { data: { publicUrl } } = supabase.storage.from("site-assets").getPublicUrl(path);
+                  setAllProductsBannerUrl(publicUrl);
+                } catch (err: any) {
+                  toast({ title: "อัปโหลดล้มเหลว", description: err.message, variant: "destructive" });
+                }
+              }} />
+            </div>
+            {allProductsBannerUrl && <Button variant="outline" size="sm" onClick={() => setAllProductsBannerUrl(null)}>ลบแบนเนอร์</Button>}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Banners */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
