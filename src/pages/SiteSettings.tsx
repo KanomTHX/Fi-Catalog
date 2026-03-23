@@ -61,6 +61,8 @@ export default function SiteSettings() {
         setLineId(d.line_id || "");
         setFacebookUrl(d.facebook_url || "");
         setInstagramUrl(d.instagram_url || "");
+        setFeaturedBannerUrl(d.featured_banner_url || null);
+        setAllProductsBannerUrl(d.all_products_banner_url || null);
       }
       setLoading(false);
     }
