@@ -76,18 +76,21 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          image_url: string | null
           name: string
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           name: string
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           name?: string
         }
         Relationships: []
@@ -505,10 +508,12 @@ export type Database = {
       site_settings: {
         Row: {
           address: string | null
+          all_products_banner_url: string | null
           company_description: string | null
           created_at: string
           email: string | null
           facebook_url: string | null
+          featured_banner_url: string | null
           google_map_embed: string | null
           id: string
           instagram_url: string | null
@@ -520,10 +525,12 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          all_products_banner_url?: string | null
           company_description?: string | null
           created_at?: string
           email?: string | null
           facebook_url?: string | null
+          featured_banner_url?: string | null
           google_map_embed?: string | null
           id?: string
           instagram_url?: string | null
@@ -535,10 +542,12 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          all_products_banner_url?: string | null
           company_description?: string | null
           created_at?: string
           email?: string | null
           facebook_url?: string | null
+          featured_banner_url?: string | null
           google_map_embed?: string | null
           id?: string
           instagram_url?: string | null

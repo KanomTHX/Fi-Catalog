@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Package, ArrowDownToLine, ArrowUpFromLine,
   SlidersHorizontal, FileBarChart, Users, Activity, LogOut, MessageSquare,
-  Printer, ScanBarcode, ShoppingCart, Settings, CreditCard
+  Printer, ScanBarcode, ShoppingCart, Settings, CreditCard, Home
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
@@ -96,7 +96,11 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
       </SidebarContent>
-      <SidebarFooter className="p-2 border-t border-sidebar-border">
+      <SidebarFooter className="p-2 border-t border-sidebar-border space-y-1">
+        <NavLink to="/" className="flex items-center gap-2 px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md">
+          <Home className="h-4 w-4" />
+          {!collapsed && "กลับหน้าแรก"}
+        </NavLink>
         <Button variant="ghost" size="sm" onClick={signOut} className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
           <LogOut className="mr-2 h-4 w-4" />
           {!collapsed && "ออกจากระบบ"}

@@ -124,7 +124,12 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto p-0 overflow-hidden rounded-2xl">
+      <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl">
+        {/* Sticky close button */}
+        <button onClick={onClose} className="absolute top-3 right-3 z-50 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center shadow-lg hover:bg-background transition-colors">
+          <X className="h-5 w-5" />
+        </button>
+        <div className="max-h-[85vh] overflow-y-auto">
         <div className="relative">
           {images.length > 0 ? (
             <img src={images[selectedImg]} alt={product.name} className="w-full aspect-square object-cover" />
@@ -181,6 +186,7 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
               <ShoppingCart className="h-4 w-4 mr-2" /> เพิ่มลงตะกร้า
             </Button>
           </div>
+        </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -923,17 +929,14 @@ export default function Showcase() {
           <SheetHeader><SheetTitle className="flex items-center gap-2"><ShoppingCart className="h-5 w-5" /> ตะกร้าสินค้า ({cartCount})</SheetTitle></SheetHeader>
           <div className="flex-1 overflow-y-auto py-4 space-y-3">
             {cart.map((item) => {
-              const price = item.product.discount_price ?? item.product.selling_price;
               const monthlyP = getMonthlyPrice(item.product);
               return (
                 <div key={item.product.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
                   {item.product.image_url ? <img src={item.product.image_url} alt="" className="h-14 w-14 rounded-lg object-cover" /> : <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center"><Package className="h-6 w-6 text-muted-foreground/30" /></div>}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.product.name}</p>
-                    {monthlyP ? (
+                    {monthlyP && (
                       <p className="text-xs text-primary font-semibold">{formatPrice(monthlyP)}/เดือน</p>
-                    ) : (
-                      <p className="text-sm text-primary font-semibold">{formatPrice(price)}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1">
@@ -1007,10 +1010,10 @@ export default function Showcase() {
             <div className="space-y-2"><Label>หมายเหตุ</Label><Textarea value={custNote} onChange={(e) => setCustNote(e.target.value)} placeholder="หมายเหตุเพิ่มเติม..." rows={2} /></div>
             <div className="bg-muted rounded-lg p-3 space-y-1.5">
               {cart.map((c) => {
-                const price = c.product.discount_price ?? c.product.selling_price ?? 0;
-                return (<div key={c.product.id} className="flex justify-between text-sm"><span className="truncate mr-2">{c.product.name} x{c.qty}</span><span className="font-mono shrink-0">{formatPrice(price * c.qty)}</span></div>);
+                const monthlyP = getMonthlyPrice(c.product);
+                return (<div key={c.product.id} className="flex justify-between text-sm"><span className="truncate mr-2">{c.product.name} x{c.qty}</span><span className="font-mono shrink-0">{monthlyP ? `${formatPrice(monthlyP * c.qty)}/เดือน` : "—"}</span></div>);
               })}
-              <div className="border-t pt-1.5 flex justify-between font-medium"><span>ยอดรวม</span><span className="text-primary font-bold">{formatPrice(cartTotal)}</span></div>
+              <div className="border-t pt-1.5 flex justify-between font-medium"><span>ยอดผ่อน/เดือน</span><span className="text-primary font-bold">{maxMonthsPlan ? formatPrice(Math.ceil(cartTotal * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months)) + "/เดือน" : formatPrice(cartTotal)}</span></div>
             </div>
             <Button className="w-full" size="lg" onClick={handleCheckout} disabled={submitting}>{submitting ? "กำลังส่งคำสั่งจอง..." : "ยืนยันสั่งจอง"}</Button>
           </div>

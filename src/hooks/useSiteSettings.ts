@@ -13,6 +13,8 @@ export interface SiteSettings {
   line_id: string | null;
   facebook_url: string | null;
   instagram_url: string | null;
+  featured_banner_url: string | null;
+  all_products_banner_url: string | null;
 }
 
 export function useSiteSettings() {
