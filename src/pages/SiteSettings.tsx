@@ -89,6 +89,8 @@ export default function SiteSettings() {
         line_id: lineId || null,
         facebook_url: facebookUrl || null,
         instagram_url: instagramUrl || null,
+        featured_banner_url: featuredBannerUrl || null,
+        all_products_banner_url: allProductsBannerUrl || null,
       } as any;
 
       if (settingsId) {
