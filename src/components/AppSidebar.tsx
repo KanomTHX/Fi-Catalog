@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Package, ArrowDownToLine, ArrowUpFromLine,
   SlidersHorizontal, FileBarChart, Users, Activity, LogOut, MessageSquare,
-  Printer, ScanBarcode, ShoppingCart, Settings, CreditCard
+  Printer, ScanBarcode, ShoppingCart, Settings, CreditCard, Home
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
