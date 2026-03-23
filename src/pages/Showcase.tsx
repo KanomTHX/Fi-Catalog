@@ -1010,10 +1010,10 @@ export default function Showcase() {
             <div className="space-y-2"><Label>หมายเหตุ</Label><Textarea value={custNote} onChange={(e) => setCustNote(e.target.value)} placeholder="หมายเหตุเพิ่มเติม..." rows={2} /></div>
             <div className="bg-muted rounded-lg p-3 space-y-1.5">
               {cart.map((c) => {
-                const price = c.product.discount_price ?? c.product.selling_price ?? 0;
-                return (<div key={c.product.id} className="flex justify-between text-sm"><span className="truncate mr-2">{c.product.name} x{c.qty}</span><span className="font-mono shrink-0">{formatPrice(price * c.qty)}</span></div>);
+                const monthlyP = getMonthlyPrice(c.product);
+                return (<div key={c.product.id} className="flex justify-between text-sm"><span className="truncate mr-2">{c.product.name} x{c.qty}</span><span className="font-mono shrink-0">{monthlyP ? `${formatPrice(monthlyP * c.qty)}/เดือน` : "—"}</span></div>);
               })}
-              <div className="border-t pt-1.5 flex justify-between font-medium"><span>ยอดรวม</span><span className="text-primary font-bold">{formatPrice(cartTotal)}</span></div>
+              <div className="border-t pt-1.5 flex justify-between font-medium"><span>ยอดผ่อน/เดือน</span><span className="text-primary font-bold">{maxMonthsPlan ? formatPrice(Math.ceil(cartTotal * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months)) + "/เดือน" : formatPrice(cartTotal)}</span></div>
             </div>
             <Button className="w-full" size="lg" onClick={handleCheckout} disabled={submitting}>{submitting ? "กำลังส่งคำสั่งจอง..." : "ยืนยันสั่งจอง"}</Button>
           </div>

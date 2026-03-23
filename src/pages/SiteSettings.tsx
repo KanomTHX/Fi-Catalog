@@ -38,6 +38,8 @@ export default function SiteSettings() {
   const [lineId, setLineId] = useState("");
   const [facebookUrl, setFacebookUrl] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("");
+  const [featuredBannerUrl, setFeaturedBannerUrl] = useState<string | null>(null);
+  const [allProductsBannerUrl, setAllProductsBannerUrl] = useState<string | null>(null);
 
   // Banners
   const [banners, setBanners] = useState<BannerRow[]>([]);
