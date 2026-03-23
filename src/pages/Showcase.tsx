@@ -187,6 +187,7 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
             </Button>
           </div>
         </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
