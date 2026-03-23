@@ -124,7 +124,12 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto p-0 overflow-hidden rounded-2xl">
+      <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl">
+        {/* Sticky close button */}
+        <button onClick={onClose} className="absolute top-3 right-3 z-50 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center shadow-lg hover:bg-background transition-colors">
+          <X className="h-5 w-5" />
+        </button>
+        <div className="max-h-[85vh] overflow-y-auto">
         <div className="relative">
           {images.length > 0 ? (
             <img src={images[selectedImg]} alt={product.name} className="w-full aspect-square object-cover" />
