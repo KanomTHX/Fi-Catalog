@@ -278,7 +278,7 @@ export default function Products() {
             </div>
             <div className="grid gap-2">
               <Label>รายละเอียดสินค้า</Label>
-              <Textarea value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="คำอธิบายสินค้า..." rows={3} />
+              <RichTextEditor content={form.description} onChange={(html) => setForm(f => ({ ...f, description: html }))} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
