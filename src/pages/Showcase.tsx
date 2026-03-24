@@ -106,6 +106,7 @@ function ProductCard({ product, onClick, onAddCart, index, monthlyPrice, maxMont
 function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPlans }: { product: Product | null; open: boolean; onClose: () => void; onAddCart: (p: Product) => void; installmentPlans: { months: number; interest_rate: number | null }[] }) {
   const [images, setImages] = useState<string[]>([]);
   const [selectedImg, setSelectedImg] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (!product) return;
@@ -123,6 +124,7 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
   const effectivePrice = product.discount_price ?? product.selling_price ?? 0;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl">
         {/* Sticky close button */}
@@ -130,32 +132,35 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
           <X className="h-5 w-5" />
         </button>
         <div className="max-h-[85vh] overflow-y-auto">
-        <div className="relative">
-          {images.length > 0 ? (
-            <img src={images[selectedImg]} alt={product.name} className="w-full aspect-square object-cover" />
-          ) : product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="w-full aspect-square object-cover" />
-          ) : (
-            <div className="w-full aspect-square bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-              <Package className="h-20 w-20 text-muted-foreground/20" />
+        {/* Image area — compact with side thumbnails */}
+        <div className="flex gap-2 p-3">
+          {images.length > 1 && (
+            <div className="flex flex-col gap-1.5 overflow-y-auto max-h-[200px]">
+              {images.map((img, i) => (
+                <button key={i} onClick={() => setSelectedImg(i)} className={`shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 ${selectedImg === i ? "border-primary" : "border-border"}`}>
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
             </div>
           )}
-          <div className="absolute top-4 left-4 flex gap-2">
-            {product.categories?.name && <Badge className="backdrop-blur-sm bg-background/80 text-foreground" variant="outline">{product.categories.name}</Badge>}
-            {product.is_new && <Badge className="bg-green-500 text-white border-0">ใหม่</Badge>}
+          <div className="flex-1 relative">
+            {images.length > 0 ? (
+              <img src={images[selectedImg]} alt={product.name} className="w-full aspect-[4/3] object-cover rounded-xl cursor-pointer" onClick={() => setLightboxOpen(true)} />
+            ) : product.image_url ? (
+              <img src={product.image_url} alt={product.name} className="w-full aspect-[4/3] object-cover rounded-xl cursor-pointer" onClick={() => setLightboxOpen(true)} />
+            ) : (
+              <div className="w-full aspect-[4/3] bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center rounded-xl">
+                <Package className="h-16 w-16 text-muted-foreground/20" />
+              </div>
+            )}
+            <div className="absolute top-2 left-2 flex gap-2">
+              {product.categories?.name && <Badge className="backdrop-blur-sm bg-background/80 text-foreground" variant="outline">{product.categories.name}</Badge>}
+              {product.is_new && <Badge className="bg-green-500 text-white border-0">ใหม่</Badge>}
+            </div>
           </div>
         </div>
-        {images.length > 1 && (
-          <div className="flex gap-1.5 px-4 pt-2 overflow-x-auto">
-            {images.map((img, i) => (
-              <button key={i} onClick={() => setSelectedImg(i)} className={`shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 ${selectedImg === i ? "border-primary" : "border-border"}`}>
-                <img src={img} alt="" className="w-full h-full object-cover" />
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="p-6 space-y-3">
-          <h2 className="text-xl font-bold text-foreground">{product.name}</h2>
+        <div className="px-4 pb-4 space-y-3">
+          <h2 className="text-lg font-bold text-foreground">{product.name}</h2>
           {product.brand && <p className="text-sm text-muted-foreground">{product.brand}</p>}
           {product.description && <div className="text-sm text-muted-foreground leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: product.description }} />}
           <div className="flex flex-wrap gap-2">
@@ -190,6 +195,29 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
         </div>
       </DialogContent>
     </Dialog>
+    {/* Lightbox */}
+    <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+      <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 bg-black/95 border-0">
+        <button onClick={() => setLightboxOpen(false)} className="absolute top-2 right-2 z-50 h-10 w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+          <X className="h-5 w-5 text-white" />
+        </button>
+        {images.length > 0 && (
+          <div className="flex items-center justify-center h-full">
+            <img src={images[selectedImg]} alt="" className="max-w-full max-h-[85vh] object-contain" />
+          </div>
+        )}
+        {images.length > 1 && (
+          <div className="flex justify-center gap-2 mt-2">
+            {images.map((img, i) => (
+              <button key={i} onClick={() => setSelectedImg(i)} className={`w-12 h-12 rounded-lg overflow-hidden border-2 ${selectedImg === i ? "border-primary" : "border-white/20"}`}>
+                <img src={img} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
