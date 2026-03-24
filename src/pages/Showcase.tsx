@@ -157,7 +157,7 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
         <div className="p-6 space-y-3">
           <h2 className="text-xl font-bold text-foreground">{product.name}</h2>
           {product.brand && <p className="text-sm text-muted-foreground">{product.brand}</p>}
-          {product.description && <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>}
+          {product.description && <div className="text-sm text-muted-foreground leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: product.description }} />}
           <div className="flex flex-wrap gap-2">
             {product.material && <Badge variant="secondary">วัสดุ: {product.material}</Badge>}
             {product.color && <Badge variant="secondary">สี: {product.color}</Badge>}

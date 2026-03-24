@@ -361,7 +361,7 @@ export default function ProductDetail() {
         <div className="mt-12">
           <h2 className="text-xl font-bold font-heading mb-4">รายละเอียดสินค้า</h2>
           <div className="bg-card border border-border rounded-xl p-6">
-            {product.description && <p className="text-muted-foreground mb-4 leading-relaxed">{product.description}</p>}
+            {product.description && <div className="text-muted-foreground mb-4 leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: product.description }} />}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
               {product.material && (
                 <div><span className="text-muted-foreground">วัสดุ:</span> <span className="font-medium">{product.material}</span></div>
