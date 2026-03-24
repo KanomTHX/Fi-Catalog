@@ -12,11 +12,12 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
-  ShoppingCart, ShoppingBag, Package, Store, Truck, ChevronRight, Plus, Minus, Eye,
+  ShoppingCart, ShoppingBag, Package, Store, Truck, ChevronRight, Plus, Minus, Eye, X,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
