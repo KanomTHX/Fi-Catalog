@@ -238,28 +238,32 @@ export default function ProductDetail() {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Image Gallery */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }}>
-            <div className="aspect-square rounded-2xl overflow-hidden bg-muted border border-border mb-3">
-              {allImages.length > 0 ? (
-                <img src={allImages[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Package className="h-20 w-20 text-muted-foreground/20" />
+            <div className="flex gap-3">
+              {/* Vertical thumbnails */}
+              {allImages.length > 1 && (
+                <div className="flex flex-col gap-2 overflow-y-auto max-h-[500px]">
+                  {allImages.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedImage(i)}
+                      className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${selectedImage === i ? "border-primary" : "border-border hover:border-primary/50"}`}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
                 </div>
               )}
-            </div>
-            {allImages.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {allImages.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedImage(i)}
-                    className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${selectedImage === i ? "border-primary" : "border-border hover:border-primary/50"}`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
+              {/* Main image */}
+              <div className="flex-1 aspect-square rounded-2xl overflow-hidden bg-muted border border-border cursor-pointer" onClick={() => setLightboxOpen(true)}>
+                {allImages.length > 0 ? (
+                  <img src={allImages[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package className="h-20 w-20 text-muted-foreground/20" />
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </motion.div>
 
           {/* Product Info */}
