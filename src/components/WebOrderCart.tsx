@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Trash2, ShoppingBag, Loader2, CheckCircle2 } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Loader2, CheckCircle2, Store, Truck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export interface CartItem {
@@ -36,6 +36,8 @@ export function WebOrderCart({ open, onOpenChange, items, onUpdate, onRemove, on
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", address: "", note: "" });
+  const [deliveryMethod, setDeliveryMethod] = useState("pickup");
+  const [selectedPlanMonths, setSelectedPlanMonths] = useState<number | null>(null);
 
   const { data: installmentPlans } = useQuery({
     queryKey: ["installment-plans-cart"],
@@ -51,15 +53,14 @@ export function WebOrderCart({ open, onOpenChange, items, onUpdate, onRemove, on
     staleTime: 60_000,
   });
 
-  const maxMonthsPlan = installmentPlans?.[0] ?? null;
-
-  const getMonthlyPrice = (price: number) => {
-    if (!maxMonthsPlan || price <= 0) return null;
-    return Math.ceil(price * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months);
-  };
-
   const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
-  const totalMonthly = getMonthlyPrice(total);
+
+  const selectedPlan = installmentPlans?.find(p => p.months === selectedPlanMonths) ?? null;
+  const getMonthlyForPlan = (price: number, plan: typeof selectedPlan) => {
+    if (!plan || price <= 0) return null;
+    return Math.ceil(price * (1 + (plan.interest_rate || 0) / 100) / plan.months);
+  };
+  const totalMonthly = selectedPlan ? getMonthlyForPlan(total, selectedPlan) : null;
 
   const handleCheckout = async () => {
     if (!form.name.trim() || !form.phone.trim()) {
@@ -77,7 +78,14 @@ export function WebOrderCart({ open, onOpenChange, items, onUpdate, onRemove, on
 
       const { data: order, error: orderErr } = await supabase
         .from("orders")
-        .insert({ customer_id: customer.id, total_amount: total, note: form.note.trim() || null, status: "pending" })
+        .insert({
+          customer_id: customer.id,
+          total_amount: total,
+          note: form.note.trim() || null,
+          status: "pending",
+          delivery_method: deliveryMethod,
+          installment_months: selectedPlanMonths,
+        })
         .select("id")
         .single();
       if (orderErr) throw orderErr;
@@ -90,6 +98,8 @@ export function WebOrderCart({ open, onOpenChange, items, onUpdate, onRemove, on
       onClear();
       setStep("cart");
       setForm({ name: "", phone: "", address: "", note: "" });
+      setDeliveryMethod("pickup");
+      setSelectedPlanMonths(null);
     } catch (e: any) {
       toast({ title: "เกิดข้อผิดพลาด", description: e.message, variant: "destructive" });
     }
@@ -116,50 +126,37 @@ export function WebOrderCart({ open, onOpenChange, items, onUpdate, onRemove, on
                     <p>ตะกร้าว่างเปล่า</p>
                   </div>
                 ) : (
-                  items.map((item) => {
-                    const monthly = getMonthlyPrice(item.price);
-                    return (
-                      <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
-                        {item.image_url ? (
-                          <img src={item.image_url} alt="" className="h-14 w-14 rounded-lg object-cover" />
-                        ) : (
-                          <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center">
-                            <ShoppingBag className="h-5 w-5 text-muted-foreground/30" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{item.name}</p>
-                          {monthly ? (
-                            <p className="text-sm text-primary font-semibold">
-                              {formatPrice(monthly)}<span className="text-xs text-muted-foreground font-normal">/เดือน</span>
-                            </p>
-                          ) : (
-                            <p className="text-sm text-primary font-semibold">{formatPrice(item.price)}</p>
-                          )}
+                  items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
+                      {item.image_url ? (
+                        <img src={item.image_url} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                      ) : (
+                        <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center">
+                          <ShoppingBag className="h-5 w-5 text-muted-foreground/30" />
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => onUpdate(item.id, item.quantity - 1)}>
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
-                          <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => onUpdate(item.id, item.quantity + 1)}>
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onRemove(item.id)}>
-                          <Trash2 className="h-4 w-4" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">x{item.quantity}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => onUpdate(item.id, item.quantity - 1)}>
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => onUpdate(item.id, item.quantity + 1)}>
+                          <Plus className="h-3 w-3" />
                         </Button>
                       </div>
-                    );
-                  })
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onRemove(item.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
                 )}
               </div>
               {items.length > 0 && (
                 <div className="border-t border-border pt-4 space-y-3">
-                  <div className="flex justify-between text-base font-bold">
-                    <span>ยอดผ่อน/เดือน</span>
-                    <span className="text-primary">{totalMonthly ? `${formatPrice(totalMonthly)}/เดือน` : formatPrice(total)}</span>
-                  </div>
                   <Button className="w-full" size="lg" onClick={() => setStep("checkout")}>
                     ดำเนินการสั่งจอง
                   </Button>
@@ -177,27 +174,66 @@ export function WebOrderCart({ open, onOpenChange, items, onUpdate, onRemove, on
                   <Label>เบอร์โทรศัพท์ *</Label>
                   <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="0xx-xxx-xxxx" maxLength={20} />
                 </div>
+
+                {/* Delivery Method */}
                 <div className="space-y-2">
-                  <Label>ที่อยู่จัดส่ง</Label>
-                  <Textarea value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="ที่อยู่สำหรับจัดส่งสินค้า" rows={3} maxLength={500} />
+                  <Label className="font-semibold">วิธีรับสินค้า</Label>
+                  <div className="flex gap-2">
+                    <Button type="button" variant={deliveryMethod === "pickup" ? "default" : "outline"} size="sm" className="flex-1" onClick={() => setDeliveryMethod("pickup")}>
+                      <Store className="h-4 w-4 mr-1" /> รับหน้าร้าน
+                    </Button>
+                    <Button type="button" variant={deliveryMethod === "delivery" ? "default" : "outline"} size="sm" className="flex-1" onClick={() => setDeliveryMethod("delivery")}>
+                      <Truck className="h-4 w-4 mr-1" /> จัดส่งถึงบ้าน
+                    </Button>
+                  </div>
                 </div>
+
+                {deliveryMethod === "delivery" && (
+                  <div className="space-y-2">
+                    <Label>ที่อยู่จัดส่ง</Label>
+                    <Textarea value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="ที่อยู่สำหรับจัดส่งสินค้า" rows={3} maxLength={500} />
+                  </div>
+                )}
+
+                {/* Installment Plan Selection */}
+                {installmentPlans && installmentPlans.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="font-semibold">แผนผ่อนชำระ</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {installmentPlans.map((plan) => {
+                        const monthly = total > 0 ? Math.ceil(total * (1 + (plan.interest_rate || 0) / 100) / plan.months) : 0;
+                        return (
+                          <Button
+                            key={plan.months}
+                            type="button"
+                            variant={selectedPlanMonths === plan.months ? "default" : "outline"}
+                            size="sm"
+                            className="flex flex-col h-auto py-2"
+                            onClick={() => setSelectedPlanMonths(plan.months)}
+                          >
+                            <span className="text-xs">{plan.months} เดือน</span>
+                            <span className="text-xs font-bold">{formatPrice(monthly)}/เดือน</span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label>หมายเหตุ</Label>
                   <Textarea value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} placeholder="ข้อความเพิ่มเติม (ถ้ามี)" rows={2} maxLength={500} />
                 </div>
                 <Separator />
                 <div className="space-y-2 text-sm">
-                  {items.map((i) => {
-                    const m = getMonthlyPrice(i.price);
-                    return (
-                      <div key={i.id} className="flex justify-between">
-                        <span className="text-muted-foreground">{i.name} x{i.quantity}</span>
-                        <span>{m ? `${formatPrice(m * i.quantity)}/เดือน` : formatPrice(i.price * i.quantity)}</span>
-                      </div>
-                    );
-                  })}
+                  {items.map((i) => (
+                    <div key={i.id} className="flex justify-between">
+                      <span className="text-muted-foreground">{i.name} x{i.quantity}</span>
+                      <span>{selectedPlan ? `${formatPrice(getMonthlyForPlan(i.price * i.quantity, selectedPlan)!)}/เดือน` : "—"}</span>
+                    </div>
+                  ))}
                   <div className="flex justify-between font-bold text-base pt-2 border-t border-border">
-                    <span>ยอดผ่อน/เดือน</span>
+                    <span>{totalMonthly ? "ยอดผ่อน/เดือน" : "ยอดรวม"}</span>
                     <span className="text-primary">{totalMonthly ? `${formatPrice(totalMonthly)}/เดือน` : formatPrice(total)}</span>
                   </div>
                 </div>

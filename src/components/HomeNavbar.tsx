@@ -81,7 +81,7 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
               </Button>
             )}
             {!onCartOpen && cartCount > 0 && (
-              <Link to="/products">
+              <Link to="/checkout">
                 <Button variant="outline" size="icon" className="relative border-primary/30 hover:border-primary">
                   <ShoppingBag className="h-5 w-5" />
                   <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-primary text-primary-foreground">

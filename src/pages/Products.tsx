@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -277,7 +278,7 @@ export default function Products() {
             </div>
             <div className="grid gap-2">
               <Label>รายละเอียดสินค้า</Label>
-              <Textarea value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="คำอธิบายสินค้า..." rows={3} />
+              <RichTextEditor content={form.description} onChange={(html) => setForm(f => ({ ...f, description: html }))} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
@@ -295,7 +296,12 @@ export default function Products() {
                 <Select value={form.category_id} onValueChange={(v) => setForm(f => ({ ...f, category_id: v }))}>
                   <SelectTrigger><SelectValue placeholder="เลือก" /></SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    {categories.map((c) => <SelectItem key={c.id} value={c.id}>
+                      <span className="flex items-center gap-2">
+                        {(c as any).image_url && <img src={(c as any).image_url} alt="" className="h-5 w-5 rounded object-cover" />}
+                        {c.name}
+                      </span>
+                    </SelectItem>)}
                   </SelectContent>
                 </Select>
                 <div className="flex gap-1.5">
@@ -318,6 +324,30 @@ export default function Products() {
                     <Plus className="h-3 w-3 mr-0.5" /> เพิ่ม
                   </Button>
                 </div>
+                {/* Category Image Upload */}
+                {form.category_id && (
+                  <div className="mt-1">
+                    <Label className="text-xs text-muted-foreground">รูปหมวดหมู่ (256x256)</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      {categories.find(c => c.id === form.category_id) && (categories.find(c => c.id === form.category_id) as any)?.image_url && (
+                        <img src={(categories.find(c => c.id === form.category_id) as any).image_url} alt="" className="h-12 w-12 rounded-lg object-cover border border-border" />
+                      )}
+                      <Input type="file" accept="image/*" className="h-8 text-xs" onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const ext = file.name.split('.').pop();
+                        const path = `categories/${crypto.randomUUID()}.${ext}`;
+                        const { error: uploadErr } = await supabase.storage.from("product-images").upload(path, file);
+                        if (uploadErr) { toast({ title: "อัปโหลดล้มเหลว", description: uploadErr.message, variant: "destructive" }); return; }
+                        const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(path);
+                        const { error: updateErr } = await supabase.from("categories").update({ image_url: publicUrl }).eq("id", form.category_id);
+                        if (updateErr) { toast({ title: "อัปเดตล้มเหลว", description: updateErr.message, variant: "destructive" }); return; }
+                        await queryClient.invalidateQueries({ queryKey: ["categories"] });
+                        toast({ title: "อัปโหลดรูปหมวดหมู่สำเร็จ" });
+                      }} />
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label>หน่วย</Label>

@@ -12,11 +12,12 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
-  ShoppingCart, ShoppingBag, Package, Store, Truck, ChevronRight, Plus, Minus, Eye,
+  ShoppingCart, ShoppingBag, Package, Store, Truck, ChevronRight, Plus, Minus, Eye, X,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -49,6 +50,7 @@ export default function ProductDetail() {
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [deliveryMethod, setDeliveryMethod] = useState("pickup");
   const [qty, setQty] = useState(1);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Fetch product
   const { data: product, isLoading } = useQuery({
@@ -236,28 +238,32 @@ export default function ProductDetail() {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Image Gallery */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }}>
-            <div className="aspect-square rounded-2xl overflow-hidden bg-muted border border-border mb-3">
-              {allImages.length > 0 ? (
-                <img src={allImages[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Package className="h-20 w-20 text-muted-foreground/20" />
+            <div className="flex gap-3">
+              {/* Vertical thumbnails */}
+              {allImages.length > 1 && (
+                <div className="flex flex-col gap-2 overflow-y-auto max-h-[500px]">
+                  {allImages.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedImage(i)}
+                      className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${selectedImage === i ? "border-primary" : "border-border hover:border-primary/50"}`}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
                 </div>
               )}
-            </div>
-            {allImages.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {allImages.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedImage(i)}
-                    className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${selectedImage === i ? "border-primary" : "border-border hover:border-primary/50"}`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
+              {/* Main image */}
+              <div className="flex-1 aspect-square rounded-2xl overflow-hidden bg-muted border border-border cursor-pointer" onClick={() => setLightboxOpen(true)}>
+                {allImages.length > 0 ? (
+                  <img src={allImages[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package className="h-20 w-20 text-muted-foreground/20" />
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </motion.div>
 
           {/* Product Info */}
@@ -361,7 +367,7 @@ export default function ProductDetail() {
         <div className="mt-12">
           <h2 className="text-xl font-bold font-heading mb-4">รายละเอียดสินค้า</h2>
           <div className="bg-card border border-border rounded-xl p-6">
-            {product.description && <p className="text-muted-foreground mb-4 leading-relaxed">{product.description}</p>}
+            {product.description && <div className="text-muted-foreground mb-4 leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: product.description }} />}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
               {product.material && (
                 <div><span className="text-muted-foreground">วัสดุ:</span> <span className="font-medium">{product.material}</span></div>
@@ -408,6 +414,29 @@ export default function ProductDetail() {
           </div>
         )}
       </div>
+
+      {/* Image Lightbox */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 bg-black/95 border-0">
+          <button onClick={() => setLightboxOpen(false)} className="absolute top-2 right-2 z-50 h-10 w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+            <X className="h-5 w-5 text-white" />
+          </button>
+          {allImages.length > 0 && (
+            <div className="flex items-center justify-center h-full">
+              <img src={allImages[selectedImage]} alt="" className="max-w-full max-h-[85vh] object-contain" />
+            </div>
+          )}
+          {allImages.length > 1 && (
+            <div className="flex justify-center gap-2 mt-2">
+              {allImages.map((img, i) => (
+                <button key={i} onClick={() => setSelectedImage(i)} className={`w-14 h-14 rounded-lg overflow-hidden border-2 ${selectedImage === i ? "border-primary" : "border-white/20"}`}>
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
