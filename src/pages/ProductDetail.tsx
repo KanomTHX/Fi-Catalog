@@ -50,6 +50,7 @@ export default function ProductDetail() {
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [deliveryMethod, setDeliveryMethod] = useState("pickup");
   const [qty, setQty] = useState(1);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Fetch product
   const { data: product, isLoading } = useQuery({
