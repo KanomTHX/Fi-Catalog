@@ -928,35 +928,26 @@ export default function Showcase() {
         <SheetContent className="flex flex-col w-full sm:max-w-md">
           <SheetHeader><SheetTitle className="flex items-center gap-2"><ShoppingCart className="h-5 w-5" /> ตะกร้าสินค้า ({cartCount})</SheetTitle></SheetHeader>
           <div className="flex-1 overflow-y-auto py-4 space-y-3">
-            {cart.map((item) => {
-              const monthlyP = getMonthlyPrice(item.product);
-              return (
-                <div key={item.product.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
-                  {item.product.image_url ? <img src={item.product.image_url} alt="" className="h-14 w-14 rounded-lg object-cover" /> : <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center"><Package className="h-6 w-6 text-muted-foreground/30" /></div>}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.product.name}</p>
-                    {monthlyP && (
-                      <p className="text-xs text-primary font-semibold">{formatPrice(monthlyP)}/เดือน</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => updateQty(item.product.id, -1)}><Minus className="h-3 w-3" /></Button>
-                    <span className="w-8 text-center text-sm font-medium">{item.qty}</span>
-                    <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => updateQty(item.product.id, 1)}><Plus className="h-3 w-3" /></Button>
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive ml-1" onClick={() => removeFromCart(item.product.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                  </div>
+            {cart.map((item) => (
+              <div key={item.product.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
+                {item.product.image_url ? <img src={item.product.image_url} alt="" className="h-14 w-14 rounded-lg object-cover" /> : <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center"><Package className="h-6 w-6 text-muted-foreground/30" /></div>}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{item.product.name}</p>
+                  <p className="text-xs text-muted-foreground">x{item.qty}</p>
                 </div>
-              );
-            })}
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => updateQty(item.product.id, -1)}><Minus className="h-3 w-3" /></Button>
+                  <span className="w-8 text-center text-sm font-medium">{item.qty}</span>
+                  <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => updateQty(item.product.id, 1)}><Plus className="h-3 w-3" /></Button>
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive ml-1" onClick={() => removeFromCart(item.product.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                </div>
+              </div>
+            ))}
             {cart.length === 0 && <div className="text-center py-12 text-muted-foreground">ตะกร้าว่างเปล่า</div>}
           </div>
           {cart.length > 0 && (
             <SheetFooter className="border-t pt-4">
               <div className="w-full space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">ยอดรวม</span>
-                  <span className="text-xl font-bold text-primary">{formatPrice(cartTotal)}</span>
-                </div>
                 <Button className="w-full" size="lg" onClick={() => { setCartOpen(false); setCheckoutOpen(true); }}>สั่งจองสินค้า</Button>
               </div>
             </SheetFooter>
