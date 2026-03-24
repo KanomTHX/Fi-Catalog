@@ -414,6 +414,29 @@ export default function ProductDetail() {
           </div>
         )}
       </div>
+
+      {/* Image Lightbox */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 bg-black/95 border-0">
+          <button onClick={() => setLightboxOpen(false)} className="absolute top-2 right-2 z-50 h-10 w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+            <X className="h-5 w-5 text-white" />
+          </button>
+          {allImages.length > 0 && (
+            <div className="flex items-center justify-center h-full">
+              <img src={allImages[selectedImage]} alt="" className="max-w-full max-h-[85vh] object-contain" />
+            </div>
+          )}
+          {allImages.length > 1 && (
+            <div className="flex justify-center gap-2 mt-2">
+              {allImages.map((img, i) => (
+                <button key={i} onClick={() => setSelectedImage(i)} className={`w-14 h-14 rounded-lg overflow-hidden border-2 ${selectedImage === i ? "border-primary" : "border-white/20"}`}>
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
