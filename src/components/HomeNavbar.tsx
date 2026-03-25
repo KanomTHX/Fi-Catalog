@@ -56,7 +56,8 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
             <span className="text-lg font-bold text-foreground font-heading">{siteName}</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6">
+            <ProductSearchBar />
             {navLinks.map((l) => (
               <Link
                 key={l.href}

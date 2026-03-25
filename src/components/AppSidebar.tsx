@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 const mainItems = [
   { title: "แดชบอร์ด", url: "/admin", icon: LayoutDashboard },
   { title: "สินค้า", url: "/admin/products", icon: Package },
+  { title: "หมวดหมู่", url: "/admin/categories", icon: FolderOpen },
   { title: "รับเข้า", url: "/admin/stock-in", icon: ArrowDownToLine },
   { title: "เบิกออก", url: "/admin/stock-out", icon: ArrowUpFromLine },
   { title: "ปรับปรุง", url: "/admin/adjustments", icon: SlidersHorizontal },
