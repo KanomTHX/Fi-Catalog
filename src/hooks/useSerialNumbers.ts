@@ -53,12 +53,39 @@ export function useBatchCreateSerials() {
   const { user } = useAuth();
   const { toast } = useToast();
   return useMutation({
-    mutationFn: async ({ product_id, prefix, count, startNum }: { product_id: string; prefix: string; count: number; startNum: number }) => {
-      const serials = Array.from({ length: count }, (_, i) => ({
-        product_id,
-        serial_code: `${prefix}${String(startNum + i).padStart(4, '0')}`,
-        created_by: user!.id,
-      }));
+    mutationFn: async ({ product_id, prefix, count }: { product_id: string; prefix: string; count: number; startNum?: number }) => {
+      // Check stock limit
+      const { data: stockData } = await supabase
+        .from("product_stock")
+        .select("current_stock")
+        .eq("product_id", product_id)
+        .maybeSingle();
+      const currentStock = (stockData as any)?.current_stock ?? 0;
+
+      const { data: existingSerials } = await supabase
+        .from("serial_numbers")
+        .select("serial_code")
+        .eq("product_id", product_id)
+        .eq("status", "in_stock");
+      const existingCount = existingSerials?.length ?? 0;
+
+      if (existingCount + count > currentStock) {
+        throw new Error(`ไม่สามารถสร้างได้ เกินจำนวนสต็อก (สต็อก: ${currentStock}, Serial คงเหลือ: ${existingCount}, ขอสร้าง: ${count})`);
+      }
+
+      // Generate random unique serial codes
+      const existingCodes = new Set(existingSerials?.map((s: any) => s.serial_code) ?? []);
+      const serials: { product_id: string; serial_code: string; created_by: string }[] = [];
+      let attempts = 0;
+      while (serials.length < count && attempts < count * 10) {
+        const code = `${prefix}${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+        if (!existingCodes.has(code)) {
+          existingCodes.add(code);
+          serials.push({ product_id, serial_code: code, created_by: user!.id });
+        }
+        attempts++;
+      }
+
       const { error } = await supabase.from("serial_numbers").insert(serials);
       if (error) throw error;
     },
