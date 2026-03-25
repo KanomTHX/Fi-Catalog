@@ -254,9 +254,9 @@ export default function ProductDetail() {
                 </div>
               )}
               {/* Main image */}
-              <div className="flex-1 aspect-square rounded-2xl overflow-hidden bg-muted border border-border cursor-pointer" onClick={() => setLightboxOpen(true)}>
+              <div className="flex-1 aspect-square rounded-2xl overflow-hidden bg-white border border-border cursor-pointer" onClick={() => setLightboxOpen(true)}>
                 {allImages.length > 0 ? (
-                  <img src={allImages[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
+                  <img src={allImages[selectedImage]} alt={product.name} className="w-full h-full object-contain p-2" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Package className="h-20 w-20 text-muted-foreground/20" />
