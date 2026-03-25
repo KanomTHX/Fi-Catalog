@@ -72,9 +72,9 @@ function ProductCard({ product, onClick, onAddCart, index, monthlyPrice, maxMont
       whileHover={{ y: -4 }}
       className="group cursor-pointer bg-card rounded-2xl border border-border overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
     >
-      <div onClick={onClick} className="aspect-square bg-muted relative overflow-hidden">
+      <div onClick={onClick} className="aspect-square bg-white relative overflow-hidden">
         {product.image_url ? (
-          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+          <img src={product.image_url} alt={product.name} className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-110" loading="lazy" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/10">
             <Package className="h-12 w-12 text-muted-foreground/30" />
