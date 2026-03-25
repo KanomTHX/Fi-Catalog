@@ -30,7 +30,6 @@ export function useUpdateOrderStatus() {
         .eq("id", orderId);
       if (error) throw error;
 
-      // Auto stock-out when completed
       if (status === "completed") {
         const { data: items } = await supabase
           .from("order_items")
@@ -49,7 +48,6 @@ export function useUpdateOrderStatus() {
           }
         }
 
-        // Log activity
         await supabase.from("activity_logs").insert({
           user_id: user!.id,
           action: "order_completed",
@@ -67,6 +65,26 @@ export function useUpdateOrderStatus() {
         cancelled: "ยกเลิกคำสั่งจองแล้ว",
       };
       toast({ title: labels[vars.status] || "อัปเดตสถานะแล้ว" });
+    },
+    onError: (e: any) => toast({ title: "เกิดข้อผิดพลาด", description: e.message, variant: "destructive" }),
+  });
+}
+
+export function useDeleteOrder() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (orderId: string) => {
+      // Delete order_items first
+      const { error: itemsErr } = await supabase.from("order_items").delete().eq("order_id", orderId);
+      if (itemsErr) throw itemsErr;
+      const { error } = await supabase.from("orders").delete().eq("id", orderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      toast({ title: "ลบคำสั่งจองแล้ว" });
     },
     onError: (e: any) => toast({ title: "เกิดข้อผิดพลาด", description: e.message, variant: "destructive" }),
   });

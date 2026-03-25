@@ -254,9 +254,9 @@ export default function ProductDetail() {
                 </div>
               )}
               {/* Main image */}
-              <div className="flex-1 aspect-square rounded-2xl overflow-hidden bg-muted border border-border cursor-pointer" onClick={() => setLightboxOpen(true)}>
+              <div className="flex-1 aspect-square rounded-2xl overflow-hidden bg-white border border-border cursor-pointer" onClick={() => setLightboxOpen(true)}>
                 {allImages.length > 0 ? (
-                  <img src={allImages[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
+                  <img src={allImages[selectedImage]} alt={product.name} className="w-full h-full object-contain p-2" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Package className="h-20 w-20 text-muted-foreground/20" />
@@ -459,9 +459,9 @@ function MiniProductCard({ product: p }: { product: any }) {
       className="overflow-hidden group hover:shadow-lg transition-all duration-300 cursor-pointer bg-card h-full flex flex-col"
       onClick={() => navigate(`/products/${p.id}`)}
     >
-      <div className="aspect-square bg-muted relative overflow-hidden">
+      <div className="aspect-square bg-white relative overflow-hidden">
         {p.image_url ? (
-          <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+          <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" loading="lazy" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground/20">
             <Package className="h-10 w-10" />

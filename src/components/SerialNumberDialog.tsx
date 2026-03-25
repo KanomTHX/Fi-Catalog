@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSerialNumbers, useCreateSerial, useBatchCreateSerials, useUpdateSerialStatus } from "@/hooks/useSerialNumbers";
-import { Plus, Hash } from "lucide-react";
+import { Plus, Hash, AlertTriangle } from "lucide-react";
 
 const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
   in_stock: { label: "คงเหลือ", variant: "default" },
@@ -29,7 +31,20 @@ export function SerialNumberDialog({
   const [singleCode, setSingleCode] = useState("");
   const [prefix, setPrefix] = useState("");
   const [count, setCount] = useState(10);
-  const [startNum, setStartNum] = useState(1);
+
+  // Fetch stock for this product
+  const { data: stockData } = useQuery({
+    queryKey: ["product-stock-single", productId],
+    queryFn: async () => {
+      const { data } = await supabase.from("product_stock").select("current_stock").eq("product_id", productId).maybeSingle();
+      return data;
+    },
+    enabled: !!productId,
+  });
+
+  const currentStock = (stockData as any)?.current_stock ?? 0;
+  const inStockSerials = serials.filter((s: any) => s.status === "in_stock").length;
+  const canCreate = currentStock - inStockSerials;
 
   const handleSingle = async () => {
     if (!singleCode.trim()) return;
@@ -39,7 +54,7 @@ export function SerialNumberDialog({
 
   const handleBatch = async () => {
     if (!prefix.trim() || count < 1) return;
-    await batchCreate.mutateAsync({ product_id: productId, prefix: prefix.trim().toUpperCase(), count, startNum });
+    await batchCreate.mutateAsync({ product_id: productId, prefix: prefix.trim().toUpperCase(), count });
   };
 
   return (
@@ -49,11 +64,18 @@ export function SerialNumberDialog({
           <DialogTitle>Serial Numbers — {productName}</DialogTitle>
         </DialogHeader>
 
+        {/* Stock info */}
+        <div className="flex items-center gap-4 text-sm bg-muted rounded-lg px-4 py-2">
+          <span>สต็อก: <strong>{currentStock}</strong></span>
+          <span>Serial คงเหลือ: <strong>{inStockSerials}</strong></span>
+          <span>สร้างได้อีก: <strong className={canCreate <= 0 ? "text-destructive" : "text-primary"}>{Math.max(0, canCreate)}</strong></span>
+        </div>
+
         <Tabs defaultValue="list" className="mt-2">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="list">รายการ ({serials.length})</TabsTrigger>
             <TabsTrigger value="single">เพิ่มทีละรายการ</TabsTrigger>
-            <TabsTrigger value="batch">สร้างชุด</TabsTrigger>
+            <TabsTrigger value="batch">สร้างชุด (สุ่ม)</TabsTrigger>
           </TabsList>
 
           <TabsContent value="list" className="mt-4">
@@ -98,6 +120,11 @@ export function SerialNumberDialog({
           </TabsContent>
 
           <TabsContent value="single" className="mt-4 space-y-4">
+            {canCreate <= 0 && (
+              <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 rounded-lg px-3 py-2">
+                <AlertTriangle className="h-4 w-4" /> ไม่สามารถสร้าง Serial เพิ่มได้ เกินจำนวนสต็อก
+              </div>
+            )}
             <div className="grid gap-2">
               <Label>Serial Code</Label>
               <div className="flex gap-2">
@@ -108,7 +135,7 @@ export function SerialNumberDialog({
                   className="font-mono"
                   onKeyDown={(e) => e.key === "Enter" && handleSingle()}
                 />
-                <Button onClick={handleSingle} disabled={!singleCode.trim() || createSerial.isPending}>
+                <Button onClick={handleSingle} disabled={!singleCode.trim() || createSerial.isPending || canCreate <= 0}>
                   <Plus className="h-4 w-4 mr-1" /> เพิ่ม
                 </Button>
               </div>
@@ -116,24 +143,25 @@ export function SerialNumberDialog({
           </TabsContent>
 
           <TabsContent value="batch" className="mt-4 space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            {canCreate <= 0 && (
+              <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 rounded-lg px-3 py-2">
+                <AlertTriangle className="h-4 w-4" /> ไม่สามารถสร้าง Serial เพิ่มได้ เกินจำนวนสต็อก
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Prefix</Label>
                 <Input value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="SN-" className="font-mono" />
               </div>
               <div className="grid gap-2">
-                <Label>เริ่มจากเลข</Label>
-                <Input type="number" min={1} value={startNum} onChange={(e) => setStartNum(Number(e.target.value))} />
-              </div>
-              <div className="grid gap-2">
-                <Label>จำนวน</Label>
-                <Input type="number" min={1} max={500} value={count} onChange={(e) => setCount(Number(e.target.value))} />
+                <Label>จำนวน (สูงสุด {Math.min(500, Math.max(0, canCreate))})</Label>
+                <Input type="number" min={1} max={Math.min(500, Math.max(0, canCreate))} value={count} onChange={(e) => setCount(Number(e.target.value))} />
               </div>
             </div>
             <div className="text-sm text-muted-foreground">
-              ตัวอย่าง: {prefix.toUpperCase()}{String(startNum).padStart(4, '0')} — {prefix.toUpperCase()}{String(startNum + count - 1).padStart(4, '0')}
+              จะสร้าง Serial Code แบบสุ่ม เช่น {prefix.toUpperCase()}A1B2C3D4
             </div>
-            <Button onClick={handleBatch} disabled={!prefix.trim() || batchCreate.isPending}>
+            <Button onClick={handleBatch} disabled={!prefix.trim() || batchCreate.isPending || count > canCreate || canCreate <= 0}>
               <Hash className="h-4 w-4 mr-1" /> สร้าง {count} รายการ
             </Button>
           </TabsContent>

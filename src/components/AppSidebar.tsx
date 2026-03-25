@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Package, ArrowDownToLine, ArrowUpFromLine,
   SlidersHorizontal, FileBarChart, Users, Activity, LogOut, MessageSquare,
-  Printer, ScanBarcode, ShoppingCart, Settings, CreditCard, Home
+  Printer, ScanBarcode, ShoppingCart, Settings, CreditCard, Home, FolderOpen
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 const mainItems = [
   { title: "แดชบอร์ด", url: "/admin", icon: LayoutDashboard },
   { title: "สินค้า", url: "/admin/products", icon: Package },
+  { title: "หมวดหมู่", url: "/admin/categories", icon: FolderOpen },
   { title: "รับเข้า", url: "/admin/stock-in", icon: ArrowDownToLine },
   { title: "เบิกออก", url: "/admin/stock-out", icon: ArrowUpFromLine },
   { title: "ปรับปรุง", url: "/admin/adjustments", icon: SlidersHorizontal },

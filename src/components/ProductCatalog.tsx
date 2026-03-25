@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
-import { ShoppingBag, Search, SlidersHorizontal } from "lucide-react";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+import { ShoppingBag, Search, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface Product {
@@ -54,6 +55,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
+  const [showAll, setShowAll] = useState(false);
   const navigate = useNavigate();
   const { data: siteSettings } = useSiteSettings();
 
@@ -144,6 +146,8 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     return list;
   }, [products, selectedCat, search, selectedBrands, priceRange]);
 
+  const displayedProducts = showAll ? filtered : filtered.slice(0, 12);
+
   const getMonthlyPrice = (product: Product) => {
     if (!maxMonthsPlan) return null;
     const price = product.discount_price ?? product.selling_price;
@@ -176,11 +180,22 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
               </div>
             </motion.div>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {featured.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} monthlyPrice={getMonthlyPrice(p)} maxMonths={maxMonthsPlan?.months} />
-            ))}
-          </div>
+          {/* Carousel for featured products */}
+          <Carousel opts={{ align: "start", loop: featured.length > 4 }} className="w-full">
+            <CarouselContent className="-ml-4">
+              {featured.map((p, i) => (
+                <CarouselItem key={p.id} className="pl-4 basis-1/2 sm:basis-1/3 lg:basis-1/4">
+                  <ProductCard product={p} index={i} monthlyPrice={getMonthlyPrice(p)} maxMonths={maxMonthsPlan?.months} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            {featured.length > 4 && (
+              <>
+                <CarouselPrevious className="-left-4 hidden sm:flex" />
+                <CarouselNext className="-right-4 hidden sm:flex" />
+              </>
+            )}
+          </Carousel>
         </section>
       )}
 
@@ -195,25 +210,25 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
             </motion.div>
           )}
 
-          {/* Category image grid */}
+          {/* Category image grid — full image, hide name */}
           {hasCategoryImages && (
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
               {categories?.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => handleCategoryChange(selectedCat === c.id ? null : c.id)}
-                  className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                    selectedCat === c.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/30 bg-card"
+                  className={`rounded-xl border-2 overflow-hidden transition-all ${
+                    selectedCat === c.id ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/30"
                   }`}
                 >
                   {c.image_url ? (
-                    <img src={c.image_url} alt={c.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover" />
+                    <img src={c.image_url} alt={c.name} className="w-full aspect-square object-contain bg-card" />
                   ) : (
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-muted flex items-center justify-center">
+                    <div className="w-full aspect-square bg-muted flex flex-col items-center justify-center gap-1 p-2">
                       <ShoppingBag className="h-6 w-6 text-muted-foreground/30" />
+                      <span className="text-xs font-medium text-foreground text-center line-clamp-2">{c.name}</span>
                     </div>
                   )}
-                  <span className="text-xs font-medium text-foreground text-center line-clamp-2">{c.name}</span>
                 </button>
               ))}
             </div>
@@ -288,11 +303,20 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
                   <p>ไม่พบสินค้า</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {filtered.map((p, i) => (
-                    <ProductCard key={p.id} product={p} index={i} monthlyPrice={getMonthlyPrice(p)} maxMonths={maxMonthsPlan?.months} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {displayedProducts.map((p, i) => (
+                      <ProductCard key={p.id} product={p} index={i} monthlyPrice={getMonthlyPrice(p)} maxMonths={maxMonthsPlan?.months} />
+                    ))}
+                  </div>
+                  {!showAll && filtered.length > 12 && (
+                    <div className="text-center mt-8">
+                      <Button variant="outline" size="lg" onClick={() => setShowAll(true)} className="gap-2">
+                        <ChevronDown className="h-4 w-4" /> ดูเพิ่มเติม ({filtered.length - 12} รายการ)
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -356,9 +380,9 @@ function ProductCard({
       transition={{ delay: index * 0.03, duration: 0.4 }}
     >
       <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-border/60 shadow-sm bg-card h-full flex flex-col cursor-pointer" onClick={() => navigate(`/products/${p.id}`)}>
-        <div className="aspect-square bg-secondary/30 relative overflow-hidden">
+        <div className="aspect-square bg-white relative overflow-hidden">
           {p.image_url ? (
-            <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+            <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" loading="lazy" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground/20">
               <ShoppingBag className="h-12 w-12" />

@@ -4,6 +4,7 @@ import { ShoppingBag, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
+import { ProductSearchBar } from "@/components/ProductSearchBar";
 
 interface HomeNavbarProps {
   siteName: string;
@@ -55,7 +56,8 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
             <span className="text-lg font-bold text-foreground font-heading">{siteName}</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6">
+            <ProductSearchBar />
             {navLinks.map((l) => (
               <Link
                 key={l.href}

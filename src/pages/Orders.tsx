@@ -1,15 +1,17 @@
-import { useOrders, useUpdateOrderStatus } from "@/hooks/useOrders";
+import { useOrders, useUpdateOrderStatus, useDeleteOrder } from "@/hooks/useOrders";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
-import { ShoppingCart, Phone, MapPin, Store, Truck, CreditCard } from "lucide-react";
+import { ShoppingCart, Phone, MapPin, Store, Truck, CreditCard, Trash2 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   pending: { label: "รอดำเนินการ", variant: "outline" },
@@ -21,7 +23,10 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
 export default function Orders() {
   const { data: orders = [], isLoading } = useOrders();
   const updateStatus = useUpdateOrderStatus();
+  const deleteOrder = useDeleteOrder();
+  const { role } = useAuth();
   const [detailOrder, setDetailOrder] = useState<any>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const formatPrice = (n: number | null) =>
     n != null ? new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB" }).format(n) : "—";
@@ -52,7 +57,7 @@ export default function Orders() {
                 <TableHead>วิธีรับ</TableHead>
                 <TableHead>สถานะ</TableHead>
                 <TableHead>วันที่</TableHead>
-                <TableHead className="text-right">เปลี่ยนสถานะ</TableHead>
+                <TableHead className="text-right">จัดการ</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -91,24 +96,31 @@ export default function Orders() {
                       {format(new Date(order.created_at), "dd/MM/yy HH:mm")}
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <Select
-                        value={order.status}
-                        onValueChange={(newStatus) => {
-                          if (newStatus !== order.status) {
-                            updateStatus.mutate({ orderId: order.id, status: newStatus });
-                          }
-                        }}
-                        disabled={updateStatus.isPending}
-                      >
-                        <SelectTrigger className="w-[140px] h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(statusConfig).map(([key, cfg]) => (
-                            <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center justify-end gap-1">
+                        <Select
+                          value={order.status}
+                          onValueChange={(newStatus) => {
+                            if (newStatus !== order.status) {
+                              updateStatus.mutate({ orderId: order.id, status: newStatus });
+                            }
+                          }}
+                          disabled={updateStatus.isPending}
+                        >
+                          <SelectTrigger className="w-[130px] h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(statusConfig).map(([key, cfg]) => (
+                              <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {role === "admin" && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteId(order.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -166,7 +178,7 @@ export default function Orders() {
                 {detailOrder.order_items?.map((item: any) => (
                   <div key={item.id} className="flex items-center gap-3 p-3">
                     {item.products?.image_url ? (
-                      <img src={item.products.image_url} alt="" className="h-10 w-10 rounded object-cover" />
+                      <img src={item.products.image_url} alt="" className="h-10 w-10 rounded object-contain bg-muted" />
                     ) : (
                       <div className="h-10 w-10 rounded bg-muted" />
                     )}
@@ -189,6 +201,25 @@ export default function Orders() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirm */}
+      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>ยืนยันการลบคำสั่งจอง</AlertDialogTitle>
+            <AlertDialogDescription>คุณต้องการลบคำสั่งจองนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteId && deleteOrder.mutate(deleteId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              ลบ
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
