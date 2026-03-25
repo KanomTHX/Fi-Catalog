@@ -1,78 +1,88 @@
 
 
-## แผนปรับปรุง — อัปโหลดรูปหมวดหมู่, Cart ไม่แสดงราคา, Rich Text, Image Lightbox, LIFF Layout
+## แผนปรับปรุง — หมวดหมู่รูปเต็มช่อง, ลบคำสั่งจอง, ค้นหา Autosuggestion, รูปสินค้าไม่ crop, LINE Login, สินค้าแนะนำ carousel, Serial จำกัดจำนวน
 
-### สรุปงาน 6 รายการ
+### สรุป 7 รายการ
 
-### 1. อัปโหลดรูปหมวดหมู่ 256x256 ใน Admin Products
+### Database Changes
 
-**`src/pages/Products.tsx`**:
-- เพิ่มส่วนจัดการรูปหมวดหมู่ในบริเวณที่สร้าง/แก้ไขหมวดหมู่
-- เพิ่มปุ่ม upload รูปถัดจาก dropdown หมวดหมู่ หรือสร้าง dialog แยกสำหรับจัดการหมวดหมู่ (ชื่อ + รูป)
-- Upload ไปที่ storage bucket `product-images` แล้ว update `categories.image_url`
+```sql
+-- เพิ่มสิทธิ์ลบ orders + order_items
+CREATE POLICY "Admins can delete orders" ON public.orders
+  FOR DELETE TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'::app_role));
 
-### 2. ตะกร้าสินค้าไม่แสดงราคาผ่อน (ยังไม่เลือกแผน)
-
-**`src/components/WebOrderCart.tsx`**:
-- ใน step "cart": ลบการแสดง `monthly` price — แสดงเฉพาะชื่อสินค้า + จำนวน
-- ลบ `ยอดผ่อน/เดือน` ที่ footer — แสดงแค่ "ยอดรวม" หรือเฉพาะปุ่ม "ดำเนินการสั่งจอง"
-- ใน step "checkout": เพิ่ม UI เลือกแผนผ่อน + วิธีรับสินค้า (เหมือน Checkout.tsx) แล้วแสดงราคาผ่อนตามแผนที่เลือก
-
-**`src/pages/Showcase.tsx`** (LIFF Cart Sheet):
-- เหมือนกัน — ลบราคาผ่อนจาก cart items, แสดงราคาผ่อนเฉพาะหลังเลือกแผนใน checkout dialog
-
-### 3. แก้ไขกดไอคอนตะกร้าแล้วเด้งออกจากหน้า /products
-
-**`src/components/HomeNavbar.tsx`**:
-- ปัญหา: เมื่อไม่มี `onCartOpen` prop (เช่น จาก ProductDetail) และมี `cartCount` → link ไป `/products` ทำให้ navigate ออก
-- แก้: เมื่อไม่มี `onCartOpen` ให้ link ไป `/checkout` แทน (หรือแสดงปุ่มแต่ไม่ navigate) เนื่องจาก ProductDetail ไม่ส่ง `onCartOpen`
-- ทางเลือกที่ดีกว่า: ส่ง `onCartOpen` จาก ProductDetail ด้วย โดยเปิด WebOrderCart ใน ProductDetail
-
-### 4. เพิ่ม Rich Text Editor สำหรับรายละเอียดสินค้า
-
-**`src/pages/Products.tsx`**:
-- เปลี่ยน `<Textarea>` ของ description เป็น rich text editor
-- ใช้ `react-quill` หรือ `tiptap` — แนะนำ `@tiptap/react` เพราะ lightweight และ modern
-- รองรับ: text alignment (left/center/right), font size, text color, emoji
-- เก็บ HTML ใน `description` field
-
-**`src/pages/ProductDetail.tsx`**:
-- เปลี่ยนจาก `<p>{product.description}</p>` เป็น `<div dangerouslySetInnerHTML>` เพื่อ render HTML
-
-**`src/pages/Showcase.tsx`**:
-- เหมือนกัน — render description เป็น HTML
-
-### 5. Image Lightbox ในหน้ารายละเอียดสินค้า
-
-**`src/pages/ProductDetail.tsx`**:
-- เพิ่ม Dialog/overlay เมื่อกดที่รูปใหญ่ → แสดงรูปขนาดเต็มจอ
-- ใช้ Dialog + `max-w-[90vw] max-h-[90vh]` กับ `object-contain`
-- รองรับ navigation ซ้าย/ขวาระหว่างรูป
-
-### 6. ปรับ Layout รูปสินค้า (LIFF + Web)
-
-**`src/pages/Showcase.tsx`** (LIFF ProductDetailDialog):
-- ลดขนาดรูปหลักจาก `aspect-square` เป็น `aspect-[4/3]` หรือ `max-h-[40vh]`
-- ย้าย thumbnails จากด้านล่างมาด้านขวาของรูปหลัก (ใช้ `flex-row`)
-- ให้เห็นปุ่ม "เพิ่มลงตะกร้า" โดยไม่ต้องเลื่อนลง
-- ปุ่มปิด X ให้ใหญ่ขึ้น + ตำแหน่งชัดเจน
-
-**`src/pages/ProductDetail.tsx`** (Web):
-- ย้าย thumbnails จากด้านล่างรูปมาด้านซ้ายเป็นแนวตั้ง (vertical strip)
-- รูปหลักอยู่ด้านขวาของ thumbnails
+CREATE POLICY "Admins can delete order_items" ON public.order_items
+  FOR DELETE TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'::app_role));
+```
 
 ### ไฟล์ที่แก้ไข
 
 | ไฟล์ | การเปลี่ยนแปลง |
 |---|---|
-| `src/pages/Products.tsx` | เพิ่ม upload รูปหมวดหมู่ + เปลี่ยน description เป็น rich text editor (tiptap) |
-| `src/components/WebOrderCart.tsx` | ลบราคาผ่อนจาก cart view, เพิ่มเลือกแผนผ่อน+วิธีรับสินค้าใน checkout step |
-| `src/pages/Showcase.tsx` | ลบราคาผ่อนจาก LIFF cart, ปรับ ProductDetailDialog layout (รูปเล็กลง + thumbnails ขวา + ปุ่มปิดชัด), render description เป็น HTML |
-| `src/components/HomeNavbar.tsx` | แก้ cart icon fallback ไม่ให้ navigate ไป /products |
-| `src/pages/ProductDetail.tsx` | เพิ่ม image lightbox, ปรับ gallery layout (thumbnails แนวตั้งด้านซ้าย), render description เป็น HTML |
+| `src/components/ProductCatalog.tsx` | (1) หมวดหมู่รูปเต็มช่อง ซ่อนชื่อ (2) Featured max 8 ตัว + carousel เมื่อเกิน (3) All products max 12 + pagination/load more (4) รูปสินค้า `object-contain` แทน `object-cover` |
+| `src/pages/Products.tsx` | แยก dialog จัดการหมวดหมู่ (CRUD ชื่อ+รูป) ออกจากฟอร์มเพิ่มสินค้า |
+| `src/pages/Orders.tsx` | เพิ่มปุ่มลบคำสั่งจอง + confirm dialog |
+| `src/hooks/useOrders.ts` | เพิ่ม `useDeleteOrder` mutation |
+| `src/components/AppSidebar.tsx` | เพิ่มเมนู "จัดการหมวดหมู่" `/admin/categories` |
+| `src/pages/Categories.tsx` | **สร้างใหม่** — หน้าจัดการหมวดหมู่ (CRUD ชื่อ+รูป 256x256) |
+| `src/App.tsx` | เพิ่ม route `/admin/categories` |
+| `src/components/ProductSearchBar.tsx` | **สร้างใหม่** — ช่องค้นหาด้านบน autosuggestion + รูปสินค้าเล็ก |
+| `src/components/HomeNavbar.tsx` | เพิ่ม `ProductSearchBar` ด้านบน |
+| `src/pages/Showcase.tsx` | (1) รูปสินค้า `object-contain` (2) ProductCard + ProductDetailDialog ปรับรูป |
+| `src/pages/ProductDetail.tsx` | รูปสินค้า `object-contain` แทน `object-cover` |
+| `src/hooks/useSerialNumbers.ts` | แก้ `useBatchCreateSerials` ให้ตรวจสอบ stock limit + ใช้การสุ่ม serial code |
+| `src/components/SerialNumberDialog.tsx` | แสดง stock เหลือ + จำกัดจำนวนสร้าง serial |
+| `src/pages/Auth.tsx` | เพิ่มปุ่ม LINE Login |
+
+### รายละเอียด
+
+**1. หมวดหมู่รูปเต็มช่อง ซ่อนชื่อ**
+- `ProductCatalog.tsx` line 200-219: เปลี่ยน category image grid
+  - รูปเต็มช่อง: ลบ `w-16 h-16` → ใช้ `w-full aspect-square` + `object-contain` + `rounded-xl`
+  - ซ่อนชื่อ: ลบ `<span>{c.name}</span>` (ชื่ออยู่ในรูปแล้ว)
+  - ถ้าไม่มีรูป ยังแสดงชื่อเป็น fallback
+
+**2. แยกหน้าจัดการหมวดหมู่ใน Admin**
+- สร้าง `src/pages/Categories.tsx`: ตาราง categories พร้อม CRUD (ชื่อ + upload รูป 256x256)
+- เพิ่มเมนู "หมวดหมู่" ใน `AppSidebar.tsx` (ใต้ "สินค้า")
+- เพิ่ม route ใน `App.tsx`
+
+**3. ปุ่มลบคำสั่งจอง ใน Admin Orders**
+- `useOrders.ts`: เพิ่ม `useDeleteOrder` — ลบ order_items ก่อน แล้วลบ order
+- `Orders.tsx`: เพิ่มปุ่ม Trash icon ในแถว + AlertDialog ยืนยันก่อนลบ
+- DB: เพิ่ม DELETE policy สำหรับ admin
+
+**4. ช่องค้นหา Autosuggestion + รูปสินค้า**
+- สร้าง `ProductSearchBar.tsx`: Input ค้นหาพร้อม dropdown แสดงรูปสินค้าเล็ก + ชื่อ + ราคา
+- ใช้ debounce search, query จาก products cache
+- คลิกแล้ว navigate ไป `/products/:id`
+- วางใน `HomeNavbar.tsx` ระหว่าง logo กับ nav links
+
+**5. รูปสินค้าไม่ crop (ทั้ง Web + LIFF)**
+- เปลี่ยน `object-cover` → `object-contain` + `bg-white` ในทุกที่ที่แสดงรูปสินค้า:
+  - `ProductCatalog.tsx` ProductCard line 361
+  - `Showcase.tsx` ProductCard line 77, ProductDetailDialog line 148-150
+  - `ProductDetail.tsx` รูปหลัก
+
+**6. LINE Login**
+- Lovable Cloud ไม่รองรับ LINE Login โดยตรง แต่สามารถ integrate ผ่าน custom OAuth ได้
+- ใช้ Supabase Auth custom provider: สร้าง Edge Function ที่ handle LINE Login callback
+- เพิ่มปุ่ม "เข้าสู่ระบบด้วย LINE" ในหน้า Auth
+- **หมายเหตุ**: ต้องมี LINE Login Channel ID + Secret — จะขอ secret จากผู้ใช้
+
+**7. สินค้าแนะนำ max 8 + carousel, สินค้าทั้งหมด max 12**
+- `ProductCatalog.tsx`: Featured section ปัจจุบัน slice 8 แล้ว → เพิ่ม horizontal carousel (ใช้ Carousel component) เมื่อ > 4 ตัว
+- All products: แสดงสูงสุด 12 ตัวแรก + ปุ่ม "ดูเพิ่มเติม" เพื่อ load more
+
+**8. Serial Numbers จำกัดจำนวน + สุ่ม**
+- `useSerialNumbers.ts` → `useBatchCreateSerials`: ตรวจสอบ current_stock จาก `product_stock` view ก่อนสร้าง
+- ถ้า serial ที่มีอยู่ (status=in_stock) + จำนวนใหม่ > current_stock → reject
+- สุ่ม serial code: ใช้ `crypto.randomUUID().slice(0,8).toUpperCase()` + prefix แทนการนับเลข
+- ป้องกันซ้ำ: query existing serial_codes ก่อน insert, retry ถ้าซ้ำ
+- `SerialNumberDialog.tsx`: แสดงจำนวนสต็อกเหลือ + serial ที่มีอยู่ + จำกัด input count
 
 ### Dependencies ใหม่
-- `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-text-align`, `@tiptap/extension-color`, `@tiptap/extension-text-style` — สำหรับ rich text editor
-
-### ไม่มี Database Changes (ใช้ `categories.image_url` และ `products.description` ที่มีอยู่แล้ว)
+ไม่มี
 
