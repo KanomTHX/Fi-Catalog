@@ -4,6 +4,7 @@ import { ShoppingBag, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
+import { ProductSearchBar } from "@/components/ProductSearchBar";
 
 interface HomeNavbarProps {
   siteName: string;
