@@ -145,9 +145,9 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
           )}
           <div className="flex-1 relative">
             {images.length > 0 ? (
-              <img src={images[selectedImg]} alt={product.name} className="w-full aspect-[4/3] object-cover rounded-xl cursor-pointer" onClick={() => setLightboxOpen(true)} />
+              <img src={images[selectedImg]} alt={product.name} className="w-full aspect-[4/3] object-contain bg-white rounded-xl cursor-pointer p-2" onClick={() => setLightboxOpen(true)} />
             ) : product.image_url ? (
-              <img src={product.image_url} alt={product.name} className="w-full aspect-[4/3] object-cover rounded-xl cursor-pointer" onClick={() => setLightboxOpen(true)} />
+              <img src={product.image_url} alt={product.name} className="w-full aspect-[4/3] object-contain bg-white rounded-xl cursor-pointer p-2" onClick={() => setLightboxOpen(true)} />
             ) : (
               <div className="w-full aspect-[4/3] bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center rounded-xl">
                 <Package className="h-16 w-16 text-muted-foreground/20" />
