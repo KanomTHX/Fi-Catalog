@@ -461,7 +461,7 @@ function MiniProductCard({ product: p }: { product: any }) {
     >
       <div className="aspect-square bg-white relative overflow-hidden">
         {p.image_url ? (
-          <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+          <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground/20">
             <Package className="h-10 w-10" />

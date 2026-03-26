@@ -15,9 +15,11 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   pending: { label: "รอดำเนินการ", variant: "outline" },
-  confirmed: { label: "ยืนยันแล้ว", variant: "secondary" },
-  completed: { label: "เบิกแล้ว", variant: "default" },
-  cancelled: { label: "ยกเลิก", variant: "destructive" },
+  credit_check: { label: "รอฝ่ายสินเชื่อติดต่อ", variant: "secondary" },
+  credit_approved: { label: "อนุมัติสินเชื่อ", variant: "secondary" },
+  shipping: { label: "รอจัดส่ง", variant: "secondary" },
+  completed: { label: "จัดส่งสำเร็จ", variant: "default" },
+  credit_rejected: { label: "ไม่อนุมัติสินเชื่อ", variant: "destructive" },
 };
 
 export default function Orders() {

@@ -20,9 +20,11 @@ import { th } from "date-fns/locale";
 
 const statusConfig: Record<string, { label: string; color: string; step: number; icon: any }> = {
   pending: { label: "รอดำเนินการ", color: "text-yellow-600", step: 1, icon: Clock },
-  confirmed: { label: "ยืนยันแล้ว", color: "text-blue-600", step: 2, icon: CheckCircle2 },
-  completed: { label: "เสร็จสิ้น", color: "text-green-600", step: 3, icon: CheckCircle2 },
-  cancelled: { label: "ยกเลิก", color: "text-destructive", step: 0, icon: XCircle },
+  credit_check: { label: "รอฝ่ายสินเชื่อติดต่อ", color: "text-blue-500", step: 2, icon: Clock },
+  credit_approved: { label: "อนุมัติสินเชื่อ", color: "text-indigo-600", step: 3, icon: CheckCircle2 },
+  shipping: { label: "รอจัดส่ง", color: "text-purple-600", step: 4, icon: Clock },
+  completed: { label: "จัดส่งสำเร็จ", color: "text-green-600", step: 5, icon: CheckCircle2 },
+  credit_rejected: { label: "ไม่อนุมัติสินเชื่อ", color: "text-destructive", step: 0, icon: XCircle },
 };
 
 export default function OrderTracking() {
@@ -78,8 +80,10 @@ export default function OrderTracking() {
   const cfg = order ? (statusConfig[order.status] || statusConfig.pending) : null;
   const steps = [
     { label: "รอดำเนินการ", step: 1 },
-    { label: "ยืนยันแล้ว", step: 2 },
-    { label: "เสร็จสิ้น", step: 3 },
+    { label: "รอฝ่ายสินเชื่อ", step: 2 },
+    { label: "อนุมัติสินเชื่อ", step: 3 },
+    { label: "รอจัดส่ง", step: 4 },
+    { label: "จัดส่งสำเร็จ", step: 5 },
   ];
 
   return (

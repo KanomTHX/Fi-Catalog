@@ -105,6 +105,9 @@ export function WebOrderCart({ open, onOpenChange, items, onUpdate, onRemove, on
           total_amount: total,
           item_count: items.length,
           delivery_method: deliveryMethod,
+          monthly_amount: totalMonthly,
+          installment_months: selectedPlanMonths,
+          product_names: items.map((i) => i.name),
         }),
       }).catch(() => {});
 
@@ -274,7 +277,7 @@ export function WebOrderCart({ open, onOpenChange, items, onUpdate, onRemove, on
               สั่งจองสำเร็จ!
             </DialogTitle>
             <DialogDescription>
-              ขอบคุณที่สั่งจองสินค้า เราจะติดต่อกลับเพื่อยืนยันคำสั่งจองของคุณ
+              ขอบคุณที่สั่งจองสินค้า 📞 รอฝ่ายสินเชื่อติดต่อกลับ
             </DialogDescription>
           </DialogHeader>
           <Button onClick={() => setSuccess(false)} className="mt-4">ปิด</Button>

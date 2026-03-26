@@ -60,9 +60,12 @@ export function useUpdateOrderStatus() {
       qc.invalidateQueries({ queryKey: ["stock-movements"] });
       qc.invalidateQueries({ queryKey: ["product-stock"] });
       const labels: Record<string, string> = {
-        confirmed: "ยืนยันคำสั่งจองแล้ว",
-        completed: "เบิกสินค้าออกแล้ว",
-        cancelled: "ยกเลิกคำสั่งจองแล้ว",
+        pending: "รอดำเนินการ",
+        credit_check: "รอฝ่ายสินเชื่อติดต่อ",
+        credit_approved: "อนุมัติสินเชื่อแล้ว",
+        shipping: "รอจัดส่ง",
+        completed: "จัดส่งสำเร็จแล้ว",
+        credit_rejected: "ไม่อนุมัติสินเชื่อ",
       };
       toast({ title: labels[vars.status] || "อัปเดตสถานะแล้ว" });
     },
