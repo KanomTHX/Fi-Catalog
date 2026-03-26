@@ -382,7 +382,7 @@ function ProductCard({
       <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-border/60 shadow-sm bg-card h-full flex flex-col cursor-pointer" onClick={() => navigate(`/products/${p.id}`)}>
         <div className="aspect-square bg-white relative overflow-hidden">
           {p.image_url ? (
-            <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+            <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground/20">
               <ShoppingBag className="h-12 w-12" />
