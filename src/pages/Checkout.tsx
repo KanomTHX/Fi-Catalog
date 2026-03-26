@@ -98,6 +98,9 @@ export default function Checkout() {
           total_amount: total,
           item_count: items.length,
           delivery_method: deliveryMethod,
+          monthly_amount: selectedPlanMonths && installmentPlans?.length ? Math.ceil(total * (1 + (installmentPlans.find((p: any) => p.months === selectedPlanMonths)?.interest_rate || 0) / 100) / selectedPlanMonths) : null,
+          installment_months: selectedPlanMonths,
+          product_names: items.map((i: any) => i.name),
         }),
       }).catch(() => {});
 
@@ -284,7 +287,7 @@ export default function Checkout() {
               สั่งจองสำเร็จ!
             </DialogTitle>
             <DialogDescription className="space-y-3">
-              <p>ขอบคุณที่สั่งจองสินค้า เราจะติดต่อกลับเพื่อยืนยัน</p>
+              <p>ขอบคุณที่สั่งจองสินค้า 📞 รอฝ่ายสินเชื่อติดต่อกลับ</p>
               {orderId && (
                 <div className="bg-muted rounded-lg p-3">
                   <p className="text-xs text-muted-foreground">เลขใบจอง</p>

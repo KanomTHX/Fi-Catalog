@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { order_id, customer_name, total_amount, item_count, delivery_method } = await req.json();
+    const { order_id, customer_name, total_amount, item_count, delivery_method, monthly_amount, installment_months, product_names } = await req.json();
 
     if (!order_id) {
       return new Response(JSON.stringify({ error: "order_id is required" }), {
@@ -41,14 +41,28 @@ Deno.serve(async (req) => {
 
     const orderCode = order_id.slice(0, 8).toUpperCase();
     const deliveryLabel = delivery_method === "delivery" ? "จัดส่งถึงบ้าน" : "รับหน้าร้าน";
-    const formattedTotal = `฿${Number(total_amount || 0).toLocaleString()}`;
+
+    // Build product list
+    const productList = Array.isArray(product_names) && product_names.length > 0
+      ? product_names.map((n: string, i: number) => `  ${i + 1}. ${n}`).join("\n")
+      : "  ไม่ระบุ";
+
+    // Monthly amount & installment info
+    const monthlyLine = monthly_amount
+      ? `💳 ยอดผ่อน/เดือน: ฿${Number(monthly_amount).toLocaleString()}`
+      : `💰 ยอดรวม: ฿${Number(total_amount || 0).toLocaleString()}`;
+    const installmentLine = installment_months
+      ? `📅 จำนวนงวด: ${installment_months} เดือน`
+      : "";
 
     const message = `🛒 คำสั่งจองใหม่!
 📋 เลขใบจอง: ${orderCode}
 👤 ลูกค้า: ${customer_name || "ไม่ระบุชื่อ"}
-💰 ยอดรวม: ${formattedTotal}
-📦 จำนวน: ${item_count || 0} รายการ
-🚚 วิธีรับสินค้า: ${deliveryLabel}`;
+📦 สินค้า (${item_count || 0} รายการ):
+${productList}
+${monthlyLine}${installmentLine ? "\n" + installmentLine : ""}
+🚚 วิธีรับสินค้า: ${deliveryLabel}
+⏳ รอฝ่ายสินเชื่อติดต่อกลับ`;
 
     // Send broadcast via LINE Messaging API
     const lineRes = await fetch("https://api.line.me/v2/bot/message/broadcast", {

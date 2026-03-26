@@ -57,9 +57,11 @@ const formatPrice = (price: number | null) => {
 
 const statusConfig: Record<string, { label: string; color: string; step: number }> = {
   pending: { label: "รอดำเนินการ", color: "bg-yellow-500", step: 1 },
-  confirmed: { label: "ยืนยันแล้ว", color: "bg-blue-500", step: 2 },
-  completed: { label: "เบิกสินค้าแล้ว", color: "bg-green-500", step: 3 },
-  cancelled: { label: "ยกเลิก", color: "bg-destructive", step: 0 },
+  credit_check: { label: "รอฝ่ายสินเชื่อติดต่อ", color: "bg-blue-400", step: 2 },
+  credit_approved: { label: "อนุมัติสินเชื่อ", color: "bg-indigo-500", step: 3 },
+  shipping: { label: "รอจัดส่ง", color: "bg-purple-500", step: 4 },
+  completed: { label: "จัดส่งสำเร็จ", color: "bg-green-500", step: 5 },
+  credit_rejected: { label: "ไม่อนุมัติสินเชื่อ", color: "bg-destructive", step: 0 },
 };
 
 // ─── Product Card ───
@@ -523,6 +525,9 @@ export default function Showcase() {
           total_amount: cartTotal,
           item_count: cart.length,
           delivery_method: liffDeliveryMethod,
+          monthly_amount: maxMonthsPlan && liffSelectedPlan ? Math.ceil(cartTotal * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months) : null,
+          installment_months: liffSelectedPlan,
+          product_names: cart.map((c) => c.product.name),
         }),
       }).catch(() => {});
 
@@ -1071,7 +1076,7 @@ export default function Showcase() {
             <Button variant="outline" size="sm" className="w-full" onClick={() => { if (orderSuccess) { navigator.clipboard.writeText(orderSuccess.slice(0, 8).toUpperCase()); toast({ title: "คัดลอกเลขใบจองแล้ว" }); } }}>
               คัดลอกเลขใบจอง
             </Button>
-            <p className="text-sm text-muted-foreground">ทางร้านจะติดต่อกลับเพื่อยืนยันคำสั่งจอง</p>
+            <p className="text-sm text-muted-foreground">📞 รอฝ่ายสินเชื่อติดต่อกลับ</p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => { setOrderSuccess(null); setActiveTab("orders"); }} className="flex-1">
                 <Eye className="h-4 w-4 mr-1" /> ดูคำสั่งจอง
