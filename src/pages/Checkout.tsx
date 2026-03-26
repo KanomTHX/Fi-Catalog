@@ -98,7 +98,7 @@ export default function Checkout() {
           total_amount: total,
           item_count: items.length,
           delivery_method: deliveryMethod,
-          monthly_amount: selectedPlanMonths && plans?.length ? Math.ceil(total * (1 + (plans.find((p: any) => p.months === selectedPlanMonths)?.interest_rate || 0) / 100) / selectedPlanMonths) : null,
+          monthly_amount: selectedPlanMonths && installmentPlans?.length ? Math.ceil(total * (1 + (installmentPlans.find((p: any) => p.months === selectedPlanMonths)?.interest_rate || 0) / 100) / selectedPlanMonths) : null,
           installment_months: selectedPlanMonths,
           product_names: items.map((i: any) => i.name),
         }),
