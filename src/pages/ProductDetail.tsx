@@ -256,7 +256,7 @@ export default function ProductDetail() {
               {/* Main image */}
               <div className="flex-1 aspect-square rounded-2xl overflow-hidden bg-white border border-border cursor-pointer" onClick={() => setLightboxOpen(true)}>
                 {allImages.length > 0 ? (
-                  <img src={allImages[selectedImage]} alt={product.name} className="w-full h-full object-contain p-2" />
+                  <img src={allImages[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Package className="h-20 w-20 text-muted-foreground/20" />

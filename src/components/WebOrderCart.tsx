@@ -94,6 +94,20 @@ export function WebOrderCart({ open, onOpenChange, items, onUpdate, onRemove, on
       const { error: itemsErr } = await supabase.from("order_items").insert(orderItems);
       if (itemsErr) throw itemsErr;
 
+      // Send LINE notification (fire-and-forget)
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      fetch(`https://${projectId}.supabase.co/functions/v1/line-notify-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: order.id,
+          customer_name: form.name.trim(),
+          total_amount: total,
+          item_count: items.length,
+          delivery_method: deliveryMethod,
+        }),
+      }).catch(() => {});
+
       setSuccess(true);
       onClear();
       setStep("cart");

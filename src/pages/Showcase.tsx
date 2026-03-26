@@ -74,7 +74,7 @@ function ProductCard({ product, onClick, onAddCart, index, monthlyPrice, maxMont
     >
       <div onClick={onClick} className="aspect-square bg-white relative overflow-hidden">
         {product.image_url ? (
-          <img src={product.image_url} alt={product.name} className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/10">
             <Package className="h-12 w-12 text-muted-foreground/30" />
@@ -145,9 +145,9 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
           )}
           <div className="flex-1 relative">
             {images.length > 0 ? (
-              <img src={images[selectedImg]} alt={product.name} className="w-full aspect-[4/3] object-contain bg-white rounded-xl cursor-pointer p-2" onClick={() => setLightboxOpen(true)} />
+              <img src={images[selectedImg]} alt={product.name} className="w-full aspect-[4/3] object-cover bg-white rounded-xl cursor-pointer" onClick={() => setLightboxOpen(true)} />
             ) : product.image_url ? (
-              <img src={product.image_url} alt={product.name} className="w-full aspect-[4/3] object-contain bg-white rounded-xl cursor-pointer p-2" onClick={() => setLightboxOpen(true)} />
+              <img src={product.image_url} alt={product.name} className="w-full aspect-[4/3] object-cover bg-white rounded-xl cursor-pointer" onClick={() => setLightboxOpen(true)} />
             ) : (
               <div className="w-full aspect-[4/3] bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center rounded-xl">
                 <Package className="h-16 w-16 text-muted-foreground/20" />
@@ -512,6 +512,20 @@ export default function Showcase() {
       const items = cart.map((c) => ({ order_id: orderId, product_id: c.product.id, quantity: c.qty, unit_price: c.product.discount_price ?? c.product.selling_price ?? 0 }));
       const { error: itemErr } = await supabase.from("order_items").insert(items);
       if (itemErr) throw itemErr;
+      // Send LINE notification (fire-and-forget)
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      fetch(`https://${projectId}.supabase.co/functions/v1/line-notify-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: orderId,
+          customer_name: custName.trim(),
+          total_amount: cartTotal,
+          item_count: cart.length,
+          delivery_method: liffDeliveryMethod,
+        }),
+      }).catch(() => {});
+
       setOrderSuccess(orderId);
       setCart([]); setCheckoutOpen(false); setCartOpen(false);
     } catch (e: any) {
