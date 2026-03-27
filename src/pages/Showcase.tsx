@@ -722,48 +722,61 @@ export default function Showcase() {
               <div className="space-y-3">
                 {[1, 2, 3].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
               </div>
-            ) : myOrders.length === 0 ? (
-              <div className="text-center py-20">
-                <ShoppingBag className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
-                <p className="text-muted-foreground font-medium mb-1">ยังไม่มีคำสั่งจอง</p>
-                <p className="text-sm text-muted-foreground/70 mb-4">เริ่มสั่งจองสินค้าได้เลย!</p>
-                <Button variant="outline" onClick={() => setActiveTab("shop")}>
-                  <Store className="h-4 w-4 mr-2" /> ดูสินค้า
-                </Button>
-              </div>
             ) : (
-              <div className="space-y-3">
-                {myOrders.map((order) => {
-                  const cfg = statusConfig[order.status] || statusConfig.pending;
-                  return (
-                    <motion.div
-                      key={order.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-card rounded-xl border border-border p-4 cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => setSelectedOrder(order)}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {format(new Date(order.created_at), "d MMM yyyy HH:mm", { locale: th })}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">#{order.id.slice(0, 8)}</p>
-                        </div>
-                        <Badge className={`${cfg.color} text-white border-0 text-[10px]`}>{cfg.label}</Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">{order.order_items.length} รายการ</p>
-                        <p className="font-bold text-primary">{formatPrice(order.total_amount)}</p>
-                      </div>
-                      <div className="flex items-center justify-end mt-1">
-                        <span className="text-xs text-primary flex items-center gap-0.5">ดูรายละเอียด <ChevronRight className="h-3 w-3" /></span>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
+              <>
+                {/* Link Order Button */}
+                <Button variant="outline" size="sm" className="mb-4 gap-2" onClick={() => setLinkOrderOpen(true)}>
+                  <ClipboardList className="h-4 w-4" /> ผูกคำสั่งจองจากเว็บ
+                </Button>
+
+                {myOrders.length === 0 ? (
+                  <div className="text-center py-16">
+                    <ShoppingBag className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
+                    <p className="text-muted-foreground font-medium mb-1">ยังไม่มีคำสั่งจอง</p>
+                    <p className="text-sm text-muted-foreground/70 mb-4">เริ่มสั่งจองสินค้าได้เลย!</p>
+                    <Button variant="outline" onClick={() => setActiveTab("shop")}>
+                      <Store className="h-4 w-4 mr-2" /> ดูสินค้า
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {myOrders.map((order) => {
+                      const cfg = statusConfig[order.status] || statusConfig.pending;
+                      return (
+                        <motion.div
+                          key={order.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-card rounded-xl border border-border p-4 cursor-pointer hover:shadow-md transition-shadow"
+                          onClick={() => setSelectedOrder(order)}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {format(new Date(order.created_at), "d MMM yyyy HH:mm", { locale: th })}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">#{order.id.slice(0, 8)}</p>
+                            </div>
+                            <Badge className={`${cfg.color} text-white border-0 text-[10px]`}>{cfg.label}</Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-muted-foreground">{order.order_items.length} รายการ</p>
+                            {order.monthly_amount ? (
+                              <p className="font-bold text-primary">{formatPrice(order.monthly_amount)}/เดือน</p>
+                            ) : (
+                              <p className="font-bold text-primary">{formatPrice(order.total_amount)}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-end mt-1">
+                            <span className="text-xs text-primary flex items-center gap-0.5">ดูรายละเอียด <ChevronRight className="h-3 w-3" /></span>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </motion.div>
         )}
@@ -925,10 +938,27 @@ export default function Showcase() {
                     <span className="font-medium">หมายเหตุ:</span> {selectedOrder.note}
                   </div>
                 )}
-                <div className="flex justify-between items-center pt-2 border-t border-border">
-                  <span className="font-medium">ยอดรวม</span>
-                  <span className="text-lg font-bold text-primary">{formatPrice(selectedOrder.total_amount)}</span>
-                </div>
+                {selectedOrder.status_reason && (
+                  <div className="text-xs text-muted-foreground bg-muted rounded-lg p-3">
+                    <span className="font-medium">เหตุผลจากเจ้าหน้าที่:</span> {selectedOrder.status_reason}
+                  </div>
+                )}
+                {selectedOrder.monthly_amount ? (
+                  <div className="space-y-1 pt-2 border-t border-border">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">ยอดผ่อน/เดือน</span>
+                      <span className="text-lg font-bold text-primary">{formatPrice(selectedOrder.monthly_amount)}/เดือน</span>
+                    </div>
+                    {selectedOrder.installment_months && (
+                      <p className="text-sm text-muted-foreground text-right">ผ่อนชำระ {selectedOrder.installment_months} เดือน</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex justify-between items-center pt-2 border-t border-border">
+                    <span className="font-medium">ยอดรวม</span>
+                    <span className="text-lg font-bold text-primary">{formatPrice(selectedOrder.total_amount)}</span>
+                  </div>
+                )}
               </div>
             </>
           )}
