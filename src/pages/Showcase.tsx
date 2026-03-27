@@ -564,6 +564,32 @@ export default function Showcase() {
     setSavingProfile(false);
   }
 
+  async function handleLinkOrder() {
+    if (!liffProfile?.userId || linkOrderCode.trim().length < 4) {
+      toast({ title: "กรุณากรอกเลขใบจองอย่างน้อย 4 ตัว", variant: "destructive" });
+      return;
+    }
+    setLinkingOrder(true);
+    try {
+      const { data: rpcData } = await supabase.rpc("search_order_by_code", { code: linkOrderCode.trim() });
+      const matched = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+      if (!matched) { toast({ title: "ไม่พบคำสั่งจอง", variant: "destructive" }); setLinkingOrder(false); return; }
+      const { data: cust } = await supabase.from("customers").select("id, line_user_id").eq("id", matched.customer_id).single();
+      if (!cust) { toast({ title: "ไม่พบข้อมูลลูกค้า", variant: "destructive" }); setLinkingOrder(false); return; }
+      if (cust.line_user_id && cust.line_user_id !== liffProfile.userId) {
+        toast({ title: "คำสั่งจองนี้ผูกกับบัญชี LINE อื่นแล้ว", variant: "destructive" }); setLinkingOrder(false); return;
+      }
+      await supabase.from("customers").update({ line_user_id: liffProfile.userId, picture_url: liffProfile.pictureUrl || null }).eq("id", cust.id);
+      toast({ title: "ผูกคำสั่งจองสำเร็จ!" });
+      setLinkOrderOpen(false);
+      setLinkOrderCode("");
+      fetchCustomerOrders();
+    } catch (e: any) {
+      toast({ title: "เกิดข้อผิดพลาด", description: e.message, variant: "destructive" });
+    }
+    setLinkingOrder(false);
+  }
+
   // ═══ RENDER ═══
   return (
     <div className="min-h-screen bg-background pb-20">
