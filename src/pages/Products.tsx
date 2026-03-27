@@ -51,17 +51,32 @@ export default function Products() {
   const [variants, setVariants] = useState<VariantRow[]>([]);
   const [newVariantName, setNewVariantName] = useState("");
   const [newVariantValue, setNewVariantValue] = useState("");
+  const [installmentPrices, setInstallmentPrices] = useState<Record<string, number>>({});
 
-  // Fetch extra images & variants when editing
+  // Fetch installment plans
+  const { data: activePlans = [] } = useQuery({
+    queryKey: ["active-installment-plans"],
+    queryFn: async () => {
+      const { data } = await supabase.from("installment_plans").select("id, months, interest_rate").eq("is_active", true).order("months");
+      return data ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  // Fetch extra images, variants & installment prices when editing
   useEffect(() => {
-    if (!editId) { setExtraImages([]); setVariants([]); return; }
+    if (!editId) { setExtraImages([]); setVariants([]); setInstallmentPrices({}); return; }
     (async () => {
-      const [imgRes, varRes] = await Promise.all([
+      const [imgRes, varRes, priceRes] = await Promise.all([
         supabase.from("product_images").select("*").eq("product_id", editId).order("sort_order"),
         supabase.from("product_variants").select("*").eq("product_id", editId).order("variant_name"),
+        supabase.from("product_installment_prices" as any).select("plan_id, monthly_price").eq("product_id", editId),
       ]);
       setExtraImages((imgRes.data ?? []).map((i: any) => ({ id: i.id, image_url: i.image_url, sort_order: i.sort_order })));
       setVariants((varRes.data ?? []).map((v: any) => ({ id: v.id, variant_name: v.variant_name, variant_value: v.variant_value })));
+      const priceMap: Record<string, number> = {};
+      (priceRes.data ?? []).forEach((p: any) => { priceMap[p.plan_id] = p.monthly_price; });
+      setInstallmentPrices(priceMap);
     })();
   }, [editId]);
 
@@ -102,9 +117,9 @@ export default function Products() {
       productId = (result as any)?.id;
     }
 
-    // Save extra images & variants for edit mode
+    // Save extra images, variants & installment prices
     if (editId && productId) {
-      // Sync extra images: delete removed, insert new
+      // Sync extra images
       const existingImgIds = extraImages.filter(i => i.id).map(i => i.id!);
       await supabase.from("product_images").delete().eq("product_id", productId).not("id", "in", `(${existingImgIds.join(",") || "00000000-0000-0000-0000-000000000000"})`);
       const newImages = extraImages.filter(i => !i.id);
@@ -112,12 +127,19 @@ export default function Products() {
         await supabase.from("product_images").insert(newImages.map((i, idx) => ({ product_id: productId!, image_url: i.image_url, sort_order: idx })));
       }
 
-      // Sync variants: delete removed, insert new
+      // Sync variants
       const existingVarIds = variants.filter(v => v.id).map(v => v.id!);
       await supabase.from("product_variants").delete().eq("product_id", productId).not("id", "in", `(${existingVarIds.join(",") || "00000000-0000-0000-0000-000000000000"})`);
       const newVariants = variants.filter(v => !v.id);
       if (newVariants.length > 0) {
         await supabase.from("product_variants").insert(newVariants.map(v => ({ product_id: productId!, variant_name: v.variant_name, variant_value: v.variant_value })));
+      }
+
+      // Sync installment prices
+      await supabase.from("product_installment_prices" as any).delete().eq("product_id", productId);
+      const priceRows = Object.entries(installmentPrices).filter(([_, v]) => v > 0).map(([planId, price]) => ({ product_id: productId!, plan_id: planId, monthly_price: price }));
+      if (priceRows.length > 0) {
+        await supabase.from("product_installment_prices" as any).insert(priceRows);
       }
     }
 
