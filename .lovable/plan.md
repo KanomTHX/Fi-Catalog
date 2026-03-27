@@ -1,64 +1,102 @@
 
 
-## แผนปรับปรุง — รูปสินค้า crop, LINE แจ้งเตือนยอดผ่อน, ข้อความรอสินเชื่อ, สถานะคำสั่งจองใหม่
+## แผนปรับปรุง — ยอดผ่อนใน Order Tracking, ผูกคำสั่งจองกับ LIFF, ล็อคสถานะ+เหตุผล, เปลี่ยนราคาขายเป็นราคาผ่อน fix
+
+### Database Changes
+
+```sql
+-- เพิ่มคอลัมน์เก็บยอดผ่อน/เดือน และเหตุผลการเปลี่ยนสถานะ
+ALTER TABLE public.orders ADD COLUMN monthly_amount numeric DEFAULT NULL;
+ALTER TABLE public.orders ADD COLUMN status_reason text DEFAULT NULL;
+```
 
 ### สรุป 4 รายการ
 
-### 1. คืนค่ารูปสินค้า MiniProductCard เป็น `object-cover`
+### 1. แสดงยอดผ่อน/เดือนแทนราคาขายสด ใน OrderTracking + LIFF
 
-**`src/pages/ProductDetail.tsx`** (MiniProductCard line 464):
-- เปลี่ยน `object-contain p-2` → `object-cover` ในรูปสินค้าที่คล้ายกันและสินค้าที่ดูล่าสุด
-
-### 2. LINE แจ้งเตือน — แสดงยอดผ่อน/เดือน + จำนวนเดือน + ชื่อสินค้า
-
-**`supabase/functions/line-notify-order/index.ts`**:
-- เพิ่ม fields: `monthly_amount`, `installment_months`, `product_names` (array ชื่อสินค้า)
-- แสดงในข้อความ: ยอดผ่อน/เดือน แทน `total_amount`, จำนวนเดือน, รายชื่อสินค้า
+**DB**: เพิ่มคอลัมน์ `monthly_amount` ใน `orders` เก็บยอดผ่อน/เดือนที่คำนวณตอน checkout
 
 **`src/components/WebOrderCart.tsx`**, **`src/pages/Checkout.tsx`**, **`src/pages/Showcase.tsx`**:
-- ส่ง `monthly_amount` (คำนวณจาก selectedPlan), `installment_months` (selectedPlanMonths), `product_names` (items.map name) ไปพร้อม LINE notify request
+- ตอน insert order เพิ่ม `monthly_amount` ลงในข้อมูลที่บันทึก
 
-### 3. เพิ่มข้อความ "รอฝ่ายสินเชื่อติดต่อกลับ" หลังสั่งจองสำเร็จ
+**`src/pages/OrderTracking.tsx`**:
+- Query เพิ่ม `monthly_amount` จาก orders
+- แสดง "ยอดผ่อน/เดือน" + "จำนวน X เดือน" แทน "รวมทั้งหมด"
 
-**`src/components/WebOrderCart.tsx`** (success dialog line 277):
-- เปลี่ยนข้อความเป็น "รอฝ่ายสินเชื่อติดต่อกลับ"
+**`src/pages/Showcase.tsx`** (LIFF Order Detail Dialog):
+- เปลี่ยนจาก `ยอดรวม` เป็น `ยอดผ่อน/เดือน` + จำนวนเดือน
 
-**`src/pages/Showcase.tsx`** (order success dialog line 1074):
-- เปลี่ยนข้อความเป็น "รอฝ่ายสินเชื่อติดต่อกลับ"
+**`src/pages/Orders.tsx`** (Admin Detail Dialog):
+- แสดง monthly_amount ถ้ามี
 
-**`src/pages/Checkout.tsx`** (success dialog):
-- เพิ่มข้อความเดียวกัน
+### 2. ผูกคำสั่งจองจากเว็บเข้ากับ LIFF ของลูกค้า
 
-### 4. ปรับสถานะคำสั่งจอง 6 สถานะ
+**Logic**: เมื่อลูกค้าเปิด LIFF และมี `line_user_id` → ค้นหา customers ที่ตรงชื่อ/เบอร์โทร แต่ยังไม่มี `line_user_id` → update เชื่อม `line_user_id`
 
-สถานะใหม่:
-| Key | Label |
-|---|---|
-| `pending` | รอดำเนินการ |
-| `credit_check` | รอฝ่ายสินเชื่อติดต่อ |
-| `credit_approved` | อนุมัติสินเชื่อ |
-| `shipping` | รอจัดส่ง |
-| `completed` | จัดส่งสำเร็จ |
-| `credit_rejected` | ไม่อนุมัติสินเชื่อ |
+**`src/pages/Showcase.tsx`**:
+- ใน tab "คำสั่งจอง" เพิ่มฟีเจอร์ "ผูกคำสั่งจอง" → Dialog ให้กรอกเลขใบจอง (8 ตัว)
+- ค้นหา order → ตรวจว่า customer ยังไม่มี line_user_id → update `customers.line_user_id` ด้วย LIFF userId
+- หลังผูกแล้ว order จะแสดงในรายการ "คำสั่งจองของฉัน"
 
-**ไฟล์ที่ต้องอัปเดต `statusConfig`**:
-- `src/pages/Orders.tsx` — statusConfig + Select options
-- `src/pages/Showcase.tsx` — statusConfig
-- `src/pages/OrderTracking.tsx` — statusConfig + progress steps
-- `src/hooks/useOrders.ts` — labels ใน onSuccess + เปลี่ยน stock-out logic จาก `completed` เป็น `completed` (ยังคงเหมือนเดิมเพราะ key เดียวกัน)
+### 3. ล็อคสถานะหลังจัดส่งสำเร็จ + เพิ่มช่องเหตุผลเมื่อเปลี่ยนสถานะ
+
+**DB**: เพิ่มคอลัมน์ `status_reason` ใน `orders`
+
+**`src/pages/Orders.tsx`**:
+- ถ้า `order.status === "completed"` → disable Select (ไม่ให้เปลี่ยนสถานะอีก)
+- เมื่อเลือกสถานะใหม่ → เปิด Dialog ให้กรอกเหตุผล → บันทึก status + status_reason
+- แสดง status_reason ใน detail dialog
+
+**`src/hooks/useOrders.ts`**:
+- `useUpdateOrderStatus` รับ `reason` เพิ่ม → update ทั้ง `status` และ `status_reason`
+
+**`src/pages/OrderTracking.tsx`** + **`src/pages/Showcase.tsx`** (LIFF):
+- แสดง `status_reason` ให้ลูกค้าเห็น (เช่น "เอกสารไม่ครบ", "ส่งแล้ววันที่ xx")
+
+### 4. ยกเลิกราคาขายสด → เปลี่ยนเป็นราคาผ่อน fix เอง
+
+**`src/pages/Products.tsx`**:
+- ลบช่อง "ราคาขาย" (`selling_price`) ออกจากฟอร์ม
+- เพิ่ม section "ราคาผ่อนชำระรายแผน" → fetch `installment_plans` ที่ active → แสดงช่อง Input สำหรับแต่ละแผน (เช่น 6 เดือน: ____/เดือน, 12 เดือน: ____/เดือน)
+- บันทึกลง table ใหม่ `product_installment_prices` (product_id, plan_id, monthly_price)
+
+**DB**: สร้างตาราง `product_installment_prices`
+```sql
+CREATE TABLE public.product_installment_prices (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  plan_id uuid NOT NULL REFERENCES installment_plans(id) ON DELETE CASCADE,
+  monthly_price numeric NOT NULL DEFAULT 0,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(product_id, plan_id)
+);
+ALTER TABLE public.product_installment_prices ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public can view" ON public.product_installment_prices FOR SELECT TO public USING (true);
+CREATE POLICY "Authenticated can manage" ON public.product_installment_prices FOR ALL TO authenticated USING (true) WITH CHECK (true);
+```
+
+**`src/pages/Showcase.tsx`** + **`src/pages/ProductDetail.tsx`** + **`src/components/ProductCatalog.tsx`**:
+- แทนที่การคำนวณ `selling_price * interest / months` → ใช้ `product_installment_prices.monthly_price` ตรงๆ
+- Checkout: ยอดผ่อน/เดือนใช้จาก `product_installment_prices` ตาม plan ที่เลือก
+
+**`src/components/WebOrderCart.tsx`** + **`src/pages/Checkout.tsx`**:
+- คำนวณ `monthly_amount` จาก sum ของ `monthly_price * qty` ตาม plan ที่เลือก
 
 ### ไฟล์ที่แก้ไข
 
 | ไฟล์ | การเปลี่ยนแปลง |
 |---|---|
-| `src/pages/ProductDetail.tsx` | MiniProductCard รูป `object-cover` |
-| `supabase/functions/line-notify-order/index.ts` | เพิ่ม monthly_amount, installment_months, product_names ในข้อความ |
-| `src/components/WebOrderCart.tsx` | ส่งข้อมูลผ่อนไป LINE + ข้อความรอสินเชื่อ |
-| `src/pages/Checkout.tsx` | ส่งข้อมูลผ่อนไป LINE + ข้อความรอสินเชื่อ |
-| `src/pages/Showcase.tsx` | ส่งข้อมูลผ่อนไป LINE + ข้อความรอสินเชื่อ |
-| `src/pages/Orders.tsx` | statusConfig 6 สถานะ |
-| `src/pages/OrderTracking.tsx` | statusConfig 6 สถานะ + progress steps |
-| `src/hooks/useOrders.ts` | labels อัปเดต |
+| `src/pages/OrderTracking.tsx` | แสดงยอดผ่อน/เดือน + จำนวนเดือน แทนราคาขายสด |
+| `src/pages/Showcase.tsx` | LIFF: แสดงยอดผ่อน, ผูกคำสั่งจอง dialog, status_reason, ใช้ราคา fix จาก product_installment_prices |
+| `src/pages/Orders.tsx` | ล็อคสถานะ completed, dialog เหตุผล, แสดง monthly + reason |
+| `src/hooks/useOrders.ts` | เพิ่ม reason ใน updateStatus |
+| `src/pages/Products.tsx` | ลบราคาขาย, เพิ่ม section ราคาผ่อน fix ตามแผน |
+| `src/components/WebOrderCart.tsx` | บันทึก monthly_amount, ใช้ราคา fix |
+| `src/pages/Checkout.tsx` | บันทึก monthly_amount, ใช้ราคา fix |
+| `src/pages/ProductDetail.tsx` | ใช้ราคาผ่อน fix จาก product_installment_prices |
+| `src/components/ProductCatalog.tsx` | ใช้ราคาผ่อน fix |
 
-### ไม่มี Database Changes (สถานะเก็บเป็น text อยู่แล้ว)
+### Database Migrations
+1. เพิ่ม `monthly_amount` + `status_reason` ใน orders
+2. สร้างตาราง `product_installment_prices` พร้อม RLS
 
