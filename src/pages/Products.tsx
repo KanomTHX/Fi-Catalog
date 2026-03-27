@@ -454,6 +454,31 @@ export default function Products() {
               )}
             </div>
 
+            {/* Installment Prices */}
+            {activePlans.length > 0 && (
+              <>
+                <Separator />
+                <div className="grid gap-2">
+                  <Label className="font-semibold">ราคาผ่อนชำระรายแผน (บาท/เดือน)</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {activePlans.map((plan: any) => (
+                      <div key={plan.id} className="grid gap-1">
+                        <Label className="text-xs text-muted-foreground">{plan.months} เดือน</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          step={1}
+                          placeholder="0"
+                          value={installmentPrices[plan.id] || ""}
+                          onChange={(e) => setInstallmentPrices(prev => ({ ...prev, [plan.id]: Number(e.target.value) }))}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Variants */}
             <Separator />
             <div className="grid gap-2">
