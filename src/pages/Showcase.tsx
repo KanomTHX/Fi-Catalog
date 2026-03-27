@@ -512,6 +512,7 @@ export default function Showcase() {
         const { error } = await supabase.from("customers").insert({ id: customerId, display_name: custName, phone: custPhone || null, address: custAddress || null });
         if (error) throw error;
       }
+      const orderId = crypto.randomUUID();
       const monthlyAmt = maxMonthsPlan && liffSelectedPlan ? Math.ceil(cartTotal * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months) : null;
       const { error: orderErr } = await supabase.from("orders").insert({ id: orderId, customer_id: customerId, total_amount: cartTotal, note: custNote || null, delivery_method: liffDeliveryMethod, installment_months: liffSelectedPlan, monthly_amount: monthlyAmt } as any);
       if (orderErr) throw orderErr;
