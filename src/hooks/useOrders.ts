@@ -23,10 +23,10 @@ export function useUpdateOrderStatus() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
+    mutationFn: async ({ orderId, status, reason }: { orderId: string; status: string; reason?: string }) => {
       const { error } = await supabase
         .from("orders")
-        .update({ status })
+        .update({ status, status_reason: reason || null } as any)
         .eq("id", orderId);
       if (error) throw error;
 

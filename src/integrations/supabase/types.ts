@@ -229,8 +229,10 @@ export type Database = {
           delivery_method: string | null
           id: string
           installment_months: number | null
+          monthly_amount: number | null
           note: string | null
           status: string
+          status_reason: string | null
           total_amount: number | null
           updated_at: string
         }
@@ -240,8 +242,10 @@ export type Database = {
           delivery_method?: string | null
           id?: string
           installment_months?: number | null
+          monthly_amount?: number | null
           note?: string | null
           status?: string
+          status_reason?: string | null
           total_amount?: number | null
           updated_at?: string
         }
@@ -251,8 +255,10 @@ export type Database = {
           delivery_method?: string | null
           id?: string
           installment_months?: number | null
+          monthly_amount?: number | null
           note?: string | null
           status?: string
+          status_reason?: string | null
           total_amount?: number | null
           updated_at?: string
         }
@@ -298,6 +304,52 @@ export type Database = {
           },
           {
             foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_installment_prices: {
+        Row: {
+          created_at: string | null
+          id: string
+          monthly_price: number
+          plan_id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          monthly_price?: number
+          plan_id: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          monthly_price?: number
+          plan_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_installment_prices_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "installment_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_installment_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_stock"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_installment_prices_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -697,8 +749,10 @@ export type Database = {
           delivery_method: string | null
           id: string
           installment_months: number | null
+          monthly_amount: number | null
           note: string | null
           status: string
+          status_reason: string | null
           total_amount: number | null
           updated_at: string
         }[]

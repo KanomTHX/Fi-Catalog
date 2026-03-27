@@ -40,6 +40,8 @@ interface OrderCount { product_id: string; order_count: number; }
 interface OrderRow {
   id: string; status: string; total_amount: number | null;
   note: string | null; created_at: string;
+  monthly_amount?: number | null; installment_months?: number | null;
+  status_reason?: string | null;
   order_items: { id: string; quantity: number; unit_price: number | null; products: { name: string; sku: string | null; image_url: string | null } | null }[];
 }
 interface CustomerRow {
@@ -246,13 +248,15 @@ function ProductSection({ title, icon, products, onProductClick, onAddCart }: { 
 // ─── Order Status Progress ───
 function OrderStatusProgress({ status }: { status: string }) {
   const cfg = statusConfig[status] || statusConfig.pending;
-  if (status === "cancelled") {
-    return <Badge variant="destructive" className="text-xs">ยกเลิก</Badge>;
+  if (status === "credit_rejected") {
+    return <Badge variant="destructive" className="text-xs">ไม่อนุมัติสินเชื่อ</Badge>;
   }
   const steps = [
     { label: "รอดำเนินการ", step: 1 },
-    { label: "ยืนยันแล้ว", step: 2 },
-    { label: "เบิกสินค้าแล้ว", step: 3 },
+    { label: "รอสินเชื่อ", step: 2 },
+    { label: "อนุมัติ", step: 3 },
+    { label: "รอจัดส่ง", step: 4 },
+    { label: "สำเร็จ", step: 5 },
   ];
   return (
     <div className="space-y-2">
@@ -263,7 +267,7 @@ function OrderStatusProgress({ status }: { status: string }) {
               {cfg.step >= s.step ? "✓" : s.step}
             </div>
             {i < steps.length - 1 && (
-              <div className={`h-0.5 w-8 sm:w-12 transition-colors ${cfg.step > s.step ? cfg.color : "bg-muted"}`} />
+              <div className={`h-0.5 w-6 sm:w-10 transition-colors ${cfg.step > s.step ? cfg.color : "bg-muted"}`} />
             )}
           </div>
         ))}
@@ -329,6 +333,11 @@ export default function Showcase() {
   const [editPhone, setEditPhone] = useState("");
   const [editAddress, setEditAddress] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // Link order from web
+  const [linkOrderOpen, setLinkOrderOpen] = useState(false);
+  const [linkOrderCode, setLinkOrderCode] = useState("");
+  const [linkingOrder, setLinkingOrder] = useState(false);
 
   const cartTotal = cart.reduce((sum, c) => sum + (c.product.discount_price ?? c.product.selling_price ?? 0) * c.qty, 0);
   const cartCount = cart.reduce((sum, c) => sum + c.qty, 0);
@@ -409,7 +418,7 @@ export default function Showcase() {
         setEditAddress(cust.address || "");
         const { data: orders } = await supabase
           .from("orders")
-          .select("id, status, total_amount, note, created_at, order_items(id, quantity, unit_price, products(name, sku, image_url))")
+          .select("id, status, total_amount, note, created_at, monthly_amount, installment_months, status_reason, order_items(id, quantity, unit_price, products(name, sku, image_url))")
           .eq("customer_id", cust.id)
           .order("created_at", { ascending: false });
         if (orders) setMyOrders(orders as any);
@@ -509,7 +518,8 @@ export default function Showcase() {
         if (error) throw error;
       }
       const orderId = crypto.randomUUID();
-      const { error: orderErr } = await supabase.from("orders").insert({ id: orderId, customer_id: customerId, total_amount: cartTotal, note: custNote || null, delivery_method: liffDeliveryMethod, installment_months: liffSelectedPlan });
+      const monthlyAmt = maxMonthsPlan && liffSelectedPlan ? Math.ceil(cartTotal * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months) : null;
+      const { error: orderErr } = await supabase.from("orders").insert({ id: orderId, customer_id: customerId, total_amount: cartTotal, note: custNote || null, delivery_method: liffDeliveryMethod, installment_months: liffSelectedPlan, monthly_amount: monthlyAmt } as any);
       if (orderErr) throw orderErr;
       const items = cart.map((c) => ({ order_id: orderId, product_id: c.product.id, quantity: c.qty, unit_price: c.product.discount_price ?? c.product.selling_price ?? 0 }));
       const { error: itemErr } = await supabase.from("order_items").insert(items);
@@ -552,6 +562,32 @@ export default function Showcase() {
       toast({ title: "เกิดข้อผิดพลาด", description: e.message, variant: "destructive" });
     }
     setSavingProfile(false);
+  }
+
+  async function handleLinkOrder() {
+    if (!liffProfile?.userId || linkOrderCode.trim().length < 4) {
+      toast({ title: "กรุณากรอกเลขใบจองอย่างน้อย 4 ตัว", variant: "destructive" });
+      return;
+    }
+    setLinkingOrder(true);
+    try {
+      const { data: rpcData } = await supabase.rpc("search_order_by_code", { code: linkOrderCode.trim() });
+      const matched = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+      if (!matched) { toast({ title: "ไม่พบคำสั่งจอง", variant: "destructive" }); setLinkingOrder(false); return; }
+      const { data: cust } = await supabase.from("customers").select("id, line_user_id").eq("id", matched.customer_id).single();
+      if (!cust) { toast({ title: "ไม่พบข้อมูลลูกค้า", variant: "destructive" }); setLinkingOrder(false); return; }
+      if (cust.line_user_id && cust.line_user_id !== liffProfile.userId) {
+        toast({ title: "คำสั่งจองนี้ผูกกับบัญชี LINE อื่นแล้ว", variant: "destructive" }); setLinkingOrder(false); return;
+      }
+      await supabase.from("customers").update({ line_user_id: liffProfile.userId, picture_url: liffProfile.pictureUrl || null }).eq("id", cust.id);
+      toast({ title: "ผูกคำสั่งจองสำเร็จ!" });
+      setLinkOrderOpen(false);
+      setLinkOrderCode("");
+      fetchCustomerOrders();
+    } catch (e: any) {
+      toast({ title: "เกิดข้อผิดพลาด", description: e.message, variant: "destructive" });
+    }
+    setLinkingOrder(false);
   }
 
   // ═══ RENDER ═══
@@ -717,48 +753,61 @@ export default function Showcase() {
               <div className="space-y-3">
                 {[1, 2, 3].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
               </div>
-            ) : myOrders.length === 0 ? (
-              <div className="text-center py-20">
-                <ShoppingBag className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
-                <p className="text-muted-foreground font-medium mb-1">ยังไม่มีคำสั่งจอง</p>
-                <p className="text-sm text-muted-foreground/70 mb-4">เริ่มสั่งจองสินค้าได้เลย!</p>
-                <Button variant="outline" onClick={() => setActiveTab("shop")}>
-                  <Store className="h-4 w-4 mr-2" /> ดูสินค้า
-                </Button>
-              </div>
             ) : (
-              <div className="space-y-3">
-                {myOrders.map((order) => {
-                  const cfg = statusConfig[order.status] || statusConfig.pending;
-                  return (
-                    <motion.div
-                      key={order.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-card rounded-xl border border-border p-4 cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => setSelectedOrder(order)}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {format(new Date(order.created_at), "d MMM yyyy HH:mm", { locale: th })}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">#{order.id.slice(0, 8)}</p>
-                        </div>
-                        <Badge className={`${cfg.color} text-white border-0 text-[10px]`}>{cfg.label}</Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">{order.order_items.length} รายการ</p>
-                        <p className="font-bold text-primary">{formatPrice(order.total_amount)}</p>
-                      </div>
-                      <div className="flex items-center justify-end mt-1">
-                        <span className="text-xs text-primary flex items-center gap-0.5">ดูรายละเอียด <ChevronRight className="h-3 w-3" /></span>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
+              <>
+                {/* Link Order Button */}
+                <Button variant="outline" size="sm" className="mb-4 gap-2" onClick={() => setLinkOrderOpen(true)}>
+                  <ClipboardList className="h-4 w-4" /> ผูกคำสั่งจองจากเว็บ
+                </Button>
+
+                {myOrders.length === 0 ? (
+                  <div className="text-center py-16">
+                    <ShoppingBag className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
+                    <p className="text-muted-foreground font-medium mb-1">ยังไม่มีคำสั่งจอง</p>
+                    <p className="text-sm text-muted-foreground/70 mb-4">เริ่มสั่งจองสินค้าได้เลย!</p>
+                    <Button variant="outline" onClick={() => setActiveTab("shop")}>
+                      <Store className="h-4 w-4 mr-2" /> ดูสินค้า
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {myOrders.map((order) => {
+                      const cfg = statusConfig[order.status] || statusConfig.pending;
+                      return (
+                        <motion.div
+                          key={order.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-card rounded-xl border border-border p-4 cursor-pointer hover:shadow-md transition-shadow"
+                          onClick={() => setSelectedOrder(order)}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {format(new Date(order.created_at), "d MMM yyyy HH:mm", { locale: th })}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">#{order.id.slice(0, 8)}</p>
+                            </div>
+                            <Badge className={`${cfg.color} text-white border-0 text-[10px]`}>{cfg.label}</Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-muted-foreground">{order.order_items.length} รายการ</p>
+                            {order.monthly_amount ? (
+                              <p className="font-bold text-primary">{formatPrice(order.monthly_amount)}/เดือน</p>
+                            ) : (
+                              <p className="font-bold text-primary">{formatPrice(order.total_amount)}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-end mt-1">
+                            <span className="text-xs text-primary flex items-center gap-0.5">ดูรายละเอียด <ChevronRight className="h-3 w-3" /></span>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </motion.div>
         )}
@@ -920,10 +969,27 @@ export default function Showcase() {
                     <span className="font-medium">หมายเหตุ:</span> {selectedOrder.note}
                   </div>
                 )}
-                <div className="flex justify-between items-center pt-2 border-t border-border">
-                  <span className="font-medium">ยอดรวม</span>
-                  <span className="text-lg font-bold text-primary">{formatPrice(selectedOrder.total_amount)}</span>
-                </div>
+                {selectedOrder.status_reason && (
+                  <div className="text-xs text-muted-foreground bg-muted rounded-lg p-3">
+                    <span className="font-medium">เหตุผลจากเจ้าหน้าที่:</span> {selectedOrder.status_reason}
+                  </div>
+                )}
+                {selectedOrder.monthly_amount ? (
+                  <div className="space-y-1 pt-2 border-t border-border">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">ยอดผ่อน/เดือน</span>
+                      <span className="text-lg font-bold text-primary">{formatPrice(selectedOrder.monthly_amount)}/เดือน</span>
+                    </div>
+                    {selectedOrder.installment_months && (
+                      <p className="text-sm text-muted-foreground text-right">ผ่อนชำระ {selectedOrder.installment_months} เดือน</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex justify-between items-center pt-2 border-t border-border">
+                    <span className="font-medium">ยอดรวม</span>
+                    <span className="text-lg font-bold text-primary">{formatPrice(selectedOrder.total_amount)}</span>
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -1088,6 +1154,28 @@ export default function Showcase() {
       </Dialog>
 
       <ProductDetailDialog product={selectedProduct} open={!!selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={addToCart} installmentPlans={installmentPlans} />
+
+      {/* Link Order Dialog */}
+      <Dialog open={linkOrderOpen} onOpenChange={setLinkOrderOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>ผูกคำสั่งจองจากเว็บ</DialogTitle>
+            <DialogDescription>กรอกเลขใบจองที่ได้รับจากการสั่งจองผ่านเว็บไซต์ เพื่อเชื่อมกับบัญชี LINE ของคุณ</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="กรอกเลขใบจอง เช่น A1B2C3D4"
+              value={linkOrderCode}
+              onChange={(e) => setLinkOrderCode(e.target.value.toUpperCase())}
+              className="text-center font-mono text-lg tracking-wider uppercase"
+              maxLength={36}
+            />
+            <Button className="w-full" onClick={handleLinkOrder} disabled={linkingOrder || linkOrderCode.trim().length < 4}>
+              {linkingOrder ? "กำลังผูก..." : "ผูกคำสั่งจอง"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

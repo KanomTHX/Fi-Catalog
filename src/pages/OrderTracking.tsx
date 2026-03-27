@@ -56,9 +56,9 @@ export default function OrderTracking() {
 
       let data = null;
       if (matchedOrder) {
-        const { data: fullOrder, error: fetchErr } = await supabase
+      const { data: fullOrder, error: fetchErr } = await supabase
           .from("orders")
-          .select("id, status, total_amount, note, created_at, delivery_method, installment_months, customers(display_name), order_items(id, quantity, unit_price, products(name, image_url))")
+          .select("id, status, total_amount, note, created_at, delivery_method, installment_months, monthly_amount, status_reason, customers(display_name), order_items(id, quantity, unit_price, products(name, image_url))")
           .eq("id", matchedOrder.id)
           .single();
         if (fetchErr) throw fetchErr;
@@ -210,10 +210,27 @@ export default function OrderTracking() {
 
                   <Separator />
 
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>รวมทั้งหมด</span>
-                    <span className="text-primary">฿{(order.total_amount || 0).toLocaleString()}</span>
-                  </div>
+                  {order.status_reason && (
+                    <div className="bg-muted rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground">หมายเหตุจากเจ้าหน้าที่</p>
+                      <p className="text-sm font-medium">{order.status_reason}</p>
+                    </div>
+                  )}
+
+                  {order.monthly_amount && order.installment_months ? (
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>ยอดผ่อน/เดือน</span>
+                      <span className="text-primary">฿{Number(order.monthly_amount).toLocaleString()}/เดือน</span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>รวมทั้งหมด</span>
+                      <span className="text-primary">฿{(order.total_amount || 0).toLocaleString()}</span>
+                    </div>
+                  )}
+                  {order.installment_months && (
+                    <p className="text-sm text-muted-foreground text-right">ผ่อนชำระ {order.installment_months} เดือน</p>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>

@@ -8,8 +8,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { format } from "date-fns";
 import { ShoppingCart, Phone, MapPin, Store, Truck, CreditCard, Trash2 } from "lucide-react";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -30,8 +33,29 @@ export default function Orders() {
   const [detailOrder, setDetailOrder] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  // Status change with reason
+  const [statusChangeOrder, setStatusChangeOrder] = useState<{ orderId: string; newStatus: string } | null>(null);
+  const [statusReason, setStatusReason] = useState("");
+
   const formatPrice = (n: number | null) =>
     n != null ? new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB" }).format(n) : "—";
+
+  const handleStatusSelect = (orderId: string, newStatus: string, currentStatus: string) => {
+    if (newStatus === currentStatus) return;
+    setStatusChangeOrder({ orderId, newStatus });
+    setStatusReason("");
+  };
+
+  const confirmStatusChange = () => {
+    if (!statusChangeOrder) return;
+    updateStatus.mutate({
+      orderId: statusChangeOrder.orderId,
+      status: statusChangeOrder.newStatus,
+      reason: statusReason.trim() || undefined,
+    });
+    setStatusChangeOrder(null);
+    setStatusReason("");
+  };
 
   if (isLoading) return <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground">Loading...</div>;
 
@@ -65,6 +89,7 @@ export default function Orders() {
             <TableBody>
               {orders.map((order: any) => {
                 const sc = statusConfig[order.status] || statusConfig.pending;
+                const isLocked = order.status === "completed";
                 return (
                   <TableRow key={order.id} className="cursor-pointer" onClick={() => setDetailOrder(order)}>
                     <TableCell>
@@ -101,14 +126,10 @@ export default function Orders() {
                       <div className="flex items-center justify-end gap-1">
                         <Select
                           value={order.status}
-                          onValueChange={(newStatus) => {
-                            if (newStatus !== order.status) {
-                              updateStatus.mutate({ orderId: order.id, status: newStatus });
-                            }
-                          }}
-                          disabled={updateStatus.isPending}
+                          onValueChange={(newStatus) => handleStatusSelect(order.id, newStatus, order.status)}
+                          disabled={updateStatus.isPending || isLocked}
                         >
-                          <SelectTrigger className="w-[130px] h-8 text-xs">
+                          <SelectTrigger className={`w-[130px] h-8 text-xs ${isLocked ? "opacity-50" : ""}`}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -138,6 +159,34 @@ export default function Orders() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Status Reason Dialog */}
+      <Dialog open={!!statusChangeOrder} onOpenChange={(o) => !o && setStatusChangeOrder(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>เปลี่ยนสถานะคำสั่งจอง</DialogTitle>
+            <DialogDescription>
+              เปลี่ยนเป็น: {statusChangeOrder ? statusConfig[statusChangeOrder.newStatus]?.label : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>เหตุผล (ไม่บังคับ)</Label>
+              <Textarea
+                value={statusReason}
+                onChange={(e) => setStatusReason(e.target.value)}
+                placeholder="เช่น เอกสารไม่ครบ, อนุมัติแล้ว, จัดส่งแล้ววันที่..."
+                rows={3}
+                maxLength={500}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusChangeOrder(null)}>ยกเลิก</Button>
+            <Button onClick={confirmStatusChange} disabled={updateStatus.isPending}>ยืนยัน</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Detail Dialog */}
       <Dialog open={!!detailOrder} onOpenChange={(o) => !o && setDetailOrder(null)}>
@@ -192,10 +241,25 @@ export default function Orders() {
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between items-center pt-2 border-t">
-                <span className="font-medium">ยอดรวม</span>
-                <span className="text-lg font-bold text-primary">{formatPrice(detailOrder.total_amount)}</span>
-              </div>
+              {detailOrder.monthly_amount ? (
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center pt-2 border-t">
+                    <span className="font-medium">ยอดผ่อน/เดือน</span>
+                    <span className="text-lg font-bold text-primary">{formatPrice(detailOrder.monthly_amount)}/เดือน</span>
+                  </div>
+                  {detailOrder.installment_months && (
+                    <p className="text-sm text-muted-foreground text-right">ผ่อนชำระ {detailOrder.installment_months} เดือน</p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex justify-between items-center pt-2 border-t">
+                  <span className="font-medium">ยอดรวม</span>
+                  <span className="text-lg font-bold text-primary">{formatPrice(detailOrder.total_amount)}</span>
+                </div>
+              )}
+              {detailOrder.status_reason && (
+                <p className="text-sm text-muted-foreground bg-muted p-2 rounded">เหตุผล: {detailOrder.status_reason}</p>
+              )}
               {detailOrder.note && (
                 <p className="text-sm text-muted-foreground bg-muted p-2 rounded">หมายเหตุ: {detailOrder.note}</p>
               )}
