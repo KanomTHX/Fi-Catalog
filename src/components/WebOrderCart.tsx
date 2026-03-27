@@ -85,7 +85,8 @@ export function WebOrderCart({ open, onOpenChange, items, onUpdate, onRemove, on
           status: "pending",
           delivery_method: deliveryMethod,
           installment_months: selectedPlanMonths,
-        })
+          monthly_amount: totalMonthly,
+        } as any)
         .select("id")
         .single();
       if (orderErr) throw orderErr;
