@@ -40,6 +40,8 @@ interface OrderCount { product_id: string; order_count: number; }
 interface OrderRow {
   id: string; status: string; total_amount: number | null;
   note: string | null; created_at: string;
+  monthly_amount?: number | null; installment_months?: number | null;
+  status_reason?: string | null;
   order_items: { id: string; quantity: number; unit_price: number | null; products: { name: string; sku: string | null; image_url: string | null } | null }[];
 }
 interface CustomerRow {
@@ -246,13 +248,15 @@ function ProductSection({ title, icon, products, onProductClick, onAddCart }: { 
 // ─── Order Status Progress ───
 function OrderStatusProgress({ status }: { status: string }) {
   const cfg = statusConfig[status] || statusConfig.pending;
-  if (status === "cancelled") {
-    return <Badge variant="destructive" className="text-xs">ยกเลิก</Badge>;
+  if (status === "credit_rejected") {
+    return <Badge variant="destructive" className="text-xs">ไม่อนุมัติสินเชื่อ</Badge>;
   }
   const steps = [
     { label: "รอดำเนินการ", step: 1 },
-    { label: "ยืนยันแล้ว", step: 2 },
-    { label: "เบิกสินค้าแล้ว", step: 3 },
+    { label: "รอสินเชื่อ", step: 2 },
+    { label: "อนุมัติ", step: 3 },
+    { label: "รอจัดส่ง", step: 4 },
+    { label: "สำเร็จ", step: 5 },
   ];
   return (
     <div className="space-y-2">
@@ -263,7 +267,7 @@ function OrderStatusProgress({ status }: { status: string }) {
               {cfg.step >= s.step ? "✓" : s.step}
             </div>
             {i < steps.length - 1 && (
-              <div className={`h-0.5 w-8 sm:w-12 transition-colors ${cfg.step > s.step ? cfg.color : "bg-muted"}`} />
+              <div className={`h-0.5 w-6 sm:w-10 transition-colors ${cfg.step > s.step ? cfg.color : "bg-muted"}`} />
             )}
           </div>
         ))}
