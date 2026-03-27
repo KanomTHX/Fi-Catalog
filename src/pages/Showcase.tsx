@@ -413,7 +413,7 @@ export default function Showcase() {
         setEditAddress(cust.address || "");
         const { data: orders } = await supabase
           .from("orders")
-          .select("id, status, total_amount, note, created_at, order_items(id, quantity, unit_price, products(name, sku, image_url))")
+          .select("id, status, total_amount, note, created_at, monthly_amount, installment_months, status_reason, order_items(id, quantity, unit_price, products(name, sku, image_url))")
           .eq("customer_id", cust.id)
           .order("created_at", { ascending: false });
         if (orders) setMyOrders(orders as any);
@@ -512,8 +512,8 @@ export default function Showcase() {
         const { error } = await supabase.from("customers").insert({ id: customerId, display_name: custName, phone: custPhone || null, address: custAddress || null });
         if (error) throw error;
       }
-      const orderId = crypto.randomUUID();
-      const { error: orderErr } = await supabase.from("orders").insert({ id: orderId, customer_id: customerId, total_amount: cartTotal, note: custNote || null, delivery_method: liffDeliveryMethod, installment_months: liffSelectedPlan });
+      const monthlyAmt = maxMonthsPlan && liffSelectedPlan ? Math.ceil(cartTotal * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months) : null;
+      const { error: orderErr } = await supabase.from("orders").insert({ id: orderId, customer_id: customerId, total_amount: cartTotal, note: custNote || null, delivery_method: liffDeliveryMethod, installment_months: liffSelectedPlan, monthly_amount: monthlyAmt } as any);
       if (orderErr) throw orderErr;
       const items = cart.map((c) => ({ order_id: orderId, product_id: c.product.id, quantity: c.qty, unit_price: c.product.discount_price ?? c.product.selling_price ?? 0 }));
       const { error: itemErr } = await supabase.from("order_items").insert(items);
