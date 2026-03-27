@@ -334,6 +334,12 @@ export default function Showcase() {
   const [editAddress, setEditAddress] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
 
+  // Link order from web
+  const [linkOrderOpen, setLinkOrderOpen] = useState(false);
+  const [linkOrderCode, setLinkOrderCode] = useState("");
+  const [linkingOrder, setLinkingOrder] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+
   const cartTotal = cart.reduce((sum, c) => sum + (c.product.discount_price ?? c.product.selling_price ?? 0) * c.qty, 0);
   const cartCount = cart.reduce((sum, c) => sum + c.qty, 0);
   const liffLaunchUrl = liffId ? `https://liff.line.me/${liffId}` : null;
