@@ -1154,6 +1154,28 @@ export default function Showcase() {
       </Dialog>
 
       <ProductDetailDialog product={selectedProduct} open={!!selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={addToCart} installmentPlans={installmentPlans} />
+
+      {/* Link Order Dialog */}
+      <Dialog open={linkOrderOpen} onOpenChange={setLinkOrderOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>ผูกคำสั่งจองจากเว็บ</DialogTitle>
+            <DialogDescription>กรอกเลขใบจองที่ได้รับจากการสั่งจองผ่านเว็บไซต์ เพื่อเชื่อมกับบัญชี LINE ของคุณ</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="กรอกเลขใบจอง เช่น A1B2C3D4"
+              value={linkOrderCode}
+              onChange={(e) => setLinkOrderCode(e.target.value.toUpperCase())}
+              className="text-center font-mono text-lg tracking-wider uppercase"
+              maxLength={36}
+            />
+            <Button className="w-full" onClick={handleLinkOrder} disabled={linkingOrder || linkOrderCode.trim().length < 4}>
+              {linkingOrder ? "กำลังผูก..." : "ผูกคำสั่งจอง"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

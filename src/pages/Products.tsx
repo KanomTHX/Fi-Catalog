@@ -354,14 +354,10 @@ export default function Products() {
                 <Input value={form.unit} onChange={(e) => setForm(f => ({ ...f, unit: e.target.value }))} placeholder="เช่น ชิ้น, กล่อง, แพ็ค" />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>ราคาต้นทุน</Label>
                 <Input type="number" min={0} step={0.01} value={form.cost_price} onChange={(e) => setForm(f => ({ ...f, cost_price: Number(e.target.value) }))} />
-              </div>
-              <div className="grid gap-2">
-                <Label>ราคาขาย</Label>
-                <Input type="number" min={0} step={0.01} value={form.selling_price} onChange={(e) => setForm(f => ({ ...f, selling_price: Number(e.target.value) }))} />
               </div>
               <div className="grid gap-2">
                 <Label>สต็อกขั้นต่ำ</Label>
