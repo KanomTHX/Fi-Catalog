@@ -1,0 +1,1 @@
+ALTER TABLE public.line_settings ADD COLUMN notify_line_user_ids text DEFAULT NULL;

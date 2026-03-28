@@ -155,6 +155,7 @@ export type Database = {
           created_at: string
           id: string
           liff_id: string | null
+          notify_line_user_ids: string | null
           rich_menu_id: string | null
           updated_at: string
         }
@@ -163,6 +164,7 @@ export type Database = {
           created_at?: string
           id?: string
           liff_id?: string | null
+          notify_line_user_ids?: string | null
           rich_menu_id?: string | null
           updated_at?: string
         }
@@ -171,6 +173,7 @@ export type Database = {
           created_at?: string
           id?: string
           liff_id?: string | null
+          notify_line_user_ids?: string | null
           rich_menu_id?: string | null
           updated_at?: string
         }
