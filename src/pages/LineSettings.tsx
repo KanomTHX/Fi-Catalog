@@ -18,6 +18,7 @@ export default function LineSettings() {
   const [liffId, setLiffId] = useState("");
   const [channelAccessToken, setChannelAccessToken] = useState("");
   const [richMenuId, setRichMenuId] = useState<string | null>(null);
+  const [notifyLineUserIds, setNotifyLineUserIds] = useState("");
 
   const showcaseUrl = liffId
     ? `https://liff.line.me/${liffId}`
@@ -31,6 +32,7 @@ export default function LineSettings() {
         setLiffId(data.liff_id || "");
         setChannelAccessToken(data.channel_access_token || "");
         setRichMenuId(data.rich_menu_id || null);
+        setNotifyLineUserIds((data as any).notify_line_user_ids || "");
       }
       setLoading(false);
     }
@@ -43,13 +45,13 @@ export default function LineSettings() {
       if (settingsId) {
         const { error } = await supabase
           .from("line_settings")
-          .update({ liff_id: liffId, channel_access_token: channelAccessToken })
+          .update({ liff_id: liffId, channel_access_token: channelAccessToken, notify_line_user_ids: notifyLineUserIds } as any)
           .eq("id", settingsId);
         if (error) throw error;
       } else {
         const { data, error } = await supabase
           .from("line_settings")
-          .insert({ liff_id: liffId, channel_access_token: channelAccessToken })
+          .insert({ liff_id: liffId, channel_access_token: channelAccessToken, notify_line_user_ids: notifyLineUserIds } as any)
           .select()
           .single();
         if (error) throw error;
@@ -168,6 +170,16 @@ export default function LineSettings() {
               value={channelAccessToken}
               onChange={(e) => setChannelAccessToken(e.target.value)}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="notify-ids">LINE User ID ผู้รับแจ้งเตือน (Admin)</Label>
+            <Input
+              id="notify-ids"
+              placeholder="Uxxxx,Uyyyy (คั่นด้วย comma)"
+              value={notifyLineUserIds}
+              onChange={(e) => setNotifyLineUserIds(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">ใส่ LINE User ID ของแอดมินที่ต้องการรับแจ้งเตือนคำสั่งจองใหม่ (หาได้จาก LINE OA Chat)</p>
           </div>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}

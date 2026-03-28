@@ -246,7 +246,7 @@ export default function Products() {
                 <TableHead className="hidden lg:table-cell"><span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> ตำแหน่ง</span></TableHead>
                 <TableHead className="hidden xl:table-cell"><span className="inline-flex items-center gap-1"><Weight className="h-3.5 w-3.5" /> น้ำหนัก</span></TableHead>
                 <TableHead className="text-right">ต้นทุน</TableHead>
-                <TableHead className="text-right">ราคาขาย</TableHead>
+                <TableHead className="text-right hidden lg:table-cell">ราคาขาย</TableHead>
                 <TableHead className="text-right">สต็อก</TableHead>
                 <TableHead className="w-24"></TableHead>
               </TableRow>
@@ -265,7 +265,7 @@ export default function Products() {
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{(p as any).location ?? "—"}</TableCell>
                     <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">{(p as any).weight ? `${(p as any).weight} กก.` : "—"}</TableCell>
                     <TableCell className="text-right font-mono">{(p.cost_price ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-mono">{(p.selling_price ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-mono hidden lg:table-cell">{(p.selling_price ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right">
                       <Badge variant={isLow ? "destructive" : "secondary"} className="font-mono">{qty}</Badge>
                     </TableCell>

@@ -21,20 +21,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get channel_access_token from line_settings
+    // Get channel_access_token and notify_line_user_ids from line_settings
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const { data: settings } = await supabase
       .from("line_settings")
-      .select("channel_access_token")
+      .select("channel_access_token, notify_line_user_ids")
       .limit(1)
       .single();
 
     if (!settings?.channel_access_token) {
       return new Response(
         JSON.stringify({ success: false, message: "No LINE channel access token configured" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Parse admin LINE user IDs (comma-separated)
+    const notifyIds = (settings.notify_line_user_ids || "")
+      .split(",")
+      .map((id: string) => id.trim())
+      .filter((id: string) => id.length > 0);
+
+    if (notifyIds.length === 0) {
+      return new Response(
+        JSON.stringify({ success: false, message: "No admin LINE user IDs configured for notifications" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -64,29 +77,32 @@ ${monthlyLine}${installmentLine ? "\n" + installmentLine : ""}
 🚚 วิธีรับสินค้า: ${deliveryLabel}
 ⏳ รอฝ่ายสินเชื่อติดต่อกลับ`;
 
-    // Send broadcast via LINE Messaging API
-    const lineRes = await fetch("https://api.line.me/v2/bot/message/broadcast", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${settings.channel_access_token}`,
-      },
-      body: JSON.stringify({
-        messages: [{ type: "text", text: message }],
-      }),
-    });
+    // Send push message to each admin user ID (not broadcast)
+    const results = [];
+    for (const userId of notifyIds) {
+      const lineRes = await fetch("https://api.line.me/v2/bot/message/push", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${settings.channel_access_token}`,
+        },
+        body: JSON.stringify({
+          to: userId,
+          messages: [{ type: "text", text: message }],
+        }),
+      });
 
-    if (!lineRes.ok) {
-      const err = await lineRes.text();
-      console.error("LINE API error:", err);
-      return new Response(
-        JSON.stringify({ success: false, error: `LINE API error: ${lineRes.status}` }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (!lineRes.ok) {
+        const err = await lineRes.text();
+        console.error(`LINE push error for ${userId}:`, err);
+        results.push({ userId, success: false, error: lineRes.status });
+      } else {
+        results.push({ userId, success: true });
+      }
     }
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, results }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
