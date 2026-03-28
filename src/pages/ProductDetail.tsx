@@ -116,7 +116,7 @@ export default function ProductDetail() {
         .from("product_installment_prices" as any)
         .select("plan_id, monthly_price")
         .eq("product_id", id!);
-      return data as { plan_id: string; monthly_price: number }[] ?? [];
+      return (data as unknown) as { plan_id: string; monthly_price: number }[] ?? [];
     },
     enabled: !!id,
   });

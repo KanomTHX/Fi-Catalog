@@ -95,7 +95,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
         .from("product_installment_prices" as any)
         .select("product_id, plan_id, monthly_price");
       if (error) throw error;
-      return data as { product_id: string; plan_id: string; monthly_price: number }[];
+      return (data as unknown) as { product_id: string; plan_id: string; monthly_price: number }[];
     },
     staleTime: 30_000,
   });
