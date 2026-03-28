@@ -35,12 +35,6 @@ interface Category {
   image_url: string | null;
 }
 
-interface InstallmentPlan {
-  id: string;
-  months: number;
-  interest_rate: number | null;
-}
-
 interface ProductCatalogProps {
   onAddToCart: (product: any) => void;
 }
@@ -93,6 +87,20 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     staleTime: 60_000,
   });
 
+  // Fetch fixed installment prices
+  const { data: installmentPrices } = useQuery({
+    queryKey: ["public-installment-prices"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_installment_prices" as any)
+        .select("product_id, plan_id, monthly_price");
+      if (error) throw error;
+      return data as { product_id: string; plan_id: string; monthly_price: number }[];
+    },
+    staleTime: 30_000,
+  });
+
+  // Fetch active plans to get max months
   const { data: installmentPlans } = useQuery({
     queryKey: ["public-installment-plans"],
     queryFn: async () => {
@@ -102,7 +110,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
         .eq("is_active", true)
         .order("months", { ascending: false });
       if (error) throw error;
-      return data as InstallmentPlan[];
+      return data as { id: string; months: number; interest_rate: number | null }[];
     },
     staleTime: 60_000,
   });
@@ -124,10 +132,10 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
   }, [products]);
 
   const maxProductPrice = useMemo(() => {
-    if (!products) return 500000;
-    const prices = products.map((p) => p.discount_price ?? p.selling_price ?? 0);
+    if (!installmentPrices || installmentPrices.length === 0) return 50000;
+    const prices = installmentPrices.map(p => p.monthly_price);
     return Math.max(...prices, 10000);
-  }, [products]);
+  }, [installmentPrices]);
 
   const filtered = useMemo(() => {
     let list = products ?? [];
@@ -139,20 +147,32 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     if (selectedBrands.length > 0) {
       list = list.filter((p) => p.brand && selectedBrands.includes(p.brand));
     }
-    list = list.filter((p) => {
-      const price = p.discount_price ?? p.selling_price ?? 0;
-      return price >= priceRange[0] && price <= priceRange[1];
-    });
+    // Filter by monthly price range
+    if (installmentPrices) {
+      list = list.filter((p) => {
+        const minPrice = getMinMonthlyPrice(p.id);
+        if (minPrice === null) return true; // show products without prices
+        return minPrice >= priceRange[0] && minPrice <= priceRange[1];
+      });
+    }
     return list;
-  }, [products, selectedCat, search, selectedBrands, priceRange]);
+  }, [products, selectedCat, search, selectedBrands, priceRange, installmentPrices]);
 
   const displayedProducts = showAll ? filtered : filtered.slice(0, 12);
 
-  const getMonthlyPrice = (product: Product) => {
-    if (!maxMonthsPlan) return null;
-    const price = product.discount_price ?? product.selling_price;
-    if (!price || price <= 0) return null;
-    return Math.ceil(price * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months);
+  // Get minimum monthly price for a product from fixed installment prices
+  const getMinMonthlyPrice = (productId: string): number | null => {
+    if (!installmentPrices) return null;
+    const prices = installmentPrices.filter(p => p.product_id === productId && p.monthly_price > 0);
+    if (prices.length === 0) return null;
+    return Math.min(...prices.map(p => p.monthly_price));
+  };
+
+  // Get max months plan's monthly price for a product
+  const getMonthlyPrice = (product: Product): number | null => {
+    if (!installmentPrices || !maxMonthsPlan) return null;
+    const price = installmentPrices.find(p => p.product_id === product.id && p.plan_id === maxMonthsPlan.id);
+    return price?.monthly_price || getMinMonthlyPrice(product.id);
   };
 
   const toggleBrand = (brand: string) => {
@@ -210,7 +230,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
             </motion.div>
           )}
 
-          {/* Category image grid — full image, hide name */}
+          {/* Category image grid */}
           {hasCategoryImages && (
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
               {categories?.map((c) => (
@@ -275,7 +295,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
                 </div>
               )}
               <div className="space-y-2">
-                <Label className="font-semibold text-sm">ช่วงราคา</Label>
+                <Label className="font-semibold text-sm">ช่วงราคา (ผ่อน/เดือน)</Label>
                 <Slider min={0} max={maxProductPrice} step={500} value={priceRange} onValueChange={(v) => setPriceRange(v as [number, number])} />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{formatPrice(priceRange[0])}</span>
@@ -342,7 +362,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
               </div>
             )}
             <div className="space-y-2">
-              <Label className="font-semibold">ช่วงราคา</Label>
+              <Label className="font-semibold">ช่วงราคา (ผ่อน/เดือน)</Label>
               <Slider min={0} max={maxProductPrice} step={500} value={priceRange} onValueChange={(v) => setPriceRange(v as [number, number])} />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{formatPrice(priceRange[0])}</span>

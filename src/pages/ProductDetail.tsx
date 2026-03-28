@@ -108,13 +108,26 @@ export default function ProductDetail() {
     },
   });
 
+  // Fetch fixed installment prices for this product
+  const { data: productInstallmentPrices } = useQuery({
+    queryKey: ["product-installment-prices", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("product_installment_prices" as any)
+        .select("plan_id, monthly_price")
+        .eq("product_id", id!);
+      return data as { plan_id: string; monthly_price: number }[] ?? [];
+    },
+    enabled: !!id,
+  });
+
   // Similar products (same category)
   const { data: similarProducts } = useQuery({
     queryKey: ["similar-products", product?.category_id, id],
     queryFn: async () => {
       const { data } = await supabase
         .from("products")
-        .select("id, name, image_url, selling_price, discount_price, is_new")
+        .select("id, name, image_url, is_new")
         .eq("category_id", product!.category_id!)
         .neq("id", id!)
         .limit(8);
@@ -131,10 +144,9 @@ export default function ProductDetail() {
       if (recentIds.length === 0) return [];
       const { data } = await supabase
         .from("products")
-        .select("id, name, image_url, selling_price, discount_price, is_new")
+        .select("id, name, image_url, is_new")
         .in("id", recentIds)
         .limit(8);
-      // Sort to match localStorage order
       return (data ?? []).sort((a, b) => recentIds.indexOf(a.id) - recentIds.indexOf(b.id));
     },
     enabled: recentIds.length > 0,
@@ -164,8 +176,12 @@ export default function ProductDetail() {
     return Object.entries(groups);
   }, [variants]);
 
-  const effectivePrice = product ? (product.discount_price ?? product.selling_price ?? 0) : 0;
-  const hasDiscount = product?.discount_price != null && product.discount_price < (product.selling_price || 0);
+  // Get fixed monthly price for a plan
+  const getFixedMonthlyPrice = (planId: string): number | null => {
+    if (!productInstallmentPrices) return null;
+    const found = productInstallmentPrices.find(p => p.plan_id === planId);
+    return found?.monthly_price || null;
+  };
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -277,13 +293,14 @@ export default function ProductDetail() {
               {product.sku && <p className="text-sm text-muted-foreground mt-1">SKU: {product.sku}</p>}
             </div>
 
-            {/* Installment Plans */}
-            {installmentPlans && installmentPlans.length > 0 && effectivePrice > 0 && (
+            {/* Installment Plans - Fixed Prices */}
+            {installmentPlans && installmentPlans.length > 0 && productInstallmentPrices && productInstallmentPrices.length > 0 && (
               <div className="bg-secondary/50 rounded-xl p-4 space-y-2">
                 <p className="text-sm font-medium text-foreground">แผนผ่อนชำระ</p>
                 <div className="flex flex-wrap gap-2">
                   {installmentPlans.map((plan: any) => {
-                    const monthly = Math.ceil(effectivePrice * (1 + (plan.interest_rate || 0) / 100) / plan.months);
+                    const monthly = getFixedMonthlyPrice(plan.id);
+                    if (!monthly) return null;
                     return (
                       <div key={plan.id} className="bg-card border border-border rounded-lg px-3 py-2 text-center min-w-[80px]">
                         <p className="text-xs text-muted-foreground">{plan.months} เดือน</p>
@@ -443,16 +460,22 @@ export default function ProductDetail() {
 
 function MiniProductCard({ product: p }: { product: any }) {
   const navigate = useNavigate();
-  const { data: plans } = useQuery({
-    queryKey: ["mini-installment-plans"],
+
+  // Fetch min monthly price from fixed installment prices
+  const { data: minPrice } = useQuery({
+    queryKey: ["mini-installment-price", p.id],
     queryFn: async () => {
-      const { data } = await supabase.from("installment_plans").select("months, interest_rate").eq("is_active", true).order("months", { ascending: false }).limit(1);
-      return data ?? [];
+      const { data } = await supabase
+        .from("product_installment_prices" as any)
+        .select("monthly_price")
+        .eq("product_id", p.id)
+        .gt("monthly_price", 0)
+        .order("monthly_price", { ascending: true })
+        .limit(1);
+      return data && data.length > 0 ? (data[0] as any).monthly_price : null;
     },
     staleTime: 60_000,
   });
-  const price = p.discount_price ?? p.selling_price;
-  const monthlyPrice = plans && plans.length > 0 && price ? Math.ceil(price * (1 + (plans[0].interest_rate || 0) / 100) / plans[0].months) : null;
 
   return (
     <Card
@@ -472,10 +495,10 @@ function MiniProductCard({ product: p }: { product: any }) {
       <CardContent className="p-3 flex flex-col flex-1">
         <h3 className="font-medium text-sm line-clamp-2 font-heading min-h-[2.5rem]">{p.name}</h3>
         <div className="mt-auto pt-2">
-          {monthlyPrice ? (
+          {minPrice ? (
             <div>
               <p className="text-xs text-muted-foreground">เริ่มต้น</p>
-              <span className="text-primary font-bold text-sm">{formatPrice(monthlyPrice)}</span>
+              <span className="text-primary font-bold text-sm">{formatPrice(minPrice)}</span>
               <span className="text-xs text-muted-foreground">/เดือน</span>
             </div>
           ) : null}
