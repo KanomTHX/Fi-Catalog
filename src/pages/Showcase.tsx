@@ -126,6 +126,15 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
 
   if (!product) return null;
   const effectivePrice = product.discount_price ?? product.selling_price ?? 0;
+  const [fixedPrices, setFixedPrices] = useState<{ plan_id: string; monthly_price: number }[]>([]);
+
+  useEffect(() => {
+    if (!product) return;
+    (async () => {
+      const { data } = await supabase.from("product_installment_prices" as any).select("plan_id, monthly_price").eq("product_id", product.id);
+      setFixedPrices((data as unknown as { plan_id: string; monthly_price: number }[]) ?? []);
+    })();
+  }, [product?.id]);
 
   return (
     <>
