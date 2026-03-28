@@ -18,6 +18,7 @@ export default function LineSettings() {
   const [liffId, setLiffId] = useState("");
   const [channelAccessToken, setChannelAccessToken] = useState("");
   const [richMenuId, setRichMenuId] = useState<string | null>(null);
+  const [notifyLineUserIds, setNotifyLineUserIds] = useState("");
 
   const showcaseUrl = liffId
     ? `https://liff.line.me/${liffId}`
