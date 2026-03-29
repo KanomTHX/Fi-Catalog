@@ -1,102 +1,105 @@
 
 
-## แผนปรับปรุง — ยอดผ่อนใน Order Tracking, ผูกคำสั่งจองกับ LIFF, ล็อคสถานะ+เหตุผล, เปลี่ยนราคาขายเป็นราคาผ่อน fix
+## แผนปรับปรุง — ลบราคาขายสด, ฟิลเตอร์สี/วัสดุ, ตะกร้าถาวร, ระบบสมาชิกลูกค้า
+
+### 1. ลบราคาขายสดออกจากระบบ + บังคับมีราคาผ่อนก่อนสั่งจอง
+
+**`src/pages/Products.tsx`**:
+- ลบคอลัมน์ "ราคาขาย" ออกจาก Table Header + TableBody (line 249, 268)
+- ลบ `selling_price` ออกจาก `emptyForm` และ `openEdit`
+
+**`src/pages/ProductDetail.tsx`**:
+- ปุ่ม "เพิ่มใส่ตะกร้า" และ "ซื้อเลย" → disable ถ้าไม่มี `productInstallmentPrices` หรือ length === 0
+- แสดงข้อความ "กรุณาติดต่อร้านเพื่อสอบถามราคา" ถ้าไม่มีราคาผ่อน
+
+**`src/components/ProductCatalog.tsx`**:
+- ลบ `selling_price`, `discount_price` ออกจาก Product interface และ query select
+- ลบ `formatPrice` ที่ใช้กับ selling_price
+
+**`src/pages/Checkout.tsx`**:
+- ลบการแสดง `item.price` (ราคาขายสด) ในรายการสินค้า
+- ลบ "รวมทั้งหมด" ที่คำนวณจาก selling_price
+- บังคับเลือกแผนผ่อนก่อนกดจอง (ถ้าไม่เลือกแผน → disable ปุ่มจอง)
+
+**`src/components/WebOrderCart.tsx`**:
+- ลบการแสดงราคาต่อชิ้น (item.price) ในตะกร้า
+- ลบ total ที่คำนวณจาก price
+
+### 2. เพิ่มฟิลเตอร์สีและวัสดุ
+
+**`src/components/ProductCatalog.tsx`**:
+- เพิ่ม `color`, `material` ใน Product interface + query select
+- สร้าง `allColors` และ `allMaterials` useMemo (เหมือน `allBrands`)
+- เพิ่ม state: `selectedColors`, `selectedMaterials`
+- เพิ่ม checkbox filter ใน Desktop sidebar (ต่อจาก Brands)
+- เพิ่ม checkbox filter ใน Mobile Sheet (ต่อจาก Brands)
+- เพิ่ม filter logic ใน `filtered` useMemo
+- อัปเดต `hasActiveFilter` ให้รวม colors/materials
+- อัปเดตปุ่ม "ล้างตัวกรอง" ให้ reset colors/materials ด้วย
+
+### 3. Popup ตะกร้าสินค้าถาวรด้านล่าง (ทุกหน้า)
+
+**สร้างไฟล์ใหม่ `src/components/FloatingCart.tsx`**:
+- Component แสดง bar ด้านล่างจอ (fixed bottom) เมื่อมีสินค้าในตะกร้า
+- แสดงจำนวนสินค้า + ปุ่ม "ดูตะกร้า" → navigate to `/checkout`
+- ใช้ `useCart()` → แสดงเมื่อ `cartCount > 0`
+- AnimatePresence slide up/down
+
+**`src/App.tsx`**:
+- เพิ่ม `<FloatingCart />` ภายใน `<CartProvider>` ให้แสดงทุกหน้า (public routes)
+- ไม่แสดงในหน้า `/admin/*` และ `/checkout`
+
+### 4. ระบบสมาชิกลูกค้า + Google Auth + Customer Portal
+
+**สร้าง customer auth page `src/pages/CustomerAuth.tsx`**:
+- หน้า Login/Signup สำหรับลูกค้า (แยกจาก Admin Auth)
+- รองรับ Email + Password + Google OAuth (ใช้ `lovable.auth.signInWithOAuth("google")`)
+- Redirect กลับหน้าเดิมหลัง login
+
+**สร้าง `src/contexts/CustomerAuthContext.tsx`**:
+- Context แยกสำหรับลูกค้า (ใช้ Supabase Auth เดียวกัน แต่ไม่ต้อง check admin role)
+- เก็บ user, session, loading, signOut
+- Link กับ `customers` table (ถ้ามี record ที่ match email)
+
+**สร้าง `src/pages/CustomerPortal.tsx`**:
+- หน้า Dashboard ลูกค้า: แสดงรายการคำสั่งจอง + สถานะ + ยอดผ่อน
+- แสดง profile (ชื่อ, เบอร์, ที่อยู่) + แก้ไขได้
+- ดึง orders ผ่าน `customers` table (match auth email/phone)
+
+**`src/components/HomeNavbar.tsx`**:
+- เพิ่มปุ่ม "สมัครสมาชิก / เข้าสู่ระบบ" ข้างปุ่มตะกร้า (ด้านขวาบน)
+- ถ้า login แล้ว → แสดง Avatar + dropdown (โปรไฟล์, คำสั่งจองของฉัน, ออกจากระบบ)
+
+**`src/pages/Checkout.tsx`**:
+- เพิ่ม Banner เชิญชวนสมัครสมาชิกก่อนกดจอง: "สมัครสมาชิกเพื่อติดตามสถานะใบจอง"
+- ถ้า login แล้ว → auto-fill ชื่อ/เบอร์จาก customer profile
+- Link order กับ customer auth user
+
+**`src/App.tsx`**:
+- เพิ่ม routes: `/auth` (customer auth), `/my-orders` (customer portal)
+- Wrap ด้วย CustomerAuthContext
 
 ### Database Changes
 
 ```sql
--- เพิ่มคอลัมน์เก็บยอดผ่อน/เดือน และเหตุผลการเปลี่ยนสถานะ
-ALTER TABLE public.orders ADD COLUMN monthly_amount numeric DEFAULT NULL;
-ALTER TABLE public.orders ADD COLUMN status_reason text DEFAULT NULL;
+-- เพิ่ม auth_user_id ใน customers เพื่อ link กับ Supabase Auth
+ALTER TABLE public.customers ADD COLUMN auth_user_id uuid DEFAULT NULL;
+CREATE INDEX idx_customers_auth_user_id ON public.customers(auth_user_id);
 ```
 
-### สรุป 4 รายการ
-
-### 1. แสดงยอดผ่อน/เดือนแทนราคาขายสด ใน OrderTracking + LIFF
-
-**DB**: เพิ่มคอลัมน์ `monthly_amount` ใน `orders` เก็บยอดผ่อน/เดือนที่คำนวณตอน checkout
-
-**`src/components/WebOrderCart.tsx`**, **`src/pages/Checkout.tsx`**, **`src/pages/Showcase.tsx`**:
-- ตอน insert order เพิ่ม `monthly_amount` ลงในข้อมูลที่บันทึก
-
-**`src/pages/OrderTracking.tsx`**:
-- Query เพิ่ม `monthly_amount` จาก orders
-- แสดง "ยอดผ่อน/เดือน" + "จำนวน X เดือน" แทน "รวมทั้งหมด"
-
-**`src/pages/Showcase.tsx`** (LIFF Order Detail Dialog):
-- เปลี่ยนจาก `ยอดรวม` เป็น `ยอดผ่อน/เดือน` + จำนวนเดือน
-
-**`src/pages/Orders.tsx`** (Admin Detail Dialog):
-- แสดง monthly_amount ถ้ามี
-
-### 2. ผูกคำสั่งจองจากเว็บเข้ากับ LIFF ของลูกค้า
-
-**Logic**: เมื่อลูกค้าเปิด LIFF และมี `line_user_id` → ค้นหา customers ที่ตรงชื่อ/เบอร์โทร แต่ยังไม่มี `line_user_id` → update เชื่อม `line_user_id`
-
-**`src/pages/Showcase.tsx`**:
-- ใน tab "คำสั่งจอง" เพิ่มฟีเจอร์ "ผูกคำสั่งจอง" → Dialog ให้กรอกเลขใบจอง (8 ตัว)
-- ค้นหา order → ตรวจว่า customer ยังไม่มี line_user_id → update `customers.line_user_id` ด้วย LIFF userId
-- หลังผูกแล้ว order จะแสดงในรายการ "คำสั่งจองของฉัน"
-
-### 3. ล็อคสถานะหลังจัดส่งสำเร็จ + เพิ่มช่องเหตุผลเมื่อเปลี่ยนสถานะ
-
-**DB**: เพิ่มคอลัมน์ `status_reason` ใน `orders`
-
-**`src/pages/Orders.tsx`**:
-- ถ้า `order.status === "completed"` → disable Select (ไม่ให้เปลี่ยนสถานะอีก)
-- เมื่อเลือกสถานะใหม่ → เปิด Dialog ให้กรอกเหตุผล → บันทึก status + status_reason
-- แสดง status_reason ใน detail dialog
-
-**`src/hooks/useOrders.ts`**:
-- `useUpdateOrderStatus` รับ `reason` เพิ่ม → update ทั้ง `status` และ `status_reason`
-
-**`src/pages/OrderTracking.tsx`** + **`src/pages/Showcase.tsx`** (LIFF):
-- แสดง `status_reason` ให้ลูกค้าเห็น (เช่น "เอกสารไม่ครบ", "ส่งแล้ววันที่ xx")
-
-### 4. ยกเลิกราคาขายสด → เปลี่ยนเป็นราคาผ่อน fix เอง
-
-**`src/pages/Products.tsx`**:
-- ลบช่อง "ราคาขาย" (`selling_price`) ออกจากฟอร์ม
-- เพิ่ม section "ราคาผ่อนชำระรายแผน" → fetch `installment_plans` ที่ active → แสดงช่อง Input สำหรับแต่ละแผน (เช่น 6 เดือน: ____/เดือน, 12 เดือน: ____/เดือน)
-- บันทึกลง table ใหม่ `product_installment_prices` (product_id, plan_id, monthly_price)
-
-**DB**: สร้างตาราง `product_installment_prices`
-```sql
-CREATE TABLE public.product_installment_prices (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  product_id uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-  plan_id uuid NOT NULL REFERENCES installment_plans(id) ON DELETE CASCADE,
-  monthly_price numeric NOT NULL DEFAULT 0,
-  created_at timestamptz DEFAULT now(),
-  UNIQUE(product_id, plan_id)
-);
-ALTER TABLE public.product_installment_prices ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can view" ON public.product_installment_prices FOR SELECT TO public USING (true);
-CREATE POLICY "Authenticated can manage" ON public.product_installment_prices FOR ALL TO authenticated USING (true) WITH CHECK (true);
-```
-
-**`src/pages/Showcase.tsx`** + **`src/pages/ProductDetail.tsx`** + **`src/components/ProductCatalog.tsx`**:
-- แทนที่การคำนวณ `selling_price * interest / months` → ใช้ `product_installment_prices.monthly_price` ตรงๆ
-- Checkout: ยอดผ่อน/เดือนใช้จาก `product_installment_prices` ตาม plan ที่เลือก
-
-**`src/components/WebOrderCart.tsx`** + **`src/pages/Checkout.tsx`**:
-- คำนวณ `monthly_amount` จาก sum ของ `monthly_price * qty` ตาม plan ที่เลือก
-
-### ไฟล์ที่แก้ไข
+### ไฟล์ที่แก้ไข/สร้าง
 
 | ไฟล์ | การเปลี่ยนแปลง |
 |---|---|
-| `src/pages/OrderTracking.tsx` | แสดงยอดผ่อน/เดือน + จำนวนเดือน แทนราคาขายสด |
-| `src/pages/Showcase.tsx` | LIFF: แสดงยอดผ่อน, ผูกคำสั่งจอง dialog, status_reason, ใช้ราคา fix จาก product_installment_prices |
-| `src/pages/Orders.tsx` | ล็อคสถานะ completed, dialog เหตุผล, แสดง monthly + reason |
-| `src/hooks/useOrders.ts` | เพิ่ม reason ใน updateStatus |
-| `src/pages/Products.tsx` | ลบราคาขาย, เพิ่ม section ราคาผ่อน fix ตามแผน |
-| `src/components/WebOrderCart.tsx` | บันทึก monthly_amount, ใช้ราคา fix |
-| `src/pages/Checkout.tsx` | บันทึก monthly_amount, ใช้ราคา fix |
-| `src/pages/ProductDetail.tsx` | ใช้ราคาผ่อน fix จาก product_installment_prices |
-| `src/components/ProductCatalog.tsx` | ใช้ราคาผ่อน fix |
-
-### Database Migrations
-1. เพิ่ม `monthly_amount` + `status_reason` ใน orders
-2. สร้างตาราง `product_installment_prices` พร้อม RLS
+| `src/pages/Products.tsx` | ลบคอลัมน์ราคาขาย |
+| `src/components/ProductCatalog.tsx` | ลบ selling_price, เพิ่มฟิลเตอร์สี/วัสดุ |
+| `src/pages/ProductDetail.tsx` | disable ปุ่มจองถ้าไม่มีราคาผ่อน |
+| `src/pages/Checkout.tsx` | ลบราคาขายสด, บังคับเลือกแผนผ่อน, banner สมัครสมาชิก |
+| `src/components/WebOrderCart.tsx` | ลบราคาขายสดจากตะกร้า |
+| `src/components/FloatingCart.tsx` | **ใหม่** — popup ตะกร้าถาวรด้านล่าง |
+| `src/pages/CustomerAuth.tsx` | **ใหม่** — หน้า Login/Signup ลูกค้า + Google |
+| `src/contexts/CustomerAuthContext.tsx` | **ใหม่** — Context สำหรับ auth ลูกค้า |
+| `src/pages/CustomerPortal.tsx` | **ใหม่** — หน้า Dashboard ลูกค้า |
+| `src/components/HomeNavbar.tsx` | เพิ่มปุ่มสมัคร/เข้าสู่ระบบ + Avatar dropdown |
+| `src/App.tsx` | เพิ่ม routes + FloatingCart + CustomerAuthContext |
 
