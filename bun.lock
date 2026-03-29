@@ -7,6 +7,7 @@
       "dependencies": {
         "@hookform/resolvers": "^3.10.0",
         "@line/liff": "^2.27.3",
+        "@lovable.dev/cloud-auth-js": "^1.0.1",
         "@radix-ui/react-accordion": "^1.2.11",
         "@radix-ui/react-alert-dialog": "^1.1.14",
         "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -298,6 +299,8 @@
     "@line/bot-sdk": ["@line/bot-sdk@10.6.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@line/bot-sdk/-/bot-sdk-10.6.0.tgz", { "dependencies": { "@types/node": "^24.0.0" }, "optionalDependencies": { "axios": "^1.7.4" } }, "sha512-4hSpglL/G/cW2JCcohaYz/BS0uOSJNV9IEYdMm0EiPEvDLayoI2hGq2D86uYPQFD2gvgkyhmzdShpWLG3P5r3w=="],
 
     "@line/liff": ["@line/liff@2.28.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@line/liff/-/liff-2.28.0.tgz", { "dependencies": { "@liff/analytics": "2.28.0", "@liff/close-window": "2.28.0", "@liff/consts": "2.28.0", "@liff/core": "2.28.0", "@liff/create-shortcut-on-home-screen": "2.28.0", "@liff/extensions": "2.28.0", "@liff/get-app-language": "2.28.0", "@liff/get-friendship": "2.28.0", "@liff/get-language": "2.28.0", "@liff/get-line-version": "2.28.0", "@liff/get-origins": "2.28.0", "@liff/get-os": "2.28.0", "@liff/get-profile": "2.28.0", "@liff/get-version": "2.28.0", "@liff/hooks": "2.28.0", "@liff/i18n": "2.28.0", "@liff/iap": "2.28.0", "@liff/init": "2.28.0", "@liff/is-api-available": "2.28.0", "@liff/is-in-client": "2.28.0", "@liff/is-logged-in": "2.28.0", "@liff/is-sub-window": "2.28.0", "@liff/liff-types": "2.28.0", "@liff/login": "2.28.0", "@liff/logout": "2.28.0", "@liff/native-bridge": "2.28.0", "@liff/open-window": "2.28.0", "@liff/permanent-link": "2.28.0", "@liff/permission": "2.28.0", "@liff/ready": "2.28.0", "@liff/request-friendship": "2.28.0", "@liff/scan-code-v2": "2.28.0", "@liff/send-messages": "2.28.0", "@liff/server-api": "2.28.0", "@liff/share-target-picker": "2.28.0", "@liff/store": "2.28.0", "@liff/sub-window": "2.28.0", "@liff/use": "2.28.0", "@liff/util": "2.28.0", "tslib": "^2.3.0", "whatwg-fetch": "^3.0.0" } }, "sha512-A2BNIZDbDnBRBVTbHv32YB54T4aUDQyNyXv9y6Ut8w4yZLnGVabHtdhK9HSa1FmfmF9pSxhdSnBzULsDXF3vag=="],
+
+    "@lovable.dev/cloud-auth-js": ["@lovable.dev/cloud-auth-js@1.0.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@lovable.dev/cloud-auth-js/-/cloud-auth-js-1.0.1.tgz", {}, "sha512-0IDAudiTtHpwCzq4a57LvYRSQr92xMW9S+4Q8PmsZfSAkPThBYnOTWtQTAPTM4qarQhDa04HWogy1z0aKGcmrg=="],
 
     "@nodelib/fs.scandir": ["@nodelib/fs.scandir@2.1.5", "", { "dependencies": { "@nodelib/fs.stat": "2.0.5", "run-parallel": "^1.1.9" } }, "sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g=="],
 

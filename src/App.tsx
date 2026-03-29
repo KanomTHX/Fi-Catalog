@@ -5,8 +5,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { CustomerAuthProvider } from "@/contexts/CustomerAuthContext";
 import { AppLayout } from "@/components/AppLayout";
+import { FloatingCart } from "@/components/FloatingCart";
 import Auth from "./pages/Auth";
+import CustomerAuth from "./pages/CustomerAuth";
+import CustomerPortal from "./pages/CustomerPortal";
 import Home from "./pages/Home";
 import PublicProducts from "./pages/PublicProducts";
 import ProductDetail from "./pages/ProductDetail";
@@ -77,19 +81,24 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/products" element={<PublicProducts />} />
-              <Route path="/products/:id" element={<ProductDetail />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/order-tracking" element={<OrderTracking />} />
-              <Route path="/liff" element={<Showcase />} />
-              <Route path="/showcase" element={<Navigate to="/" replace />} />
-              <Route path="/admin/auth" element={<AuthRoute />} />
-              <Route path="/admin/*" element={<ProtectedRoutes />} />
-            </Routes>
+            <CustomerAuthProvider>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/products" element={<PublicProducts />} />
+                <Route path="/products/:id" element={<ProductDetail />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/order-tracking" element={<OrderTracking />} />
+                <Route path="/auth" element={<CustomerAuth />} />
+                <Route path="/my-orders" element={<CustomerPortal />} />
+                <Route path="/liff" element={<Showcase />} />
+                <Route path="/showcase" element={<Navigate to="/" replace />} />
+                <Route path="/admin/auth" element={<AuthRoute />} />
+                <Route path="/admin/*" element={<ProtectedRoutes />} />
+              </Routes>
+              <FloatingCart />
+            </CustomerAuthProvider>
           </CartProvider>
         </AuthProvider>
       </BrowserRouter>

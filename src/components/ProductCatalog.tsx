@@ -20,13 +20,13 @@ interface Product {
   id: string;
   name: string;
   image_url: string | null;
-  selling_price: number | null;
-  discount_price: number | null;
   is_new: boolean | null;
   is_featured: boolean | null;
   category_id: string | null;
   description: string | null;
   brand: string | null;
+  color: string | null;
+  material: string | null;
 }
 
 interface Category {
@@ -48,6 +48,8 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
   const [selectedCat, setSelectedCat] = useState<string | null>(searchParams.get("category") || null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
   const [showAll, setShowAll] = useState(false);
   const navigate = useNavigate();
@@ -69,7 +71,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, image_url, selling_price, discount_price, is_new, is_featured, category_id, description, brand")
+        .select("id, name, image_url, is_new, is_featured, category_id, description, brand, color, material")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Product[];
@@ -87,7 +89,6 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     staleTime: 60_000,
   });
 
-  // Fetch fixed installment prices
   const { data: installmentPrices } = useQuery({
     queryKey: ["public-installment-prices"],
     queryFn: async () => {
@@ -100,7 +101,6 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     staleTime: 30_000,
   });
 
-  // Fetch active plans to get max months
   const { data: installmentPlans } = useQuery({
     queryKey: ["public-installment-plans"],
     queryFn: async () => {
@@ -131,7 +131,18 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     return [...new Set(brands)].sort();
   }, [products]);
 
-  // Get minimum monthly price for a product from fixed installment prices
+  const allColors = useMemo(() => {
+    if (!products) return [];
+    const colors = products.map((p) => p.color).filter(Boolean) as string[];
+    return [...new Set(colors)].sort();
+  }, [products]);
+
+  const allMaterials = useMemo(() => {
+    if (!products) return [];
+    const materials = products.map((p) => p.material).filter(Boolean) as string[];
+    return [...new Set(materials)].sort();
+  }, [products]);
+
   const getMinMonthlyPrice = (productId: string): number | null => {
     if (!installmentPrices) return null;
     const prices = installmentPrices.filter(p => p.product_id === productId && p.monthly_price > 0);
@@ -139,7 +150,6 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     return Math.min(...prices.map(p => p.monthly_price));
   };
 
-  // Get max months plan's monthly price for a product
   const getMonthlyPrice = (product: Product): number | null => {
     if (!installmentPrices || !maxMonthsPlan) return null;
     const price = installmentPrices.find(p => p.product_id === product.id && p.plan_id === maxMonthsPlan.id);
@@ -162,32 +172,65 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     if (selectedBrands.length > 0) {
       list = list.filter((p) => p.brand && selectedBrands.includes(p.brand));
     }
-    // Filter by monthly price range
+    if (selectedColors.length > 0) {
+      list = list.filter((p) => p.color && selectedColors.includes(p.color));
+    }
+    if (selectedMaterials.length > 0) {
+      list = list.filter((p) => p.material && selectedMaterials.includes(p.material));
+    }
     if (installmentPrices) {
       list = list.filter((p) => {
         const minPrice = getMinMonthlyPrice(p.id);
-        if (minPrice === null) return true; // show products without prices
+        if (minPrice === null) return true;
         return minPrice >= priceRange[0] && minPrice <= priceRange[1];
       });
     }
     return list;
-  }, [products, selectedCat, search, selectedBrands, priceRange, installmentPrices]);
+  }, [products, selectedCat, search, selectedBrands, selectedColors, selectedMaterials, priceRange, installmentPrices]);
 
   const displayedProducts = showAll ? filtered : filtered.slice(0, 12);
 
   const toggleBrand = (brand: string) => {
-    setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
-    );
+    setSelectedBrands((prev) => prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]);
+  };
+  const toggleColor = (color: string) => {
+    setSelectedColors((prev) => prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]);
+  };
+  const toggleMaterial = (material: string) => {
+    setSelectedMaterials((prev) => prev.includes(material) ? prev.filter((m) => m !== material) : [...prev, material]);
   };
 
-  const hasActiveFilter = selectedBrands.length > 0 || priceRange[0] > 0 || priceRange[1] < maxProductPrice;
+  const hasActiveFilter = selectedBrands.length > 0 || selectedColors.length > 0 || selectedMaterials.length > 0 || priceRange[0] > 0 || priceRange[1] < maxProductPrice;
 
   const hasCategoryImages = categories?.some((c) => c.image_url);
 
+  const clearAllFilters = () => {
+    setSelectedBrands([]);
+    setSelectedColors([]);
+    setSelectedMaterials([]);
+    setPriceRange([0, maxProductPrice]);
+  };
+
+  const FilterCheckboxGroup = ({ label, items, selected, onToggle }: { label: string; items: string[]; selected: string[]; onToggle: (v: string) => void }) => {
+    if (items.length === 0) return null;
+    return (
+      <div className="space-y-2">
+        <Label className="font-semibold text-sm">{label}</Label>
+        <div className="space-y-1.5">
+          {items.map((item) => (
+            <label key={item} className="flex items-center gap-2 text-sm cursor-pointer">
+              <Checkbox checked={selected.includes(item)} onCheckedChange={() => onToggle(item)} />
+              {item}
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
-      {/* Featured — hidden when category is selected */}
+      {/* Featured */}
       {!selectedCat && featured.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
           {siteSettings?.featured_banner_url ? (
@@ -200,7 +243,6 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
               </div>
             </motion.div>
           )}
-          {/* Carousel for featured products */}
           <Carousel opts={{ align: "start", loop: featured.length > 4 }} className="w-full">
             <CarouselContent className="-ml-4">
               {featured.map((p, i) => (
@@ -219,7 +261,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
         </section>
       )}
 
-      {/* All products with filter */}
+      {/* All products */}
       <section id="products" className="bg-secondary/40 scroll-mt-20">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
           {siteSettings?.all_products_banner_url ? (
@@ -230,16 +272,13 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
             </motion.div>
           )}
 
-          {/* Category image grid */}
           {hasCategoryImages && (
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
               {categories?.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => handleCategoryChange(selectedCat === c.id ? null : c.id)}
-                  className={`rounded-xl border-2 overflow-hidden transition-all ${
-                    selectedCat === c.id ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/30"
-                  }`}
+                  className={`rounded-xl border-2 overflow-hidden transition-all ${selectedCat === c.id ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/30"}`}
                 >
                   {c.image_url ? (
                     <img src={c.image_url} alt={c.name} className="w-full aspect-square object-contain bg-card" />
@@ -254,7 +293,6 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
             </div>
           )}
 
-          {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -277,23 +315,12 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
             </div>
           </div>
 
-          {/* Product grid */}
           <div className="flex gap-6">
             {/* Desktop sidebar filters */}
             <aside className="hidden lg:block w-56 shrink-0 space-y-6">
-              {allBrands.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="font-semibold text-sm">แบรนด์</Label>
-                  <div className="space-y-1.5">
-                    {allBrands.map((b) => (
-                      <label key={b} className="flex items-center gap-2 text-sm cursor-pointer">
-                        <Checkbox checked={selectedBrands.includes(b)} onCheckedChange={() => toggleBrand(b)} />
-                        {b}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <FilterCheckboxGroup label="แบรนด์" items={allBrands} selected={selectedBrands} onToggle={toggleBrand} />
+              <FilterCheckboxGroup label="สี" items={allColors} selected={selectedColors} onToggle={toggleColor} />
+              <FilterCheckboxGroup label="วัสดุ" items={allMaterials} selected={selectedMaterials} onToggle={toggleMaterial} />
               <div className="space-y-2">
                 <Label className="font-semibold text-sm">ช่วงราคา (ผ่อน/เดือน)</Label>
                 <Slider min={0} max={maxProductPrice} step={500} value={priceRange} onValueChange={(v) => setPriceRange(v as [number, number])} />
@@ -302,6 +329,9 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
                   <span>{formatPrice(priceRange[1])}</span>
                 </div>
               </div>
+              {hasActiveFilter && (
+                <Button variant="ghost" size="sm" onClick={clearAllFilters} className="w-full text-xs">ล้างตัวกรองทั้งหมด</Button>
+              )}
             </aside>
 
             <div className="flex-1">
@@ -348,19 +378,9 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
         <SheetContent className="flex flex-col w-full sm:max-w-sm">
           <SheetHeader><SheetTitle className="flex items-center gap-2"><SlidersHorizontal className="h-5 w-5" /> ตัวกรอง</SheetTitle></SheetHeader>
           <div className="flex-1 overflow-y-auto py-4 space-y-6">
-            {allBrands.length > 0 && (
-              <div className="space-y-2">
-                <Label className="font-semibold">แบรนด์</Label>
-                <div className="space-y-1.5">
-                  {allBrands.map((b) => (
-                    <label key={b} className="flex items-center gap-2 text-sm cursor-pointer">
-                      <Checkbox checked={selectedBrands.includes(b)} onCheckedChange={() => toggleBrand(b)} />
-                      {b}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
+            <FilterCheckboxGroup label="แบรนด์" items={allBrands} selected={selectedBrands} onToggle={toggleBrand} />
+            <FilterCheckboxGroup label="สี" items={allColors} selected={selectedColors} onToggle={toggleColor} />
+            <FilterCheckboxGroup label="วัสดุ" items={allMaterials} selected={selectedMaterials} onToggle={toggleMaterial} />
             <div className="space-y-2">
               <Label className="font-semibold">ช่วงราคา (ผ่อน/เดือน)</Label>
               <Slider min={0} max={maxProductPrice} step={500} value={priceRange} onValueChange={(v) => setPriceRange(v as [number, number])} />
@@ -371,7 +391,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
             </div>
           </div>
           <SheetFooter className="border-t pt-4 gap-2">
-            <Button variant="outline" onClick={() => { setSelectedBrands([]); setPriceRange([0, maxProductPrice]); }} className="flex-1">ล้างตัวกรอง</Button>
+            <Button variant="outline" onClick={clearAllFilters} className="flex-1">ล้างตัวกรอง</Button>
             <Button onClick={() => setFilterOpen(false)} className="flex-1">ดูผลลัพธ์ ({filtered.length})</Button>
           </SheetFooter>
         </SheetContent>

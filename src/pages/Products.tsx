@@ -20,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
 
-const emptyForm = { name: "", sku: "", category_id: "", cost_price: 0, selling_price: 0, unit: "pcs", min_stock_level: 0, image_url: "", description: "", brand: "", weight: 0, dimensions: "", location: "", color: "", material: "", discount_price: 0, is_new: false, is_featured: false };
+const emptyForm = { name: "", sku: "", category_id: "", cost_price: 0, unit: "pcs", min_stock_level: 0, image_url: "", description: "", brand: "", weight: 0, dimensions: "", location: "", color: "", material: "", is_new: false, is_featured: false };
 
 interface VariantRow { id?: string; variant_name: string; variant_value: string; }
 interface ExtraImage { id?: string; image_url: string; sort_order: number; }
@@ -46,14 +46,12 @@ export default function Products() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [serialDialogProduct, setSerialDialogProduct] = useState<{ id: string; name: string } | null>(null);
 
-  // Extra images & variants state
   const [extraImages, setExtraImages] = useState<ExtraImage[]>([]);
   const [variants, setVariants] = useState<VariantRow[]>([]);
   const [newVariantName, setNewVariantName] = useState("");
   const [newVariantValue, setNewVariantValue] = useState("");
   const [installmentPrices, setInstallmentPrices] = useState<Record<string, number>>({});
 
-  // Fetch installment plans
   const { data: activePlans = [] } = useQuery({
     queryKey: ["active-installment-plans"],
     queryFn: async () => {
@@ -63,7 +61,6 @@ export default function Products() {
     staleTime: 60_000,
   });
 
-  // Fetch extra images, variants & installment prices when editing
   useEffect(() => {
     if (!editId) { setExtraImages([]); setVariants([]); setInstallmentPrices({}); return; }
     (async () => {
@@ -95,20 +92,19 @@ export default function Products() {
     setEditId(p.id);
     setForm({
       name: p.name, sku: p.sku ?? "", category_id: p.category_id ?? "",
-      cost_price: p.cost_price ?? 0, selling_price: p.selling_price ?? 0,
+      cost_price: p.cost_price ?? 0,
       unit: p.unit ?? "pcs", min_stock_level: p.min_stock_level ?? 0, image_url: p.image_url ?? "",
       description: (p as any).description ?? "", brand: (p as any).brand ?? "",
       weight: (p as any).weight ?? 0, dimensions: (p as any).dimensions ?? "",
       location: (p as any).location ?? "",
       color: (p as any).color ?? "", material: (p as any).material ?? "",
-      discount_price: (p as any).discount_price ?? 0,
       is_new: (p as any).is_new ?? false, is_featured: (p as any).is_featured ?? false,
     });
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    const payload = { ...form, category_id: form.category_id || undefined, cost_price: Number(form.cost_price), selling_price: Number(form.selling_price), min_stock_level: Number(form.min_stock_level), discount_price: Number(form.discount_price) || undefined, weight: Number(form.weight) || undefined };
+    const payload = { ...form, category_id: form.category_id || undefined, cost_price: Number(form.cost_price), min_stock_level: Number(form.min_stock_level), weight: Number(form.weight) || undefined };
     let productId = editId;
     if (editId) {
       await updateProduct.mutateAsync({ id: editId, ...payload });
@@ -117,9 +113,7 @@ export default function Products() {
       productId = (result as any)?.id;
     }
 
-    // Save extra images, variants & installment prices
     if (editId && productId) {
-      // Sync extra images
       const existingImgIds = extraImages.filter(i => i.id).map(i => i.id!);
       await supabase.from("product_images").delete().eq("product_id", productId).not("id", "in", `(${existingImgIds.join(",") || "00000000-0000-0000-0000-000000000000"})`);
       const newImages = extraImages.filter(i => !i.id);
@@ -127,7 +121,6 @@ export default function Products() {
         await supabase.from("product_images").insert(newImages.map((i, idx) => ({ product_id: productId!, image_url: i.image_url, sort_order: idx })));
       }
 
-      // Sync variants
       const existingVarIds = variants.filter(v => v.id).map(v => v.id!);
       await supabase.from("product_variants").delete().eq("product_id", productId).not("id", "in", `(${existingVarIds.join(",") || "00000000-0000-0000-0000-000000000000"})`);
       const newVariants = variants.filter(v => !v.id);
@@ -135,7 +128,6 @@ export default function Products() {
         await supabase.from("product_variants").insert(newVariants.map(v => ({ product_id: productId!, variant_name: v.variant_name, variant_value: v.variant_value })));
       }
 
-      // Sync installment prices
       await supabase.from("product_installment_prices" as any).delete().eq("product_id", productId);
       const priceRows = Object.entries(installmentPrices).filter(([_, v]) => v > 0).map(([planId, price]) => ({ product_id: productId!, plan_id: planId, monthly_price: price }));
       if (priceRows.length > 0) {
@@ -159,7 +151,7 @@ export default function Products() {
           try {
             await createProduct.mutateAsync({
               name: row.name, sku: row.sku || undefined,
-              cost_price: Number(row.cost_price) || 0, selling_price: Number(row.selling_price) || 0,
+              cost_price: Number(row.cost_price) || 0,
               unit: row.unit || "pcs", min_stock_level: Number(row.min_stock_level) || 0, brand: row.brand || undefined,
             });
             count++;
@@ -246,7 +238,6 @@ export default function Products() {
                 <TableHead className="hidden lg:table-cell"><span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> ตำแหน่ง</span></TableHead>
                 <TableHead className="hidden xl:table-cell"><span className="inline-flex items-center gap-1"><Weight className="h-3.5 w-3.5" /> น้ำหนัก</span></TableHead>
                 <TableHead className="text-right">ต้นทุน</TableHead>
-                <TableHead className="text-right hidden lg:table-cell">ราคาขาย</TableHead>
                 <TableHead className="text-right">สต็อก</TableHead>
                 <TableHead className="w-24"></TableHead>
               </TableRow>
@@ -265,7 +256,6 @@ export default function Products() {
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{(p as any).location ?? "—"}</TableCell>
                     <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">{(p as any).weight ? `${(p as any).weight} กก.` : "—"}</TableCell>
                     <TableCell className="text-right font-mono">{(p.cost_price ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-mono hidden lg:table-cell">{(p.selling_price ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right">
                       <Badge variant={isLow ? "destructive" : "secondary"} className="font-mono">{qty}</Badge>
                     </TableCell>
@@ -280,7 +270,7 @@ export default function Products() {
                 );
               })}
               {!isLoading && filtered.length === 0 && (
-                <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-12">ไม่พบสินค้า</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-12">ไม่พบสินค้า</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -346,7 +336,6 @@ export default function Products() {
                     <Plus className="h-3 w-3 mr-0.5" /> เพิ่ม
                   </Button>
                 </div>
-                {/* Category Image Upload */}
                 {form.category_id && (
                   <div className="mt-1">
                     <Label className="text-xs text-muted-foreground">รูปหมวดหมู่ (256x256)</Label>
@@ -400,7 +389,7 @@ export default function Products() {
                 <Input value={form.location} onChange={(e) => setForm(f => ({ ...f, location: e.target.value }))} placeholder="เช่น ชั้น A-01" />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>สี</Label>
                 <Input value={form.color} onChange={(e) => setForm(f => ({ ...f, color: e.target.value }))} placeholder="เช่น ขาว, ดำ, ลายไม้" />
@@ -408,10 +397,6 @@ export default function Products() {
               <div className="grid gap-2">
                 <Label>วัสดุ</Label>
                 <Input value={form.material} onChange={(e) => setForm(f => ({ ...f, material: e.target.value }))} placeholder="เช่น ไม้สัก, MDF, เหล็ก" />
-              </div>
-              <div className="grid gap-2">
-                <Label>ราคาลดพิเศษ</Label>
-                <Input type="number" min={0} step={0.01} value={form.discount_price} onChange={(e) => setForm(f => ({ ...f, discount_price: Number(e.target.value) }))} placeholder="0.00" />
               </div>
             </div>
             <div className="flex gap-6">
