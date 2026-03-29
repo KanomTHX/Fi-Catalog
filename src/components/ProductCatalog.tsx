@@ -131,6 +131,21 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     return [...new Set(brands)].sort();
   }, [products]);
 
+  // Get minimum monthly price for a product from fixed installment prices
+  const getMinMonthlyPrice = (productId: string): number | null => {
+    if (!installmentPrices) return null;
+    const prices = installmentPrices.filter(p => p.product_id === productId && p.monthly_price > 0);
+    if (prices.length === 0) return null;
+    return Math.min(...prices.map(p => p.monthly_price));
+  };
+
+  // Get max months plan's monthly price for a product
+  const getMonthlyPrice = (product: Product): number | null => {
+    if (!installmentPrices || !maxMonthsPlan) return null;
+    const price = installmentPrices.find(p => p.product_id === product.id && p.plan_id === maxMonthsPlan.id);
+    return price?.monthly_price || getMinMonthlyPrice(product.id);
+  };
+
   const maxProductPrice = useMemo(() => {
     if (!installmentPrices || installmentPrices.length === 0) return 50000;
     const prices = installmentPrices.map(p => p.monthly_price);
@@ -159,21 +174,6 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
   }, [products, selectedCat, search, selectedBrands, priceRange, installmentPrices]);
 
   const displayedProducts = showAll ? filtered : filtered.slice(0, 12);
-
-  // Get minimum monthly price for a product from fixed installment prices
-  const getMinMonthlyPrice = (productId: string): number | null => {
-    if (!installmentPrices) return null;
-    const prices = installmentPrices.filter(p => p.product_id === productId && p.monthly_price > 0);
-    if (prices.length === 0) return null;
-    return Math.min(...prices.map(p => p.monthly_price));
-  };
-
-  // Get max months plan's monthly price for a product
-  const getMonthlyPrice = (product: Product): number | null => {
-    if (!installmentPrices || !maxMonthsPlan) return null;
-    const price = installmentPrices.find(p => p.product_id === product.id && p.plan_id === maxMonthsPlan.id);
-    return price?.monthly_price || getMinMonthlyPrice(product.id);
-  };
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) =>
