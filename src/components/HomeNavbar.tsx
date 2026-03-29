@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { ShoppingBag, Menu, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ShoppingBag, Menu, X, User, LogOut, Package, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProductSearchBar } from "@/components/ProductSearchBar";
+import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 
 interface HomeNavbarProps {
   siteName: string;
@@ -25,12 +28,17 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, customer, signOut, loading } = useCustomerAuth();
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
   }, []);
+
+  const initials = customer?.display_name?.slice(0, 2)?.toUpperCase() ||
+    user?.email?.slice(0, 2)?.toUpperCase() || "?";
 
   return (
     <motion.nav
@@ -72,6 +80,7 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Cart button */}
             {onCartOpen && (
               <Button variant="outline" size="icon" className="relative border-primary/30 hover:border-primary" onClick={onCartOpen}>
                 <ShoppingBag className="h-5 w-5" />
@@ -92,6 +101,36 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
                 </Button>
               </Link>
             )}
+
+            {/* Auth button */}
+            {!loading && (
+              user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-1.5 px-2">
+                      <Avatar className="h-7 w-7">
+                        <AvatarFallback className="text-xs bg-primary/10 text-primary">{initials}</AvatarFallback>
+                      </Avatar>
+                      <ChevronDown className="h-3 w-3 text-muted-foreground hidden sm:block" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => navigate("/my-orders")} className="cursor-pointer">
+                      <Package className="h-4 w-4 mr-2" /> คำสั่งจองของฉัน
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={async () => { await signOut(); navigate("/"); }} className="cursor-pointer text-destructive">
+                      <LogOut className="h-4 w-4 mr-2" /> ออกจากระบบ
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={() => navigate("/auth")}>
+                  <User className="h-4 w-4" /> เข้าสู่ระบบ
+                </Button>
+              )
+            )}
+
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -120,6 +159,15 @@ export function HomeNavbar({ siteName, logoUrl, cartCount, onCartOpen }: HomeNav
                   {l.label}
                 </Link>
               ))}
+              {!user && (
+                <Link
+                  to="/auth"
+                  onClick={() => setMobileOpen(false)}
+                  className="block w-full text-left px-4 py-3 text-sm font-medium rounded-lg text-primary bg-primary/10"
+                >
+                  เข้าสู่ระบบ / สมัครสมาชิก
+                </Link>
+              )}
             </div>
           </motion.div>
         )}
