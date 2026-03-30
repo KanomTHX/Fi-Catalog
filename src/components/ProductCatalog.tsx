@@ -351,6 +351,12 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
                     </Card>
                   ))}
                 </div>
+              ) : productsError ? (
+                <div className="text-center py-16 text-muted-foreground">
+                  <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p className="mb-4">เกิดข้อผิดพลาดในการโหลดสินค้า</p>
+                  <Button variant="outline" onClick={() => refetchProducts()}>ลองใหม่</Button>
+                </div>
               ) : filtered.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground">
                   <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-30" />
