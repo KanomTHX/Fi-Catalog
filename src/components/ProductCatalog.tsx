@@ -66,7 +66,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     else setSearchParams({});
   };
 
-  const { data: products, isLoading: productsLoading } = useQuery({
+  const { data: products, isLoading: productsLoading, isError: productsError, refetch: refetchProducts } = useQuery({
     queryKey: ["public-products"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -74,9 +74,10 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
         .select("id, name, image_url, is_new, is_featured, category_id, description, brand, color, material")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Product[];
+      return (data ?? []) as Product[];
     },
     staleTime: 30_000,
+    retry: 2,
   });
 
   const { data: categories } = useQuery({
@@ -84,21 +85,23 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     queryFn: async () => {
       const { data, error } = await supabase.from("categories").select("id, name, image_url").order("name");
       if (error) throw error;
-      return data as Category[];
+      return (data ?? []) as Category[];
     },
     staleTime: 60_000,
+    retry: 2,
   });
 
   const { data: installmentPrices } = useQuery({
     queryKey: ["public-installment-prices"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("product_installment_prices" as any)
+        .from("product_installment_prices")
         .select("product_id, plan_id, monthly_price");
       if (error) throw error;
-      return (data as unknown) as { product_id: string; plan_id: string; monthly_price: number }[];
+      return (data ?? []) as { product_id: string; plan_id: string; monthly_price: number }[];
     },
     staleTime: 30_000,
+    retry: 2,
   });
 
   const { data: installmentPlans } = useQuery({
@@ -110,9 +113,10 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
         .eq("is_active", true)
         .order("months", { ascending: false });
       if (error) throw error;
-      return data as { id: string; months: number; interest_rate: number | null }[];
+      return (data ?? []) as { id: string; months: number; interest_rate: number | null }[];
     },
     staleTime: 60_000,
+    retry: 2,
   });
 
   const maxMonthsPlan = useMemo(() => {
@@ -346,6 +350,12 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
                       </CardContent>
                     </Card>
                   ))}
+                </div>
+              ) : productsError ? (
+                <div className="text-center py-16 text-muted-foreground">
+                  <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p className="mb-4">เกิดข้อผิดพลาดในการโหลดสินค้า</p>
+                  <Button variant="outline" onClick={() => refetchProducts()}>ลองใหม่</Button>
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground">
