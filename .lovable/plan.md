@@ -1,54 +1,59 @@
 
-ปัญหานี้น่าจะไม่ได้มาจาก “ไม่มีข้อมูลในฐานข้อมูล” แต่เป็นปัญหาที่ฝั่งหน้าเว็บ public ดึงข้อมูลแล้วไม่ถูก render ออกมา
+แผนแก้ไขรอบนี้จะโฟกัสที่ “ต้นเหตุร่วม” ก่อน เพราะอาการเกิดทั้ง Preview และ Published และทุกหน้า public ค้างเป็น skeleton เหมือนกัน
 
-สิ่งที่ผมตรวจเจอแล้ว:
-- มีสินค้าในฐานข้อมูล 26 รายการ
-- มีหมวดหมู่ 12 รายการ
-- มีข้อมูลตั้งค่าเว็บ 1 ชุด
-- มีแผนผ่อน active 7 แผน
-- สิทธิ์ public สำหรับ `products`, `categories`, `installment_plans`, `product_installment_prices`, `site_settings` มีอยู่แล้ว
-- ดังนั้นจุดที่ต้องแก้หลักคือ flow ดึงข้อมูลในหน้า public โดยเฉพาะ `src/components/ProductCatalog.tsx`
+1. แก้ shared auth/provider ที่น่าจะทำให้ query public ค้างทั้งแอป
+- ไฟล์หลัก: `src/contexts/CustomerAuthContext.tsx`
+- ตอนนี้ `onAuthStateChange` เป็น async และ `await fetchCustomer(...)` อยู่ใน callback ซึ่งเสี่ยงทำให้ auth/session restore ค้าง และลากให้ query public ไม่เริ่มหรือ pending ยาว
+- จะ refactor ให้ callback ไม่ await อะไรเลย:
+  - set `session` / `user` ก่อน
+  - ถ้ามี user ให้เรียก `void fetchCustomer(...)`
+  - ตั้ง `loading`/`isReady` ให้จบจาก `getSession()` อย่างชัดเจน
+- ถ้าจำเป็นจะปรับ `src/contexts/AuthContext.tsx` ให้ใช้ pattern เดียวกันเพื่อให้ behavior สม่ำเสมอ
 
-แผนแก้ไข
+2. ทำให้ public pages ไม่ผูกชะตากับ auth initialization
+- ตรวจและปรับ query ในหน้า public ให้สามารถวิ่งได้แม้ customer session ยังไม่พร้อม
+- จุดที่เกี่ยวข้อง:
+  - `src/hooks/useSiteSettings.ts`
+  - `src/components/ProductCatalog.tsx`
+  - `src/components/ProductSearchBar.tsx`
+  - `src/components/PromoBanners.tsx`
+  - `src/pages/ProductDetail.tsx`
+- เป้าหมายคือ ถ้า auth ยัง restore อยู่ หน้า public ต้องยังโหลดข้อมูลจาก backend ได้ตามปกติ
 
-1. แก้ flow ดึงข้อมูลหน้าสินค้าให้ไม่ค้างเป็น skeleton
-- ปรับ `ProductCatalog.tsx` ให้รองรับ `isError` / `error` ชัดเจน แทนการแสดง skeleton อย่างเดียว
-- แยกการโหลด “รายการสินค้า” ออกจาก “ราคาผ่อน” เพื่อให้สินค้าขึ้นก่อน แม้ query ราคาผ่อนจะช้าหรือพลาด
-- เพิ่ม fallback ที่ชัดเจน: ถ้าดึงสินค้าได้แต่ดึงราคาผ่อนไม่ได้ ให้ยังแสดงการ์ดสินค้าได้
+3. ทำ fallback/error state ให้ทุกหน้า public
+- ตอนนี้หลายหน้ามีแต่ loading state หรือ fallback เงียบ ๆ
+- จะเพิ่ม handling ให้ชัดเจน:
+  - `/products` แยก `products` ออกจาก `installment prices` ต่อไป
+  - `/`, `/about`, `/contact` ถ้า settings โหลดไม่ได้ ให้มี error/empty state ชัดเจน แทนการดูเหมือนค้าง
+  - `/products/:id` เปลี่ยนจุดที่เสี่ยงจาก `.single()` เป็น `.maybeSingle()` แล้วแสดง “ไม่พบสินค้า” ให้ถูกต้อง
 
-2. ตรวจ query public ทุกหน้าที่เกี่ยวข้อง
-- `src/components/ProductCatalog.tsx`
-- `src/components/ProductSearchBar.tsx`
-- `src/pages/ProductDetail.tsx`
+4. เก็บงานความสอดคล้องของ query public
+- ใส่รูปแบบเดียวกันทุกจุด:
+  - `throw error` เมื่อ query พลาด
+  - ใช้ `data ?? []` / `maybeSingle()`
+  - เพิ่ม `retry` แบบจำกัดใน public queries
+  - ไม่ให้ query รอง เช่น ราคาผ่อน หรือ search suggestions ทำให้หน้าหลักดูเหมือนพังทั้งหน้า
+
+5. ตรวจผลกระทบหลังแก้
+- หน้าเป้าหมายที่ต้องกลับมาทำงาน:
+  - `/`
+  - `/products`
+  - `/about`
+  - `/contact`
+  - `/products/:id`
+- จะเน้นให้ “สินค้าขึ้นก่อน” และ “ข้อมูลร้านขึ้นก่อน” แม้ customer auth ยังไม่มี session
+
+ไฟล์ที่คาดว่าจะต้องแก้
+- `src/contexts/CustomerAuthContext.tsx`
+- `src/contexts/AuthContext.tsx`
 - `src/hooks/useSiteSettings.ts`
-เป้าหมายคือทำให้ทุกหน้า public ใช้รูปแบบ query ที่ปลอดภัยเหมือนกัน และไม่พังเงียบเมื่อ query ใด query หนึ่งมีปัญหา
-
-3. ปรับ logic การแสดงสินค้าให้ไม่พึ่งราคาผ่อนในการ render รายการ
-- ตอนนี้มีสินค้าแค่ 1 ตัวที่มีราคาผ่อนจริงในตาราง `product_installment_prices`
-- จะคงให้ “สินค้าทั้งหมด” แสดงครบก่อน
-- สินค้าที่ไม่มีราคาผ่อนให้แสดงแบบไม่มีราคา/ปุ่มจอง หรือมีข้อความกำกับแทน ไม่ควรถูกซ่อนจาก grid
-
-4. เพิ่มสถานะหน้า public ให้ debug ได้ง่าย
-- ถ้า query พลาด ให้มีข้อความ error และปุ่มลองใหม่
-- ถ้าไม่มีสินค้าจริง ให้แสดง empty state ที่ชัดเจน
-- ลดโอกาสที่ผู้ใช้เห็นแต่ skeleton แล้วไม่รู้ว่าเกิดอะไรขึ้น
-
-5. ตรวจผลกระทบกับหน้าอื่น
-- หน้าแรก `/`
-- `/about`
-- `/contact`
-- `/products`
-- `/products/:id`
-รวมถึง navbar search ที่มี query สินค้าแยกอีกชุดหนึ่ง เพื่อไม่ให้ query ด้านบนไปกระทบหน้า public ทั้งระบบ
-
-ไฟล์ที่จะปรับ
 - `src/components/ProductCatalog.tsx`
 - `src/components/ProductSearchBar.tsx`
+- `src/components/PromoBanners.tsx`
 - `src/pages/ProductDetail.tsx`
-- `src/pages/PublicProducts.tsx`
-- `src/hooks/useSiteSettings.ts` (ถ้าต้องทำให้รูปแบบ loading/error สอดคล้องกัน)
+- อาจรวม `src/pages/Home.tsx`, `src/pages/About.tsx`, `src/pages/Contact.tsx` ถ้าต้องเพิ่ม error/empty UI
 
 รายละเอียดเทคนิค
-- จากข้อมูลที่ตรวจแล้ว backend มีข้อมูลและ policy เปิดอ่าน public อยู่แล้ว จึงไม่ใช่ปัญหา RLS เป็นหลัก
-- ความเสี่ยงสูงสุดอยู่ที่ฝั่ง React Query + การ render state ในหน้า public
-- แนวทางที่เหมาะคือทำให้หน้า `/products` render จาก `products` query ได้โดยตรง แล้วค่อยเติมข้อมูลผ่อนทีหลัง แทนการให้ประสบการณ์ทั้งหน้าดูเหมือน “ไม่มีข้อมูล”
+- จากโค้ดและอาการตอนนี้ ปัญหาไม่น่าใช่ RLS หรือไม่มีข้อมูลในฐานข้อมูล
+- จุดเสี่ยงที่สุดคือ auth event callback ที่ยิง query ซ้อนแบบ await ใน `CustomerAuthContext`
+- การแก้รอบนี้จะเริ่มจาก provider ก่อน แล้วค่อยเก็บ query/fallback ของ public pages เพื่อไม่ให้เกิดอาการ skeleton ค้างทั้งระบบอีก
