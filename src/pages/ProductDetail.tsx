@@ -97,6 +97,7 @@ export default function ProductDetail() {
       return (data ?? []) as { plan_id: string; monthly_price: number }[];
     },
     enabled: !!id,
+    retry: 2,
   });
 
   const { data: similarProducts } = useQuery({
