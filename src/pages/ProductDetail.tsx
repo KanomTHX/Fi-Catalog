@@ -57,6 +57,7 @@ export default function ProductDetail() {
       return data;
     },
     enabled: !!id,
+    retry: 2,
   });
 
   const { data: extraImages } = useQuery({
