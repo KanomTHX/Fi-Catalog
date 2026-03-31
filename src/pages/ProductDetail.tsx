@@ -52,7 +52,7 @@ export default function ProductDetail() {
   const { data: product, isLoading } = useQuery({
     queryKey: ["product-detail", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*, categories(name)").eq("id", id!).single();
+      const { data, error } = await supabase.from("products").select("*, categories(name)").eq("id", id!).maybeSingle();
       if (error) throw error;
       return data;
     },
