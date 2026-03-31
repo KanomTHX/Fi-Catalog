@@ -24,6 +24,7 @@ function useBanners() {
       }>;
     },
     staleTime: 60_000,
+    retry: 2,
   });
 }
 

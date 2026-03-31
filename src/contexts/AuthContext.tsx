@@ -26,12 +26,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Enums<"app_role"> | null>(null);
   const [loading, setLoading] = useState(true);
 
+  async function fetchUserData(userId: string) {
+    try {
+      const [profileRes, roleRes] = await Promise.all([
+        supabase.from("profiles").select("full_name, avatar_url").eq("id", userId).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
+      ]);
+      setProfile(profileRes.data);
+      setRole(roleRes.data?.role ?? null);
+    } catch {
+      // silently fail
+    }
+    setLoading(false);
+  }
+
   useEffect(() => {
+    // 1. Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        void fetchUserData(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // 2. Listen — NON-ASYNC, fire-and-forget
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        setTimeout(() => fetchUserData(session.user.id), 0);
+        void fetchUserData(session.user.id);
       } else {
         setProfile(null);
         setRole(null);
@@ -39,28 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserData(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
     return () => subscription.unsubscribe();
   }, []);
-
-  async function fetchUserData(userId: string) {
-    const [profileRes, roleRes] = await Promise.all([
-      supabase.from("profiles").select("full_name, avatar_url").eq("id", userId).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
-    ]);
-    setProfile(profileRes.data);
-    setRole(roleRes.data?.role ?? null);
-    setLoading(false);
-  }
 
   const signOut = async () => {
     await supabase.auth.signOut();

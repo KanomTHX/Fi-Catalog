@@ -52,11 +52,12 @@ export default function ProductDetail() {
   const { data: product, isLoading } = useQuery({
     queryKey: ["product-detail", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*, categories(name)").eq("id", id!).single();
+      const { data, error } = await supabase.from("products").select("*, categories(name)").eq("id", id!).maybeSingle();
       if (error) throw error;
       return data;
     },
     enabled: !!id,
+    retry: 2,
   });
 
   const { data: extraImages } = useQuery({
@@ -88,13 +89,15 @@ export default function ProductDetail() {
   const { data: productInstallmentPrices } = useQuery({
     queryKey: ["product-installment-prices", id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("product_installment_prices" as any)
+      const { data, error } = await supabase
+        .from("product_installment_prices")
         .select("plan_id, monthly_price")
         .eq("product_id", id!);
-      return (data as unknown) as { plan_id: string; monthly_price: number }[] ?? [];
+      if (error) throw error;
+      return (data ?? []) as { plan_id: string; monthly_price: number }[];
     },
     enabled: !!id,
+    retry: 2,
   });
 
   const { data: similarProducts } = useQuery({
@@ -379,7 +382,7 @@ function MiniProductCard({ product: p }: { product: any }) {
   const { data: minPrice } = useQuery({
     queryKey: ["mini-installment-price", p.id],
     queryFn: async () => {
-      const { data } = await supabase.from("product_installment_prices" as any).select("monthly_price").eq("product_id", p.id).gt("monthly_price", 0).order("monthly_price", { ascending: true }).limit(1);
+      const { data } = await supabase.from("product_installment_prices").select("monthly_price").eq("product_id", p.id).gt("monthly_price", 0).order("monthly_price", { ascending: true }).limit(1);
       return data && data.length > 0 ? (data[0] as any).monthly_price : null;
     },
     staleTime: 60_000,
