@@ -89,11 +89,12 @@ export default function ProductDetail() {
   const { data: productInstallmentPrices } = useQuery({
     queryKey: ["product-installment-prices", id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("product_installment_prices" as any)
+      const { data, error } = await supabase
+        .from("product_installment_prices")
         .select("plan_id, monthly_price")
         .eq("product_id", id!);
-      return (data as unknown) as { plan_id: string; monthly_price: number }[] ?? [];
+      if (error) throw error;
+      return (data ?? []) as { plan_id: string; monthly_price: number }[];
     },
     enabled: !!id,
   });
