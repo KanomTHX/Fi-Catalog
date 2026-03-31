@@ -382,7 +382,7 @@ function MiniProductCard({ product: p }: { product: any }) {
   const { data: minPrice } = useQuery({
     queryKey: ["mini-installment-price", p.id],
     queryFn: async () => {
-      const { data } = await supabase.from("product_installment_prices" as any).select("monthly_price").eq("product_id", p.id).gt("monthly_price", 0).order("monthly_price", { ascending: true }).limit(1);
+      const { data } = await supabase.from("product_installment_prices").select("monthly_price").eq("product_id", p.id).gt("monthly_price", 0).order("monthly_price", { ascending: true }).limit(1);
       return data && data.length > 0 ? (data[0] as any).monthly_price : null;
     },
     staleTime: 60_000,

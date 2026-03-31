@@ -31,5 +31,6 @@ export function useSiteSettings() {
       return data as unknown as SiteSettings;
     },
     staleTime: 60_000,
+    retry: 2,
   });
 }

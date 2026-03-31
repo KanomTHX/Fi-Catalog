@@ -33,45 +33,43 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState<CustomerProfile | null>(null);
 
-  const fetchCustomer = useCallback(async (userId: string, email: string | undefined) => {
-    // Try to find customer by auth_user_id first
-    let { data } = await supabase
-      .from("customers")
-      .select("id, display_name, phone, address, picture_url")
-      .eq("auth_user_id", userId)
-      .maybeSingle();
-
-    if (!data && email) {
-      // Try matching by phone (fallback)
-      // No match — customer will be created at checkout
+  const fetchCustomer = useCallback(async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from("customers")
+        .select("id, display_name, phone, address, picture_url")
+        .eq("auth_user_id", userId)
+        .maybeSingle();
+      setCustomer(data as CustomerProfile | null);
+    } catch {
+      // silently fail — customer data is optional
     }
-
-    setCustomer(data as CustomerProfile | null);
   }, []);
 
   const refreshCustomer = useCallback(async () => {
-    if (user) await fetchCustomer(user.id, user.email);
+    if (user) await fetchCustomer(user.id);
   }, [user, fetchCustomer]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchCustomer(session.user.id, session.user.email);
-      } else {
-        setCustomer(null);
-      }
-      setLoading(false);
-    });
-
+    // 1. Get initial session first
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchCustomer(session.user.id, session.user.email);
+        void fetchCustomer(session.user.id);
       }
       setLoading(false);
+    });
+
+    // 2. Listen for changes — NON-ASYNC callback, fire-and-forget fetchCustomer
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        void fetchCustomer(session.user.id);
+      } else {
+        setCustomer(null);
+      }
     });
 
     return () => subscription.unsubscribe();
