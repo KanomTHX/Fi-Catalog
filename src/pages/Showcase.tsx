@@ -196,11 +196,20 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
               </div>
             );
           })()}
-          <div className="flex items-center justify-end pt-1">
-            <Button onClick={() => { onAddCart(product); onClose(); }}>
-              <ShoppingCart className="h-4 w-4 mr-2" /> เพิ่มลงตะกร้า
-            </Button>
-          </div>
+          {(() => {
+            const hasAnyPlan = installmentPrices.some(ip => ip.product_id === product.id && ip.monthly_price > 0);
+            return (
+              <div className="flex items-center justify-end pt-1">
+                {hasAnyPlan ? (
+                  <Button onClick={() => { onAddCart(product); onClose(); }}>
+                    <ShoppingCart className="h-4 w-4 mr-2" /> เพิ่มลงตะกร้า
+                  </Button>
+                ) : (
+                  <p className="text-sm text-muted-foreground">สินค้ายังไม่มีแผนผ่อนชำระ</p>
+                )}
+              </div>
+            );
+          })()}
         </div>
         </div>
       </DialogContent>
