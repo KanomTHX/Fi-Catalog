@@ -516,9 +516,15 @@ export default function Showcase() {
     setter(arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val]);
   }
 
+  // Check if all cart items have installment pricing for any plan
+  const cartHasPlans = useMemo(() => {
+    return cart.every(c => installmentPrices.some(ip => ip.product_id === c.product.id && ip.monthly_price > 0));
+  }, [cart, installmentPrices]);
+
   async function handleCheckout() {
     if (!custName.trim()) { toast({ title: "กรุณากรอกชื่อ", variant: "destructive" }); return; }
     if (cart.length === 0) return;
+    if (!liffSelectedPlan) { toast({ title: "กรุณาเลือกแผนผ่อนชำระ", variant: "destructive" }); return; }
     setSubmitting(true);
     try {
       let customerId: string;
