@@ -107,7 +107,7 @@ function ProductCard({ product, onClick, onAddCart, index, monthlyPrice, maxMont
 }
 
 // ─── Product Detail Dialog ───
-function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPlans }: { product: Product | null; open: boolean; onClose: () => void; onAddCart: (p: Product) => void; installmentPlans: { months: number; interest_rate: number | null }[] }) {
+function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPlans, installmentPrices }: { product: Product | null; open: boolean; onClose: () => void; onAddCart: (p: Product) => void; installmentPlans: { id: string; months: number; interest_rate: number | null }[]; installmentPrices: { product_id: string; plan_id: string; monthly_price: number }[] }) {
   const [images, setImages] = useState<string[]>([]);
   const [selectedImg, setSelectedImg] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -125,7 +125,6 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
   }, [product?.id]);
 
   if (!product) return null;
-  const effectivePrice = product.discount_price ?? product.selling_price ?? 0;
 
   return (
     <>
@@ -172,17 +171,18 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
             {product.color && <Badge variant="secondary">สี: {product.color}</Badge>}
             {product.dimensions && <Badge variant="secondary">ขนาด: {product.dimensions}</Badge>}
           </div>
-          {/* Installment plans */}
-          {installmentPlans.length > 0 && effectivePrice > 0 && (
+          {/* Installment plans from product_installment_prices */}
+          {installmentPlans.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-xs font-medium text-muted-foreground">แผนผ่อนชำระ</p>
               <div className="flex flex-wrap gap-2">
-                {installmentPlans.map((plan, i) => {
-                  const monthly = Math.ceil(effectivePrice * (1 + (plan.interest_rate || 0) / 100) / plan.months);
+                {installmentPlans.map((plan) => {
+                  const fixedPrice = installmentPrices.find(ip => ip.product_id === product.id && ip.plan_id === plan.id);
+                  if (!fixedPrice || fixedPrice.monthly_price <= 0) return null;
                   return (
-                    <div key={i} className="bg-muted rounded-lg px-3 py-2 text-center min-w-[70px]">
+                    <div key={plan.id} className="bg-muted rounded-lg px-3 py-2 text-center min-w-[70px]">
                       <p className="text-[10px] text-muted-foreground">{plan.months} เดือน</p>
-                      <p className="text-sm font-bold text-primary">{formatPrice(monthly)}</p>
+                      <p className="text-sm font-bold text-primary">{formatPrice(fixedPrice.monthly_price)}</p>
                       <p className="text-[9px] text-muted-foreground">/เดือน</p>
                     </div>
                   );
@@ -290,7 +290,8 @@ export default function Showcase() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orderCounts, setOrderCounts] = useState<OrderCount[]>([]);
-  const [installmentPlans, setInstallmentPlans] = useState<{ months: number; interest_rate: number | null }[]>([]);
+  const [installmentPlans, setInstallmentPlans] = useState<{ id: string; months: number; interest_rate: number | null }[]>([]);
+  const [installmentPrices, setInstallmentPrices] = useState<{ product_id: string; plan_id: string; monthly_price: number }[]>([]);
   const [selectedCat, setSelectedCat] = useState("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -339,7 +340,7 @@ export default function Showcase() {
   const [linkOrderCode, setLinkOrderCode] = useState("");
   const [linkingOrder, setLinkingOrder] = useState(false);
 
-  const cartTotal = cart.reduce((sum, c) => sum + (c.product.discount_price ?? c.product.selling_price ?? 0) * c.qty, 0);
+  const cartTotal = 0; // Prices determined at checkout via installment plan selection
   const cartCount = cart.reduce((sum, c) => sum + c.qty, 0);
   const liffLaunchUrl = liffId ? `https://liff.line.me/${liffId}` : null;
 
@@ -382,17 +383,19 @@ export default function Showcase() {
   // ─── Fetch products & site settings ───
   useEffect(() => {
     async function fetchData() {
-      const [prodRes, catRes, orderCountRes, siteRes, planRes] = await Promise.all([
+      const [prodRes, catRes, orderCountRes, siteRes, planRes, priceRes] = await Promise.all([
         supabase.from("products").select("id, name, sku, selling_price, discount_price, image_url, category_id, brand, description, weight, location, color, material, dimensions, is_new, is_featured, created_at, categories(name)").order("created_at", { ascending: false }),
         supabase.from("categories").select("*").order("name"),
         supabase.from("product_order_counts" as any).select("*"),
         supabase.from("site_settings").select("*").limit(1).single(),
-        supabase.from("installment_plans").select("months, interest_rate").eq("is_active", true).order("months", { ascending: false }),
+        supabase.from("installment_plans").select("id, months, interest_rate").eq("is_active", true).order("months", { ascending: false }),
+        supabase.from("product_installment_prices").select("product_id, plan_id, monthly_price"),
       ]);
       if (prodRes.data) setProducts(prodRes.data as any);
       if (catRes.data) setCategories(catRes.data);
       if (orderCountRes.data) setOrderCounts(orderCountRes.data as any);
       if (planRes.data) setInstallmentPlans(planRes.data as any);
+      if (priceRes.data) setInstallmentPrices(priceRes.data as any);
       if (siteRes.data) {
         setSiteName((siteRes.data as any).site_name || "StockFlow");
         setLogoUrl((siteRes.data as any).logo_url || null);
@@ -440,11 +443,22 @@ export default function Showcase() {
   const specialOffers = useMemo(() => products.filter(p => p.discount_price != null && p.discount_price < (p.selling_price || 0)), [products]);
 
   const maxMonthsPlan = useMemo(() => installmentPlans.length > 0 ? installmentPlans[0] : null, [installmentPlans]);
+
+  const getMinMonthlyPrice = (productId: string): number | null => {
+    const prices = installmentPrices.filter(p => p.product_id === productId && p.monthly_price > 0);
+    if (prices.length === 0) return null;
+    return Math.min(...prices.map(p => p.monthly_price));
+  };
+
   const getMonthlyPrice = (p: Product) => {
-    if (!maxMonthsPlan) return null;
-    const price = p.discount_price ?? p.selling_price;
-    if (!price || price <= 0) return null;
-    return Math.ceil(price * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months);
+    if (!maxMonthsPlan) return getMinMonthlyPrice(p.id);
+    const price = installmentPrices.find(ip => ip.product_id === p.id && ip.plan_id === maxMonthsPlan.id);
+    return price?.monthly_price || getMinMonthlyPrice(p.id);
+  };
+
+  const getMonthlyPriceForPlan = (productId: string, planId: string): number | null => {
+    const price = installmentPrices.find(ip => ip.product_id === productId && ip.plan_id === planId);
+    return price?.monthly_price || null;
   };
 
   const filtered = useMemo(() => {
@@ -518,10 +532,17 @@ export default function Showcase() {
         if (error) throw error;
       }
       const orderId = crypto.randomUUID();
-      const monthlyAmt = maxMonthsPlan && liffSelectedPlan ? Math.ceil(cartTotal * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months) : null;
-      const { error: orderErr } = await supabase.from("orders").insert({ id: orderId, customer_id: customerId, total_amount: cartTotal, note: custNote || null, delivery_method: liffDeliveryMethod, installment_months: liffSelectedPlan, monthly_amount: monthlyAmt } as any);
+      const selectedPlanObj = installmentPlans.find(p => p.months === liffSelectedPlan);
+      const monthlyAmt = selectedPlanObj ? cart.reduce((sum, c) => {
+        const mp = getMonthlyPriceForPlan(c.product.id, selectedPlanObj.id);
+        return sum + (mp || 0) * c.qty;
+      }, 0) : null;
+      const { error: orderErr } = await supabase.from("orders").insert({ id: orderId, customer_id: customerId, total_amount: 0, note: custNote || null, delivery_method: liffDeliveryMethod, installment_months: liffSelectedPlan, monthly_amount: monthlyAmt } as any);
       if (orderErr) throw orderErr;
-      const items = cart.map((c) => ({ order_id: orderId, product_id: c.product.id, quantity: c.qty, unit_price: c.product.discount_price ?? c.product.selling_price ?? 0 }));
+      const items = cart.map((c) => {
+        const unitPrice = selectedPlanObj ? (getMonthlyPriceForPlan(c.product.id, selectedPlanObj.id) || 0) : 0;
+        return { order_id: orderId, product_id: c.product.id, quantity: c.qty, unit_price: unitPrice };
+      });
       const { error: itemErr } = await supabase.from("order_items").insert(items);
       if (itemErr) throw itemErr;
       // Send LINE notification (fire-and-forget)
@@ -532,10 +553,10 @@ export default function Showcase() {
         body: JSON.stringify({
           order_id: orderId,
           customer_name: custName.trim(),
-          total_amount: cartTotal,
+          total_amount: monthlyAmt || 0,
           item_count: cart.length,
           delivery_method: liffDeliveryMethod,
-          monthly_amount: maxMonthsPlan && liffSelectedPlan ? Math.ceil(cartTotal * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months) : null,
+          monthly_amount: monthlyAmt,
           installment_months: liffSelectedPlan,
           product_names: cart.map((c) => c.product.name),
         }),
@@ -1099,11 +1120,14 @@ export default function Showcase() {
                 <Label className="font-semibold">แผนผ่อนชำระ</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {installmentPlans.map((plan) => {
-                    const monthly = cartTotal > 0 ? Math.ceil(cartTotal * (1 + (plan.interest_rate || 0) / 100) / plan.months) : 0;
+                    const totalMonthly = cart.reduce((sum, c) => {
+                      const mp = getMonthlyPriceForPlan(c.product.id, plan.id);
+                      return sum + (mp || 0) * c.qty;
+                    }, 0);
                     return (
                       <Button key={plan.months} type="button" variant={liffSelectedPlan === plan.months ? "default" : "outline"} size="sm" className="flex flex-col h-auto py-2" onClick={() => setLiffSelectedPlan(plan.months)}>
                         <span className="text-xs">{plan.months} เดือน</span>
-                        <span className="text-xs font-bold">{formatPrice(monthly)}/เดือน</span>
+                        <span className="text-xs font-bold">{totalMonthly > 0 ? `${formatPrice(totalMonthly)}/เดือน` : "—"}</span>
                       </Button>
                     );
                   })}
@@ -1114,10 +1138,23 @@ export default function Showcase() {
             <div className="space-y-2"><Label>หมายเหตุ</Label><Textarea value={custNote} onChange={(e) => setCustNote(e.target.value)} placeholder="หมายเหตุเพิ่มเติม..." rows={2} /></div>
             <div className="bg-muted rounded-lg p-3 space-y-1.5">
               {cart.map((c) => {
-                const monthlyP = getMonthlyPrice(c.product);
+                const selectedPlanObj = installmentPlans.find(p => p.months === liffSelectedPlan);
+                const monthlyP = selectedPlanObj ? getMonthlyPriceForPlan(c.product.id, selectedPlanObj.id) : getMonthlyPrice(c.product);
                 return (<div key={c.product.id} className="flex justify-between text-sm"><span className="truncate mr-2">{c.product.name} x{c.qty}</span><span className="font-mono shrink-0">{monthlyP ? `${formatPrice(monthlyP * c.qty)}/เดือน` : "—"}</span></div>);
               })}
-              <div className="border-t pt-1.5 flex justify-between font-medium"><span>ยอดผ่อน/เดือน</span><span className="text-primary font-bold">{maxMonthsPlan ? formatPrice(Math.ceil(cartTotal * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months)) + "/เดือน" : formatPrice(cartTotal)}</span></div>
+              {(() => {
+                const selectedPlanObj = installmentPlans.find(p => p.months === liffSelectedPlan);
+                const totalMonthly = selectedPlanObj ? cart.reduce((sum, c) => {
+                  const mp = getMonthlyPriceForPlan(c.product.id, selectedPlanObj.id);
+                  return sum + (mp || 0) * c.qty;
+                }, 0) : 0;
+                return (
+                  <div className="border-t pt-1.5 flex justify-between font-medium">
+                    <span>ยอดผ่อน/เดือน</span>
+                    <span className="text-primary font-bold">{totalMonthly > 0 ? `${formatPrice(totalMonthly)}/เดือน` : "—"}</span>
+                  </div>
+                );
+              })()}
             </div>
             <Button className="w-full" size="lg" onClick={handleCheckout} disabled={submitting}>{submitting ? "กำลังส่งคำสั่งจอง..." : "ยืนยันสั่งจอง"}</Button>
           </div>
@@ -1153,7 +1190,7 @@ export default function Showcase() {
         </DialogContent>
       </Dialog>
 
-      <ProductDetailDialog product={selectedProduct} open={!!selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={addToCart} installmentPlans={installmentPlans} />
+      <ProductDetailDialog product={selectedProduct} open={!!selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={addToCart} installmentPlans={installmentPlans} installmentPrices={installmentPrices} />
 
       {/* Link Order Dialog */}
       <Dialog open={linkOrderOpen} onOpenChange={setLinkOrderOpen}>
