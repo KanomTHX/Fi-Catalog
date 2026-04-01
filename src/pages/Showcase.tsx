@@ -107,7 +107,7 @@ function ProductCard({ product, onClick, onAddCart, index, monthlyPrice, maxMont
 }
 
 // ─── Product Detail Dialog ───
-function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPlans }: { product: Product | null; open: boolean; onClose: () => void; onAddCart: (p: Product) => void; installmentPlans: { months: number; interest_rate: number | null }[] }) {
+function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPlans, installmentPrices }: { product: Product | null; open: boolean; onClose: () => void; onAddCart: (p: Product) => void; installmentPlans: { id: string; months: number; interest_rate: number | null }[]; installmentPrices: { product_id: string; plan_id: string; monthly_price: number }[] }) {
   const [images, setImages] = useState<string[]>([]);
   const [selectedImg, setSelectedImg] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
