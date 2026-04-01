@@ -125,7 +125,6 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
   }, [product?.id]);
 
   if (!product) return null;
-  const effectivePrice = product.discount_price ?? product.selling_price ?? 0;
 
   return (
     <>
