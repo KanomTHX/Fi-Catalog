@@ -171,30 +171,45 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
             {product.color && <Badge variant="secondary">สี: {product.color}</Badge>}
             {product.dimensions && <Badge variant="secondary">ขนาด: {product.dimensions}</Badge>}
           </div>
-          {/* Installment plans from product_installment_prices */}
-          {installmentPlans.length > 0 && (
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">แผนผ่อนชำระ</p>
-              <div className="flex flex-wrap gap-2">
-                {installmentPlans.map((plan) => {
-                  const fixedPrice = installmentPrices.find(ip => ip.product_id === product.id && ip.plan_id === plan.id);
-                  if (!fixedPrice || fixedPrice.monthly_price <= 0) return null;
-                  return (
-                    <div key={plan.id} className="bg-muted rounded-lg px-3 py-2 text-center min-w-[70px]">
-                      <p className="text-[10px] text-muted-foreground">{plan.months} เดือน</p>
-                      <p className="text-sm font-bold text-primary">{formatPrice(fixedPrice.monthly_price)}</p>
-                      <p className="text-[9px] text-muted-foreground">/เดือน</p>
-                    </div>
-                  );
-                })}
+          {/* Installment plans from product_installment_prices — only show plans with data */}
+          {(() => {
+            const plansWithPrice = installmentPlans.filter(plan => {
+              const fp = installmentPrices.find(ip => ip.product_id === product.id && ip.plan_id === plan.id);
+              return fp && fp.monthly_price > 0;
+            });
+            if (plansWithPrice.length === 0) return null;
+            return (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">แผนผ่อนชำระ</p>
+                <div className="flex flex-wrap gap-2">
+                  {plansWithPrice.map((plan) => {
+                    const fixedPrice = installmentPrices.find(ip => ip.product_id === product.id && ip.plan_id === plan.id)!;
+                    return (
+                      <div key={plan.id} className="bg-muted rounded-lg px-3 py-2 text-center min-w-[70px]">
+                        <p className="text-[10px] text-muted-foreground">{plan.months} เดือน</p>
+                        <p className="text-sm font-bold text-primary">{formatPrice(fixedPrice.monthly_price)}</p>
+                        <p className="text-[9px] text-muted-foreground">/เดือน</p>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
-          <div className="flex items-center justify-end pt-1">
-            <Button onClick={() => { onAddCart(product); onClose(); }}>
-              <ShoppingCart className="h-4 w-4 mr-2" /> เพิ่มลงตะกร้า
-            </Button>
-          </div>
+            );
+          })()}
+          {(() => {
+            const hasAnyPlan = installmentPrices.some(ip => ip.product_id === product.id && ip.monthly_price > 0);
+            return (
+              <div className="flex items-center justify-end pt-1">
+                {hasAnyPlan ? (
+                  <Button onClick={() => { onAddCart(product); onClose(); }}>
+                    <ShoppingCart className="h-4 w-4 mr-2" /> เพิ่มลงตะกร้า
+                  </Button>
+                ) : (
+                  <p className="text-sm text-muted-foreground">สินค้ายังไม่มีแผนผ่อนชำระ</p>
+                )}
+              </div>
+            );
+          })()}
         </div>
         </div>
       </DialogContent>
@@ -493,6 +508,11 @@ export default function Showcase() {
     setFilterBrands([]); setFilterMaterials([]); setFilterColors([]); setMaxWidth(""); setPriceRange([0, maxPrice]);
   }
   function addToCart(product: Product) {
+    const hasAnyPlan = installmentPrices.some(ip => ip.product_id === product.id && ip.monthly_price > 0);
+    if (!hasAnyPlan) {
+      toast({ title: "สินค้ายังไม่มีแผนผ่อนชำระ", description: "ไม่สามารถจองได้ในขณะนี้", variant: "destructive" });
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((c) => c.product.id === product.id);
       if (existing) return prev.map((c) => c.product.id === product.id ? { ...c, qty: c.qty + 1 } : c);
@@ -510,9 +530,15 @@ export default function Showcase() {
     setter(arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val]);
   }
 
+  // Check if all cart items have installment pricing for any plan
+  const cartHasPlans = useMemo(() => {
+    return cart.every(c => installmentPrices.some(ip => ip.product_id === c.product.id && ip.monthly_price > 0));
+  }, [cart, installmentPrices]);
+
   async function handleCheckout() {
     if (!custName.trim()) { toast({ title: "กรุณากรอกชื่อ", variant: "destructive" }); return; }
     if (cart.length === 0) return;
+    if (!liffSelectedPlan) { toast({ title: "กรุณาเลือกแผนผ่อนชำระ", variant: "destructive" }); return; }
     setSubmitting(true);
     try {
       let customerId: string;
@@ -1114,20 +1140,21 @@ export default function Showcase() {
               </div>
             </div>
 
-            {/* Installment Plan */}
+            {/* Installment Plan — only show plans that have pricing for all cart items */}
             {installmentPlans.length > 0 && (
               <div className="space-y-2">
-                <Label className="font-semibold">แผนผ่อนชำระ</Label>
+                <Label className="font-semibold">แผนผ่อนชำระ *</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {installmentPlans.map((plan) => {
                     const totalMonthly = cart.reduce((sum, c) => {
                       const mp = getMonthlyPriceForPlan(c.product.id, plan.id);
                       return sum + (mp || 0) * c.qty;
                     }, 0);
+                    if (totalMonthly <= 0) return null;
                     return (
                       <Button key={plan.months} type="button" variant={liffSelectedPlan === plan.months ? "default" : "outline"} size="sm" className="flex flex-col h-auto py-2" onClick={() => setLiffSelectedPlan(plan.months)}>
                         <span className="text-xs">{plan.months} เดือน</span>
-                        <span className="text-xs font-bold">{totalMonthly > 0 ? `${formatPrice(totalMonthly)}/เดือน` : "—"}</span>
+                        <span className="text-xs font-bold">{formatPrice(totalMonthly)}/เดือน</span>
                       </Button>
                     );
                   })}
