@@ -54,6 +54,20 @@ export function useUpdateOrderStatus() {
           details: { order_id: orderId },
         });
       }
+
+      // Notify customer via LINE (fire-and-forget)
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      if (projectId) {
+        fetch(`https://${projectId}.supabase.co/functions/v1/line-notify-status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            order_id: orderId,
+            new_status: status,
+            reason: reason || null,
+          }),
+        }).catch(() => {});
+      }
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["orders"] });
