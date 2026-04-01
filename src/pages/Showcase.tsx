@@ -1113,11 +1113,14 @@ export default function Showcase() {
                 <Label className="font-semibold">แผนผ่อนชำระ</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {installmentPlans.map((plan) => {
-                    const monthly = cartTotal > 0 ? Math.ceil(cartTotal * (1 + (plan.interest_rate || 0) / 100) / plan.months) : 0;
+                    const totalMonthly = cart.reduce((sum, c) => {
+                      const mp = getMonthlyPriceForPlan(c.product.id, plan.id);
+                      return sum + (mp || 0) * c.qty;
+                    }, 0);
                     return (
                       <Button key={plan.months} type="button" variant={liffSelectedPlan === plan.months ? "default" : "outline"} size="sm" className="flex flex-col h-auto py-2" onClick={() => setLiffSelectedPlan(plan.months)}>
                         <span className="text-xs">{plan.months} เดือน</span>
-                        <span className="text-xs font-bold">{formatPrice(monthly)}/เดือน</span>
+                        <span className="text-xs font-bold">{totalMonthly > 0 ? `${formatPrice(totalMonthly)}/เดือน` : "—"}</span>
                       </Button>
                     );
                   })}
@@ -1128,10 +1131,23 @@ export default function Showcase() {
             <div className="space-y-2"><Label>หมายเหตุ</Label><Textarea value={custNote} onChange={(e) => setCustNote(e.target.value)} placeholder="หมายเหตุเพิ่มเติม..." rows={2} /></div>
             <div className="bg-muted rounded-lg p-3 space-y-1.5">
               {cart.map((c) => {
-                const monthlyP = getMonthlyPrice(c.product);
+                const selectedPlanObj = installmentPlans.find(p => p.months === liffSelectedPlan);
+                const monthlyP = selectedPlanObj ? getMonthlyPriceForPlan(c.product.id, selectedPlanObj.id) : getMonthlyPrice(c.product);
                 return (<div key={c.product.id} className="flex justify-between text-sm"><span className="truncate mr-2">{c.product.name} x{c.qty}</span><span className="font-mono shrink-0">{monthlyP ? `${formatPrice(monthlyP * c.qty)}/เดือน` : "—"}</span></div>);
               })}
-              <div className="border-t pt-1.5 flex justify-between font-medium"><span>ยอดผ่อน/เดือน</span><span className="text-primary font-bold">{maxMonthsPlan ? formatPrice(Math.ceil(cartTotal * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months)) + "/เดือน" : formatPrice(cartTotal)}</span></div>
+              {(() => {
+                const selectedPlanObj = installmentPlans.find(p => p.months === liffSelectedPlan);
+                const totalMonthly = selectedPlanObj ? cart.reduce((sum, c) => {
+                  const mp = getMonthlyPriceForPlan(c.product.id, selectedPlanObj.id);
+                  return sum + (mp || 0) * c.qty;
+                }, 0) : 0;
+                return (
+                  <div className="border-t pt-1.5 flex justify-between font-medium">
+                    <span>ยอดผ่อน/เดือน</span>
+                    <span className="text-primary font-bold">{totalMonthly > 0 ? `${formatPrice(totalMonthly)}/เดือน` : "—"}</span>
+                  </div>
+                );
+              })()}
             </div>
             <Button className="w-full" size="lg" onClick={handleCheckout} disabled={submitting}>{submitting ? "กำลังส่งคำสั่งจอง..." : "ยืนยันสั่งจอง"}</Button>
           </div>
