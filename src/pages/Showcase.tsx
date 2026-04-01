@@ -171,25 +171,31 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
             {product.color && <Badge variant="secondary">สี: {product.color}</Badge>}
             {product.dimensions && <Badge variant="secondary">ขนาด: {product.dimensions}</Badge>}
           </div>
-          {/* Installment plans from product_installment_prices */}
-          {installmentPlans.length > 0 && (
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">แผนผ่อนชำระ</p>
-              <div className="flex flex-wrap gap-2">
-                {installmentPlans.map((plan) => {
-                  const fixedPrice = installmentPrices.find(ip => ip.product_id === product.id && ip.plan_id === plan.id);
-                  if (!fixedPrice || fixedPrice.monthly_price <= 0) return null;
-                  return (
-                    <div key={plan.id} className="bg-muted rounded-lg px-3 py-2 text-center min-w-[70px]">
-                      <p className="text-[10px] text-muted-foreground">{plan.months} เดือน</p>
-                      <p className="text-sm font-bold text-primary">{formatPrice(fixedPrice.monthly_price)}</p>
-                      <p className="text-[9px] text-muted-foreground">/เดือน</p>
-                    </div>
-                  );
-                })}
+          {/* Installment plans from product_installment_prices — only show plans with data */}
+          {(() => {
+            const plansWithPrice = installmentPlans.filter(plan => {
+              const fp = installmentPrices.find(ip => ip.product_id === product.id && ip.plan_id === plan.id);
+              return fp && fp.monthly_price > 0;
+            });
+            if (plansWithPrice.length === 0) return null;
+            return (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">แผนผ่อนชำระ</p>
+                <div className="flex flex-wrap gap-2">
+                  {plansWithPrice.map((plan) => {
+                    const fixedPrice = installmentPrices.find(ip => ip.product_id === product.id && ip.plan_id === plan.id)!;
+                    return (
+                      <div key={plan.id} className="bg-muted rounded-lg px-3 py-2 text-center min-w-[70px]">
+                        <p className="text-[10px] text-muted-foreground">{plan.months} เดือน</p>
+                        <p className="text-sm font-bold text-primary">{formatPrice(fixedPrice.monthly_price)}</p>
+                        <p className="text-[9px] text-muted-foreground">/เดือน</p>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
           <div className="flex items-center justify-end pt-1">
             <Button onClick={() => { onAddCart(product); onClose(); }}>
               <ShoppingCart className="h-4 w-4 mr-2" /> เพิ่มลงตะกร้า
