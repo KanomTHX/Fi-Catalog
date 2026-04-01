@@ -340,7 +340,7 @@ export default function Showcase() {
   const [linkOrderCode, setLinkOrderCode] = useState("");
   const [linkingOrder, setLinkingOrder] = useState(false);
 
-  const cartTotal = cart.reduce((sum, c) => sum + (c.product.discount_price ?? c.product.selling_price ?? 0) * c.qty, 0);
+  const cartTotal = 0; // Prices determined at checkout via installment plan selection
   const cartCount = cart.reduce((sum, c) => sum + c.qty, 0);
   const liffLaunchUrl = liffId ? `https://liff.line.me/${liffId}` : null;
 
