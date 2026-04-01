@@ -553,10 +553,10 @@ export default function Showcase() {
         body: JSON.stringify({
           order_id: orderId,
           customer_name: custName.trim(),
-          total_amount: cartTotal,
+          total_amount: monthlyAmt || 0,
           item_count: cart.length,
           delivery_method: liffDeliveryMethod,
-          monthly_amount: maxMonthsPlan && liffSelectedPlan ? Math.ceil(cartTotal * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months) : null,
+          monthly_amount: monthlyAmt,
           installment_months: liffSelectedPlan,
           product_names: cart.map((c) => c.product.name),
         }),
