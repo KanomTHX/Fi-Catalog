@@ -171,17 +171,18 @@ function ProductDetailDialog({ product, open, onClose, onAddCart, installmentPla
             {product.color && <Badge variant="secondary">สี: {product.color}</Badge>}
             {product.dimensions && <Badge variant="secondary">ขนาด: {product.dimensions}</Badge>}
           </div>
-          {/* Installment plans */}
-          {installmentPlans.length > 0 && effectivePrice > 0 && (
+          {/* Installment plans from product_installment_prices */}
+          {installmentPlans.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-xs font-medium text-muted-foreground">แผนผ่อนชำระ</p>
               <div className="flex flex-wrap gap-2">
-                {installmentPlans.map((plan, i) => {
-                  const monthly = Math.ceil(effectivePrice * (1 + (plan.interest_rate || 0) / 100) / plan.months);
+                {installmentPlans.map((plan) => {
+                  const fixedPrice = installmentPrices.find(ip => ip.product_id === product.id && ip.plan_id === plan.id);
+                  if (!fixedPrice || fixedPrice.monthly_price <= 0) return null;
                   return (
-                    <div key={i} className="bg-muted rounded-lg px-3 py-2 text-center min-w-[70px]">
+                    <div key={plan.id} className="bg-muted rounded-lg px-3 py-2 text-center min-w-[70px]">
                       <p className="text-[10px] text-muted-foreground">{plan.months} เดือน</p>
-                      <p className="text-sm font-bold text-primary">{formatPrice(monthly)}</p>
+                      <p className="text-sm font-bold text-primary">{formatPrice(fixedPrice.monthly_price)}</p>
                       <p className="text-[9px] text-muted-foreground">/เดือน</p>
                     </div>
                   );
