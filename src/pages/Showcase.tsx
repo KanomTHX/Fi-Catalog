@@ -1135,20 +1135,21 @@ export default function Showcase() {
               </div>
             </div>
 
-            {/* Installment Plan */}
+            {/* Installment Plan — only show plans that have pricing for all cart items */}
             {installmentPlans.length > 0 && (
               <div className="space-y-2">
-                <Label className="font-semibold">แผนผ่อนชำระ</Label>
+                <Label className="font-semibold">แผนผ่อนชำระ *</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {installmentPlans.map((plan) => {
                     const totalMonthly = cart.reduce((sum, c) => {
                       const mp = getMonthlyPriceForPlan(c.product.id, plan.id);
                       return sum + (mp || 0) * c.qty;
                     }, 0);
+                    if (totalMonthly <= 0) return null;
                     return (
                       <Button key={plan.months} type="button" variant={liffSelectedPlan === plan.months ? "default" : "outline"} size="sm" className="flex flex-col h-auto py-2" onClick={() => setLiffSelectedPlan(plan.months)}>
                         <span className="text-xs">{plan.months} เดือน</span>
-                        <span className="text-xs font-bold">{totalMonthly > 0 ? `${formatPrice(totalMonthly)}/เดือน` : "—"}</span>
+                        <span className="text-xs font-bold">{formatPrice(totalMonthly)}/เดือน</span>
                       </Button>
                     );
                   })}
