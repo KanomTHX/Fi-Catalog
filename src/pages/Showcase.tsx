@@ -1167,7 +1167,7 @@ export default function Showcase() {
         </DialogContent>
       </Dialog>
 
-      <ProductDetailDialog product={selectedProduct} open={!!selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={addToCart} installmentPlans={installmentPlans} />
+      <ProductDetailDialog product={selectedProduct} open={!!selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={addToCart} installmentPlans={installmentPlans} installmentPrices={installmentPrices} />
 
       {/* Link Order Dialog */}
       <Dialog open={linkOrderOpen} onOpenChange={setLinkOrderOpen}>
