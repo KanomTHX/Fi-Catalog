@@ -443,11 +443,22 @@ export default function Showcase() {
   const specialOffers = useMemo(() => products.filter(p => p.discount_price != null && p.discount_price < (p.selling_price || 0)), [products]);
 
   const maxMonthsPlan = useMemo(() => installmentPlans.length > 0 ? installmentPlans[0] : null, [installmentPlans]);
+
+  const getMinMonthlyPrice = (productId: string): number | null => {
+    const prices = installmentPrices.filter(p => p.product_id === productId && p.monthly_price > 0);
+    if (prices.length === 0) return null;
+    return Math.min(...prices.map(p => p.monthly_price));
+  };
+
   const getMonthlyPrice = (p: Product) => {
-    if (!maxMonthsPlan) return null;
-    const price = p.discount_price ?? p.selling_price;
-    if (!price || price <= 0) return null;
-    return Math.ceil(price * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months);
+    if (!maxMonthsPlan) return getMinMonthlyPrice(p.id);
+    const price = installmentPrices.find(ip => ip.product_id === p.id && ip.plan_id === maxMonthsPlan.id);
+    return price?.monthly_price || getMinMonthlyPrice(p.id);
+  };
+
+  const getMonthlyPriceForPlan = (productId: string, planId: string): number | null => {
+    const price = installmentPrices.find(ip => ip.product_id === productId && ip.plan_id === planId);
+    return price?.monthly_price || null;
   };
 
   const filtered = useMemo(() => {
