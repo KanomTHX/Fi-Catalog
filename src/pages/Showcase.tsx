@@ -532,10 +532,17 @@ export default function Showcase() {
         if (error) throw error;
       }
       const orderId = crypto.randomUUID();
-      const monthlyAmt = maxMonthsPlan && liffSelectedPlan ? Math.ceil(cartTotal * (1 + (maxMonthsPlan.interest_rate || 0) / 100) / maxMonthsPlan.months) : null;
-      const { error: orderErr } = await supabase.from("orders").insert({ id: orderId, customer_id: customerId, total_amount: cartTotal, note: custNote || null, delivery_method: liffDeliveryMethod, installment_months: liffSelectedPlan, monthly_amount: monthlyAmt } as any);
+      const selectedPlanObj = installmentPlans.find(p => p.months === liffSelectedPlan);
+      const monthlyAmt = selectedPlanObj ? cart.reduce((sum, c) => {
+        const mp = getMonthlyPriceForPlan(c.product.id, selectedPlanObj.id);
+        return sum + (mp || 0) * c.qty;
+      }, 0) : null;
+      const { error: orderErr } = await supabase.from("orders").insert({ id: orderId, customer_id: customerId, total_amount: 0, note: custNote || null, delivery_method: liffDeliveryMethod, installment_months: liffSelectedPlan, monthly_amount: monthlyAmt } as any);
       if (orderErr) throw orderErr;
-      const items = cart.map((c) => ({ order_id: orderId, product_id: c.product.id, quantity: c.qty, unit_price: c.product.discount_price ?? c.product.selling_price ?? 0 }));
+      const items = cart.map((c) => {
+        const unitPrice = selectedPlanObj ? (getMonthlyPriceForPlan(c.product.id, selectedPlanObj.id) || 0) : 0;
+        return { order_id: orderId, product_id: c.product.id, quantity: c.qty, unit_price: unitPrice };
+      });
       const { error: itemErr } = await supabase.from("order_items").insert(items);
       if (itemErr) throw itemErr;
       // Send LINE notification (fire-and-forget)
