@@ -508,6 +508,11 @@ export default function Showcase() {
     setFilterBrands([]); setFilterMaterials([]); setFilterColors([]); setMaxWidth(""); setPriceRange([0, maxPrice]);
   }
   function addToCart(product: Product) {
+    const hasAnyPlan = installmentPrices.some(ip => ip.product_id === product.id && ip.monthly_price > 0);
+    if (!hasAnyPlan) {
+      toast({ title: "สินค้ายังไม่มีแผนผ่อนชำระ", description: "ไม่สามารถจองได้ในขณะนี้", variant: "destructive" });
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((c) => c.product.id === product.id);
       if (existing) return prev.map((c) => c.product.id === product.id ? { ...c, qty: c.qty + 1 } : c);
