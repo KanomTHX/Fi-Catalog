@@ -44,7 +44,7 @@ export default function Products() {
   const [creatingCat, setCreatingCat] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [serialDialogProduct, setSerialDialogProduct] = useState<{ id: string; name: string } | null>(null);
+  const [serialDialogProduct, setSerialDialogProduct] = useState<{ id: string; name: string; sku: string | null } | null>(null);
 
   const [extraImages, setExtraImages] = useState<ExtraImage[]>([]);
   const [variants, setVariants] = useState<VariantRow[]>([]);
