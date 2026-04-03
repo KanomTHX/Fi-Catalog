@@ -549,6 +549,18 @@ export default function Showcase() {
     if (!liffSelectedPlan) { toast({ title: "กรุณาเลือกแผนผ่อนชำระ", variant: "destructive" }); return; }
     setSubmitting(true);
     try {
+      // Re-check stock before submitting
+      const { data: freshStock } = await supabase.from("product_stock").select("product_id, current_stock").in("product_id", cart.map(c => c.product.id));
+      const outOfStock = cart.filter(c => {
+        const s = freshStock?.find((s: any) => s.product_id === c.product.id);
+        return !s || (s as any).current_stock <= 0;
+      });
+      if (outOfStock.length > 0) {
+        toast({ title: "สินค้าหมด", description: `${outOfStock.map(c => c.product.name).join(", ")} ไม่มีสินค้าในสต็อก`, variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
+
       let customerId: string;
       if (liffProfile?.userId) {
         const { data: existing } = await supabase.from("customers").select("id").eq("line_user_id", liffProfile.userId).maybeSingle();
