@@ -516,6 +516,11 @@ export default function Showcase() {
       toast({ title: "สินค้ายังไม่มีแผนผ่อนชำระ", description: "ไม่สามารถจองได้ในขณะนี้", variant: "destructive" });
       return;
     }
+    const stock = stockMap.get(product.id) ?? 0;
+    if (stock <= 0) {
+      toast({ title: "สินค้าหมด", description: `${product.name} ไม่มีสินค้าในสต็อก`, variant: "destructive" });
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((c) => c.product.id === product.id);
       if (existing) return prev.map((c) => c.product.id === product.id ? { ...c, qty: c.qty + 1 } : c);
