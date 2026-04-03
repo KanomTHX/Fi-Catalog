@@ -382,7 +382,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">
                     {displayedProducts.map((p, i) => (
-                      <ProductCard key={p.id} product={p} index={i} monthlyPrice={getMonthlyPrice(p)} maxMonths={maxMonthsPlan?.months} />
+                      <ProductCard key={p.id} product={p} index={i} monthlyPrice={getMonthlyPrice(p)} maxMonths={maxMonthsPlan?.months} outOfStock={getStock(p.id) <= 0} />
                     ))}
                   </div>
                   {!showAll && filtered.length > 12 && (
