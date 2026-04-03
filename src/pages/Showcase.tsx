@@ -337,6 +337,7 @@ export default function Showcase() {
   const [custNote, setCustNote] = useState("");
   const [liffDeliveryMethod, setLiffDeliveryMethod] = useState("pickup");
   const [liffSelectedPlan, setLiffSelectedPlan] = useState<number | null>(null);
+  const [stockMap, setStockMap] = useState<Map<string, number>>(new Map());
 
   // Customer portal
   const [customer, setCustomer] = useState<CustomerRow | null>(null);
