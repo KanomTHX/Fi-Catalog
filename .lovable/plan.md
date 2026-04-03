@@ -1,59 +1,64 @@
 
-แผนแก้ไขรอบนี้จะโฟกัสที่ “ต้นเหตุร่วม” ก่อน เพราะอาการเกิดทั้ง Preview และ Published และทุกหน้า public ค้างเป็น skeleton เหมือนกัน
 
-1. แก้ shared auth/provider ที่น่าจะทำให้ query public ค้างทั้งแอป
-- ไฟล์หลัก: `src/contexts/CustomerAuthContext.tsx`
-- ตอนนี้ `onAuthStateChange` เป็น async และ `await fetchCustomer(...)` อยู่ใน callback ซึ่งเสี่ยงทำให้ auth/session restore ค้าง และลากให้ query public ไม่เริ่มหรือ pending ยาว
-- จะ refactor ให้ callback ไม่ await อะไรเลย:
-  - set `session` / `user` ก่อน
-  - ถ้ามี user ให้เรียก `void fetchCustomer(...)`
-  - ตั้ง `loading`/`isReady` ให้จบจาก `getSession()` อย่างชัดเจน
-- ถ้าจำเป็นจะปรับ `src/contexts/AuthContext.tsx` ให้ใช้ pattern เดียวกันเพื่อให้ behavior สม่ำเสมอ
+## แผนแก้ไข 4 ส่วน
 
-2. ทำให้ public pages ไม่ผูกชะตากับ auth initialization
-- ตรวจและปรับ query ในหน้า public ให้สามารถวิ่งได้แม้ customer session ยังไม่พร้อม
-- จุดที่เกี่ยวข้อง:
-  - `src/hooks/useSiteSettings.ts`
-  - `src/components/ProductCatalog.tsx`
-  - `src/components/ProductSearchBar.tsx`
-  - `src/components/PromoBanners.tsx`
-  - `src/pages/ProductDetail.tsx`
-- เป้าหมายคือ ถ้า auth ยัง restore อยู่ หน้า public ต้องยังโหลดข้อมูลจาก backend ได้ตามปกติ
+### 1. ระบบจัดการรูปแบนเนอร์ — Image Crop/Fit ก่อนอัปโหลด
 
-3. ทำ fallback/error state ให้ทุกหน้า public
-- ตอนนี้หลายหน้ามีแต่ loading state หรือ fallback เงียบ ๆ
-- จะเพิ่ม handling ให้ชัดเจน:
-  - `/products` แยก `products` ออกจาก `installment prices` ต่อไป
-  - `/`, `/about`, `/contact` ถ้า settings โหลดไม่ได้ ให้มี error/empty state ชัดเจน แทนการดูเหมือนค้าง
-  - `/products/:id` เปลี่ยนจุดที่เสี่ยงจาก `.single()` เป็น `.maybeSingle()` แล้วแสดง “ไม่พบสินค้า” ให้ถูกต้อง
+**ปัญหา**: อัปโหลดรูปขนาดใหญ่เกินแนะนำ (2048x448) แล้วระบบ crop จน object-cover เสียสัดส่วน
 
-4. เก็บงานความสอดคล้องของ query public
-- ใส่รูปแบบเดียวกันทุกจุด:
-  - `throw error` เมื่อ query พลาด
-  - ใช้ `data ?? []` / `maybeSingle()`
-  - เพิ่ม `retry` แบบจำกัดใน public queries
-  - ไม่ให้ query รอง เช่น ราคาผ่อน หรือ search suggestions ทำให้หน้าหลักดูเหมือนพังทั้งหน้า
+**แก้ไขที่** `src/pages/SiteSettings.tsx`:
+- เพิ่ม image preview ขนาดจริง (aspect ratio 2048:448 ≈ 4.57:1) ก่อนอัปโหลด
+- ใช้ Canvas API client-side เพื่อ resize/fit รูปให้ตรง 2048x448 ก่อนอัปโหลดจริง:
+  - ถ้ารูปที่อัปมาใหญ่เกิน → ย่อให้พอดี 2048px กว้าง แล้ว crop ส่วนสูงให้ 448px (center crop)
+  - แสดง preview ของรูปที่ crop แล้ว ก่อนยืนยัน
+- เปลี่ยนจาก `object-cover` เป็น `object-contain` ที่ preview รูปแบนเนอร์ในหน้า settings เพื่อเห็นสัดส่วนจริง
+- ใช้ pattern เดียวกันทั้ง "แบนเนอร์สินค้าแนะนำ" และ "แบนเนอร์สินค้าทั้งหมด"
 
-5. ตรวจผลกระทบหลังแก้
-- หน้าเป้าหมายที่ต้องกลับมาทำงาน:
-  - `/`
-  - `/products`
-  - `/about`
-  - `/contact`
-  - `/products/:id`
-- จะเน้นให้ “สินค้าขึ้นก่อน” และ “ข้อมูลร้านขึ้นก่อน” แม้ customer auth ยังไม่มี session
+### 2. ปรับปรุง Barcode/Serial Number — Product Code + Serial Number
 
-ไฟล์ที่คาดว่าจะต้องแก้
-- `src/contexts/CustomerAuthContext.tsx`
-- `src/contexts/AuthContext.tsx`
-- `src/hooks/useSiteSettings.ts`
-- `src/components/ProductCatalog.tsx`
-- `src/components/ProductSearchBar.tsx`
-- `src/components/PromoBanners.tsx`
-- `src/pages/ProductDetail.tsx`
-- อาจรวม `src/pages/Home.tsx`, `src/pages/About.tsx`, `src/pages/Contact.tsx` ถ้าต้องเพิ่ม error/empty UI
+**ปัญหา**: ตอนนี้ barcode label แสดงแค่ serial code อย่างเดียว ต้องการให้มี Product Code (SKU) ด้านบน และ Serial Number ด้านล่าง
 
-รายละเอียดเทคนิค
-- จากโค้ดและอาการตอนนี้ ปัญหาไม่น่าใช่ RLS หรือไม่มีข้อมูลในฐานข้อมูล
-- จุดเสี่ยงที่สุดคือ auth event callback ที่ยิง query ซ้อนแบบ await ใน `CustomerAuthContext`
-- การแก้รอบนี้จะเริ่มจาก provider ก่อน แล้วค่อยเก็บ query/fallback ของ public pages เพื่อไม่ให้เกิดอาการ skeleton ค้างทั้งระบบอีก
+**แก้ไขที่** `src/pages/SerialPrint.tsx`:
+- เปลี่ยน `BarcodeLabel` component ให้รับ `sku` prop เพิ่ม
+- Layout ใหม่ของ label:
+  - บรรทัดที่ 1: ชื่อสินค้า (productName)
+  - บรรทัดที่ 2: Product Code (SKU) — ตัวหนังสือ
+  - บรรทัดที่ 3: Barcode (Code 39) ของ serial code
+  - บรรทัดที่ 4: Serial Number — ตัวหนังสือ
+- ส่ง `sku` จาก product data ที่มีอยู่แล้วผ่าน `useProducts()`
+
+**แก้ไขที่** `src/components/SerialNumberDialog.tsx`:
+- แสดง SKU ของสินค้าใน dialog header ให้ชัดเจน
+
+### 3. เช็คสต็อกก่อนจอง — ทั้ง Web และ LIFF
+
+**ปัญหา**: สินค้าที่สต็อกหมดยังสามารถจองได้
+
+**แก้ไขที่** `src/pages/Checkout.tsx` (Web):
+- ก่อน `handleSubmit()` ดำเนินการ insert order → query `product_stock` view เช็คทุก item ในตะกร้า
+- ถ้าสินค้าใดมี `current_stock <= 0` → แจ้ง toast error + ไม่ให้จอง
+- แสดงข้อความว่าสินค้าตัวไหน "สินค้าหมด"
+
+**แก้ไขที่** `src/pages/Showcase.tsx` (LIFF):
+- เพิ่ม fetch `product_stock` view เมื่อ load data
+- `addToCart()` → เช็คสต็อกก่อนเพิ่ม ถ้า `current_stock <= 0` → toast "สินค้าหมด"
+- `handleCheckout()` → เช็คสต็อกอีกครั้งก่อน submit
+
+**แก้ไขที่** `src/components/ProductCatalog.tsx` (Web catalog):
+- Fetch `product_stock` ด้วย
+- แสดง badge "สินค้าหมด" บน product card ถ้า `current_stock <= 0`
+
+**แก้ไขที่** `src/contexts/CartContext.tsx` (Web cart):
+- `addToCart()` → รับ stock data เป็นพารามิเตอร์เสริม หรือเช็คจาก query ก่อนเพิ่ม
+
+### 4. ไฟล์ที่ต้องแก้ไข
+
+| ไฟล์ | สิ่งที่เปลี่ยน |
+|---|---|
+| `src/pages/SiteSettings.tsx` | Image crop/resize ก่อนอัปโหลดแบนเนอร์ |
+| `src/pages/SerialPrint.tsx` | Label layout: SKU ด้านบน + Serial ด้านล่าง |
+| `src/pages/Checkout.tsx` | เช็คสต็อกก่อนยืนยันจอง |
+| `src/pages/Showcase.tsx` | เช็คสต็อกก่อนเพิ่มตะกร้า/จอง (LIFF) |
+| `src/components/ProductCatalog.tsx` | แสดง badge สินค้าหมด |
+| `src/contexts/CartContext.tsx` | อาจเพิ่ม stock validation |
+
