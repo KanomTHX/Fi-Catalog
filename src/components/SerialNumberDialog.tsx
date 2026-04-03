@@ -19,9 +19,9 @@ const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondar
 };
 
 export function SerialNumberDialog({
-  open, onOpenChange, productId, productName,
+  open, onOpenChange, productId, productName, productSku,
 }: {
-  open: boolean; onOpenChange: (o: boolean) => void; productId: string; productName: string;
+  open: boolean; onOpenChange: (o: boolean) => void; productId: string; productName: string; productSku?: string | null;
 }) {
   const { data: serials = [], isLoading } = useSerialNumbers(productId);
   const createSerial = useCreateSerial();
@@ -61,7 +61,10 @@ export function SerialNumberDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Serial Numbers — {productName}</DialogTitle>
+          <DialogTitle>
+            Serial Numbers — {productName}
+            {productSku && <span className="ml-2 text-sm font-normal text-muted-foreground">(SKU: {productSku})</span>}
+          </DialogTitle>
         </DialogHeader>
 
         {/* Stock info */}

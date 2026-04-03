@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useProducts } from "@/hooks/useProducts";
 import { useSerialNumbers } from "@/hooks/useSerialNumbers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,20 +8,21 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Printer } from "lucide-react";
 import { renderCode39ToCanvas } from "@/lib/code39";
 
-function BarcodeLabel({ serialCode, productName }: { serialCode: string; productName: string }) {
+function BarcodeLabel({ serialCode, productName, sku }: { serialCode: string; productName: string; sku: string | null }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (canvasRef.current) {
-      renderCode39ToCanvas(canvasRef.current, serialCode, { width: 250, height: 50 });
+      renderCode39ToCanvas(canvasRef.current, serialCode, { width: 250, height: 40 });
     }
   }, [serialCode]);
 
   return (
-    <div className="label-item border border-border rounded-md p-3 flex flex-col items-center gap-1 bg-background" style={{ width: '60mm', height: '30mm', pageBreakInside: 'avoid' }}>
-      <div className="text-xs font-medium truncate w-full text-center">{productName}</div>
+    <div className="label-item border border-border rounded-md p-2 flex flex-col items-center gap-0.5 bg-background" style={{ width: '60mm', height: '30mm', pageBreakInside: 'avoid' }}>
+      <div className="text-[9px] font-medium truncate w-full text-center leading-tight">{productName}</div>
+      {sku && <div className="text-[8px] font-mono text-muted-foreground">SKU: {sku}</div>}
       <canvas ref={canvasRef} className="w-full" />
-      <div className="text-[10px] font-mono tracking-wider">{serialCode}</div>
+      <div className="text-[9px] font-mono tracking-wider">S/N: {serialCode}</div>
     </div>
   );
 }
@@ -33,7 +34,9 @@ export default function SerialPrint() {
   const [selectedSerials, setSelectedSerials] = useState<Set<string>>(new Set());
 
   const inStockSerials = serials.filter((s: any) => s.status === "in_stock");
-  const productName = products.find((p) => p.id === selectedProduct)?.name ?? "";
+  const product = products.find((p) => p.id === selectedProduct);
+  const productName = product?.name ?? "";
+  const productSku = product?.sku ?? null;
 
   const toggleSerial = (id: string) => {
     setSelectedSerials((prev) => {
@@ -70,7 +73,7 @@ export default function SerialPrint() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">พิมพ์ฉลากบาร์โค้ด</h1>
-          <p className="text-muted-foreground">เลือกสินค้าและ Serial Numbers เพื่อพิมพ์ฉลาก Code 39</p>
+          <p className="text-muted-foreground">เลือกสินค้าและ Serial Numbers เพื่อพิมพ์ฉลาก — SKU (Product Code) + Serial Number</p>
         </div>
 
         <Card>
@@ -135,7 +138,7 @@ export default function SerialPrint() {
             <CardContent>
               <div className="print-area flex flex-wrap gap-3">
                 {selectedItems.map((s: any) => (
-                  <BarcodeLabel key={s.id} serialCode={s.serial_code} productName={productName} />
+                  <BarcodeLabel key={s.id} serialCode={s.serial_code} productName={productName} sku={productSku} />
                 ))}
               </div>
             </CardContent>
