@@ -514,6 +514,7 @@ export default function Products() {
           onOpenChange={(o) => !o && setSerialDialogProduct(null)}
           productId={serialDialogProduct.id}
           productName={serialDialogProduct.name}
+          productSku={serialDialogProduct.sku}
         />
       )}
     </div>
