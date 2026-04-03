@@ -398,19 +398,21 @@ export default function Showcase() {
   // ─── Fetch products & site settings ───
   useEffect(() => {
     async function fetchData() {
-      const [prodRes, catRes, orderCountRes, siteRes, planRes, priceRes] = await Promise.all([
+      const [prodRes, catRes, orderCountRes, siteRes, planRes, priceRes, stockRes] = await Promise.all([
         supabase.from("products").select("id, name, sku, selling_price, discount_price, image_url, category_id, brand, description, weight, location, color, material, dimensions, is_new, is_featured, created_at, categories(name)").order("created_at", { ascending: false }),
         supabase.from("categories").select("*").order("name"),
         supabase.from("product_order_counts" as any).select("*"),
         supabase.from("site_settings").select("*").limit(1).single(),
         supabase.from("installment_plans").select("id, months, interest_rate").eq("is_active", true).order("months", { ascending: false }),
         supabase.from("product_installment_prices").select("product_id, plan_id, monthly_price"),
+        supabase.from("product_stock").select("product_id, current_stock"),
       ]);
       if (prodRes.data) setProducts(prodRes.data as any);
       if (catRes.data) setCategories(catRes.data);
       if (orderCountRes.data) setOrderCounts(orderCountRes.data as any);
       if (planRes.data) setInstallmentPlans(planRes.data as any);
       if (priceRes.data) setInstallmentPrices(priceRes.data as any);
+      if (stockRes.data) setStockMap(new Map((stockRes.data as any[]).map(s => [s.product_id, s.current_stock ?? 0])));
       if (siteRes.data) {
         setSiteName((siteRes.data as any).site_name || "StockFlow");
         setLogoUrl((siteRes.data as any).logo_url || null);
