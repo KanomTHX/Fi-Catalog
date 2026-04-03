@@ -80,6 +80,22 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     retry: 2,
   });
 
+  const { data: productStock } = useQuery({
+    queryKey: ["public-product-stock"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("product_stock").select("product_id, current_stock");
+      if (error) throw error;
+      return (data ?? []) as { product_id: string; current_stock: number | null }[];
+    },
+    staleTime: 30_000,
+    retry: 2,
+  });
+
+  const getStock = (productId: string): number => {
+    const s = productStock?.find(s => s.product_id === productId);
+    return s?.current_stock ?? 0;
+  };
+
   const { data: categories } = useQuery({
     queryKey: ["public-categories"],
     queryFn: async () => {
