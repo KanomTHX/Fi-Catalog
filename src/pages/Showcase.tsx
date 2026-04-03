@@ -337,6 +337,7 @@ export default function Showcase() {
   const [custNote, setCustNote] = useState("");
   const [liffDeliveryMethod, setLiffDeliveryMethod] = useState("pickup");
   const [liffSelectedPlan, setLiffSelectedPlan] = useState<number | null>(null);
+  const [stockMap, setStockMap] = useState<Map<string, number>>(new Map());
 
   // Customer portal
   const [customer, setCustomer] = useState<CustomerRow | null>(null);
@@ -398,19 +399,21 @@ export default function Showcase() {
   // ─── Fetch products & site settings ───
   useEffect(() => {
     async function fetchData() {
-      const [prodRes, catRes, orderCountRes, siteRes, planRes, priceRes] = await Promise.all([
+      const [prodRes, catRes, orderCountRes, siteRes, planRes, priceRes, stockRes] = await Promise.all([
         supabase.from("products").select("id, name, sku, selling_price, discount_price, image_url, category_id, brand, description, weight, location, color, material, dimensions, is_new, is_featured, created_at, categories(name)").order("created_at", { ascending: false }),
         supabase.from("categories").select("*").order("name"),
         supabase.from("product_order_counts" as any).select("*"),
         supabase.from("site_settings").select("*").limit(1).single(),
         supabase.from("installment_plans").select("id, months, interest_rate").eq("is_active", true).order("months", { ascending: false }),
         supabase.from("product_installment_prices").select("product_id, plan_id, monthly_price"),
+        supabase.from("product_stock").select("product_id, current_stock"),
       ]);
       if (prodRes.data) setProducts(prodRes.data as any);
       if (catRes.data) setCategories(catRes.data);
       if (orderCountRes.data) setOrderCounts(orderCountRes.data as any);
       if (planRes.data) setInstallmentPlans(planRes.data as any);
       if (priceRes.data) setInstallmentPrices(priceRes.data as any);
+      if (stockRes.data) setStockMap(new Map((stockRes.data as any[]).map(s => [s.product_id, s.current_stock ?? 0])));
       if (siteRes.data) {
         setSiteName((siteRes.data as any).site_name || "StockFlow");
         setLogoUrl((siteRes.data as any).logo_url || null);
@@ -513,6 +516,11 @@ export default function Showcase() {
       toast({ title: "สินค้ายังไม่มีแผนผ่อนชำระ", description: "ไม่สามารถจองได้ในขณะนี้", variant: "destructive" });
       return;
     }
+    const stock = stockMap.get(product.id) ?? 0;
+    if (stock <= 0) {
+      toast({ title: "สินค้าหมด", description: `${product.name} ไม่มีสินค้าในสต็อก`, variant: "destructive" });
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((c) => c.product.id === product.id);
       if (existing) return prev.map((c) => c.product.id === product.id ? { ...c, qty: c.qty + 1 } : c);
@@ -541,6 +549,18 @@ export default function Showcase() {
     if (!liffSelectedPlan) { toast({ title: "กรุณาเลือกแผนผ่อนชำระ", variant: "destructive" }); return; }
     setSubmitting(true);
     try {
+      // Re-check stock before submitting
+      const { data: freshStock } = await supabase.from("product_stock").select("product_id, current_stock").in("product_id", cart.map(c => c.product.id));
+      const outOfStock = cart.filter(c => {
+        const s = freshStock?.find((s: any) => s.product_id === c.product.id);
+        return !s || (s as any).current_stock <= 0;
+      });
+      if (outOfStock.length > 0) {
+        toast({ title: "สินค้าหมด", description: `${outOfStock.map(c => c.product.name).join(", ")} ไม่มีสินค้าในสต็อก`, variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
+
       let customerId: string;
       if (liffProfile?.userId) {
         const { data: existing } = await supabase.from("customers").select("id").eq("line_user_id", liffProfile.userId).maybeSingle();

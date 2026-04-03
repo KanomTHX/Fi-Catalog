@@ -80,6 +80,22 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
     retry: 2,
   });
 
+  const { data: productStock } = useQuery({
+    queryKey: ["public-product-stock"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("product_stock").select("product_id, current_stock");
+      if (error) throw error;
+      return (data ?? []) as { product_id: string; current_stock: number | null }[];
+    },
+    staleTime: 30_000,
+    retry: 2,
+  });
+
+  const getStock = (productId: string): number => {
+    const s = productStock?.find(s => s.product_id === productId);
+    return s?.current_stock ?? 0;
+  };
+
   const { data: categories } = useQuery({
     queryKey: ["public-categories"],
     queryFn: async () => {
@@ -366,7 +382,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">
                     {displayedProducts.map((p, i) => (
-                      <ProductCard key={p.id} product={p} index={i} monthlyPrice={getMonthlyPrice(p)} maxMonths={maxMonthsPlan?.months} />
+                      <ProductCard key={p.id} product={p} index={i} monthlyPrice={getMonthlyPrice(p)} maxMonths={maxMonthsPlan?.months} outOfStock={getStock(p.id) <= 0} />
                     ))}
                   </div>
                   {!showAll && filtered.length > 12 && (
@@ -415,11 +431,13 @@ function ProductCard({
   index,
   monthlyPrice,
   maxMonths,
+  outOfStock,
 }: {
   product: Product;
   index: number;
   monthlyPrice: number | null;
   maxMonths?: number;
+  outOfStock?: boolean;
 }) {
   const navigate = useNavigate();
   return (
@@ -432,20 +450,27 @@ function ProductCard({
       <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-border/60 shadow-sm bg-card h-full flex flex-col cursor-pointer" onClick={() => navigate(`/products/${p.id}`)}>
         <div className="aspect-square bg-white relative overflow-hidden">
           {p.image_url ? (
-            <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+            <img src={p.image_url} alt={p.name} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${outOfStock ? "opacity-50" : ""}`} loading="lazy" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground/20">
               <ShoppingBag className="h-12 w-12" />
             </div>
           )}
-          {p.is_new && (
-            <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs shadow-sm">ใหม่</Badge>
-          )}
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            {outOfStock && (
+              <Badge variant="destructive" className="text-xs shadow-sm">สินค้าหมด</Badge>
+            )}
+            {p.is_new && !outOfStock && (
+              <Badge className="bg-primary text-primary-foreground text-xs shadow-sm">ใหม่</Badge>
+            )}
+          </div>
         </div>
         <CardContent className="p-3 sm:p-4 flex flex-col flex-1">
           <h3 className="font-medium text-sm line-clamp-2 text-foreground font-heading min-h-[2.5rem]">{p.name}</h3>
           <div className="mt-auto pt-2">
-            {monthlyPrice ? (
+            {outOfStock ? (
+              <p className="text-sm font-medium text-destructive">สินค้าหมด</p>
+            ) : monthlyPrice ? (
               <div>
                 <p className="text-xs text-muted-foreground">เริ่มต้น</p>
                 <span className="text-primary font-bold text-sm sm:text-base">{formatPrice(monthlyPrice)}</span>

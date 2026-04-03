@@ -44,7 +44,7 @@ export default function Products() {
   const [creatingCat, setCreatingCat] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [serialDialogProduct, setSerialDialogProduct] = useState<{ id: string; name: string } | null>(null);
+  const [serialDialogProduct, setSerialDialogProduct] = useState<{ id: string; name: string; sku: string | null } | null>(null);
 
   const [extraImages, setExtraImages] = useState<ExtraImage[]>([]);
   const [variants, setVariants] = useState<VariantRow[]>([]);
@@ -261,7 +261,7 @@ export default function Products() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1 justify-end">
-                        <Button variant="ghost" size="icon" onClick={() => setSerialDialogProduct({ id: p.id, name: p.name })} title="Serial Numbers"><Hash className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => setSerialDialogProduct({ id: p.id, name: p.name, sku: p.sku || null })} title="Serial Numbers"><Hash className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => setDeleteId(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>
@@ -514,6 +514,7 @@ export default function Products() {
           onOpenChange={(o) => !o && setSerialDialogProduct(null)}
           productId={serialDialogProduct.id}
           productName={serialDialogProduct.name}
+          productSku={serialDialogProduct.sku}
         />
       )}
     </div>

@@ -100,6 +100,25 @@ export default function Checkout() {
       toast({ title: "กรุณาเลือกแผนผ่อนชำระ", variant: "destructive" });
       return;
     }
+    // Stock check before ordering
+    try {
+      const { data: stockRows } = await supabase
+        .from("product_stock")
+        .select("product_id, current_stock, name")
+        .in("product_id", items.map(i => i.id));
+      const outOfStock = items.filter(item => {
+        const stock = stockRows?.find((s: any) => s.product_id === item.id);
+        return !stock || (stock as any).current_stock <= 0;
+      });
+      if (outOfStock.length > 0) {
+        toast({
+          title: "สินค้าหมด",
+          description: `${outOfStock.map(i => i.name).join(", ")} ไม่มีสินค้าในสต็อก`,
+          variant: "destructive",
+        });
+        return;
+      }
+    } catch { }
     setSubmitting(true);
     try {
       // Create or link customer

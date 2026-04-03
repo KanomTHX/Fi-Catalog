@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -6,8 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Loader2, Upload, Image, Plus, Trash2, GripVertical } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Save, Loader2, Upload, Image, Plus, Trash2, GripVertical, Crop } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+
+const BANNER_W = 2048;
+const BANNER_H = 448;
+const BANNER_RATIO = BANNER_W / BANNER_H; // ≈ 4.57
 
 interface BannerRow {
   id: string;
@@ -17,6 +22,112 @@ interface BannerRow {
   link_url: string | null;
   is_active: boolean;
   sort_order: number;
+}
+
+/** Resize & center-crop an image file to BANNER_W × BANNER_H, returns a Blob */
+function cropBannerImage(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = BANNER_W;
+      canvas.height = BANNER_H;
+      const ctx = canvas.getContext("2d")!;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, BANNER_W, BANNER_H);
+
+      const srcRatio = img.width / img.height;
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+      if (srcRatio > BANNER_RATIO) {
+        // wider than target → crop sides
+        sw = img.height * BANNER_RATIO;
+        sx = (img.width - sw) / 2;
+      } else {
+        // taller than target → crop top/bottom
+        sh = img.width / BANNER_RATIO;
+        sy = (img.height - sh) / 2;
+      }
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, BANNER_W, BANNER_H);
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Canvas toBlob failed"));
+      }, "image/jpeg", 0.9);
+    };
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function BannerCropDialog({ open, onOpenChange, file, onConfirm }: {
+  open: boolean; onOpenChange: (o: boolean) => void; file: File | null; onConfirm: (blob: Blob) => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [processing, setProcessing] = useState(false);
+
+  useEffect(() => {
+    if (!file || !open) return;
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      // Preview at reduced size
+      const previewW = Math.min(600, BANNER_W);
+      const previewH = previewW / BANNER_RATIO;
+      canvas.width = previewW;
+      canvas.height = previewH;
+      const ctx = canvas.getContext("2d")!;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, previewW, previewH);
+
+      const srcRatio = img.width / img.height;
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+      if (srcRatio > BANNER_RATIO) {
+        sw = img.height * BANNER_RATIO;
+        sx = (img.width - sw) / 2;
+      } else {
+        sh = img.width / BANNER_RATIO;
+        sy = (img.height - sh) / 2;
+      }
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, previewW, previewH);
+    };
+    img.src = URL.createObjectURL(file);
+    return () => URL.revokeObjectURL(img.src);
+  }, [file, open]);
+
+  const handleConfirm = async () => {
+    if (!file) return;
+    setProcessing(true);
+    try {
+      const blob = await cropBannerImage(file);
+      onConfirm(blob);
+    } catch {
+      // fallback
+    }
+    setProcessing(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Crop className="h-5 w-5" /> ตัวอย่างแบนเนอร์ (2048×448)</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">ระบบจะ crop รูปให้พอดีสัดส่วน 2048×448 โดยอัตโนมัติ ตรวจสอบ preview ด้านล่างก่อนยืนยัน</p>
+          <div className="border border-border rounded-lg overflow-hidden bg-muted">
+            <canvas ref={canvasRef} className="w-full" style={{ aspectRatio: `${BANNER_W}/${BANNER_H}` }} />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>ยกเลิก</Button>
+            <Button onClick={handleConfirm} disabled={processing}>
+              {processing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              ยืนยันและอัปโหลด
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 export default function SiteSettings() {
@@ -40,6 +151,11 @@ export default function SiteSettings() {
   const [instagramUrl, setInstagramUrl] = useState("");
   const [featuredBannerUrl, setFeaturedBannerUrl] = useState<string | null>(null);
   const [allProductsBannerUrl, setAllProductsBannerUrl] = useState<string | null>(null);
+
+  // Banner crop dialog
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropTarget, setCropTarget] = useState<"featured" | "all" | string | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
 
   // Banners
   const [banners, setBanners] = useState<BannerRow[]>([]);
@@ -126,6 +242,37 @@ export default function SiteSettings() {
     setUploading(false);
   }
 
+  // Open crop dialog for section banners
+  function openBannerCrop(file: File, target: "featured" | "all" | string) {
+    setCropFile(file);
+    setCropTarget(target);
+    setCropOpen(true);
+  }
+
+  async function uploadCroppedBanner(blob: Blob) {
+    setCropOpen(false);
+    try {
+      const path = `banner-crop-${Date.now()}.jpg`;
+      const { error } = await supabase.storage.from("site-assets").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("site-assets").getPublicUrl(path);
+
+      if (cropTarget === "featured") {
+        setFeaturedBannerUrl(publicUrl);
+      } else if (cropTarget === "all") {
+        setAllProductsBannerUrl(publicUrl);
+      } else if (cropTarget) {
+        // It's a promo banner id
+        updateBanner(cropTarget, "image_url", publicUrl);
+      }
+      toast({ title: "อัปโหลดแบนเนอร์สำเร็จ" });
+    } catch (e: any) {
+      toast({ title: "อัปโหลดล้มเหลว", description: e.message, variant: "destructive" });
+    }
+    setCropFile(null);
+    setCropTarget(null);
+  }
+
   // Banner CRUD
   async function addBanner() {
     const { data, error } = await supabase
@@ -145,21 +292,6 @@ export default function SiteSettings() {
   async function deleteBanner(id: string) {
     setBanners((prev) => prev.filter((b) => b.id !== id));
     await supabase.from("banners").delete().eq("id", id);
-  }
-
-  async function handleBannerImage(id: string, e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const ext = file.name.split(".").pop();
-      const path = `banner-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true });
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from("site-assets").getPublicUrl(path);
-      updateBanner(id, "image_url", publicUrl);
-    } catch (e: any) {
-      toast({ title: "อัปโหลดล้มเหลว", description: e.message, variant: "destructive" });
-    }
   }
 
   if (loading) return <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground">Loading...</div>;
@@ -257,26 +389,19 @@ export default function SiteSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">แบนเนอร์หน้าสินค้า</CardTitle>
-          <CardDescription>รูปแบนเนอร์สำหรับส่วน "สินค้าแนะนำ" และ "สินค้าทั้งหมด" (แนะนำ 2048x448 px)</CardDescription>
+          <CardDescription>รูปแบนเนอร์สำหรับส่วน "สินค้าแนะนำ" และ "สินค้าทั้งหมด" (แนะนำ 2048×448 px) — ระบบจะ crop ให้พอดีอัตโนมัติ</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>แบนเนอร์สินค้าแนะนำ</Label>
             <div className="flex items-center gap-3">
-              {featuredBannerUrl && <img src={featuredBannerUrl} alt="" className="h-14 w-32 rounded-lg object-cover border border-border" />}
-              <Input type="file" accept="image/*" onChange={async (e) => {
+              {featuredBannerUrl && (
+                <img src={featuredBannerUrl} alt="" className="h-16 rounded-lg object-contain border border-border" style={{ aspectRatio: `${BANNER_W}/${BANNER_H}` }} />
+              )}
+              <Input type="file" accept="image/*" onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (!file) return;
-                try {
-                  const ext = file.name.split(".").pop();
-                  const path = `featured-banner-${Date.now()}.${ext}`;
-                  const { error } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true });
-                  if (error) throw error;
-                  const { data: { publicUrl } } = supabase.storage.from("site-assets").getPublicUrl(path);
-                  setFeaturedBannerUrl(publicUrl);
-                } catch (err: any) {
-                  toast({ title: "อัปโหลดล้มเหลว", description: err.message, variant: "destructive" });
-                }
+                if (file) openBannerCrop(file, "featured");
+                e.target.value = "";
               }} />
             </div>
             {featuredBannerUrl && <Button variant="outline" size="sm" onClick={() => setFeaturedBannerUrl(null)}>ลบแบนเนอร์</Button>}
@@ -284,20 +409,13 @@ export default function SiteSettings() {
           <div className="space-y-2">
             <Label>แบนเนอร์สินค้าทั้งหมด</Label>
             <div className="flex items-center gap-3">
-              {allProductsBannerUrl && <img src={allProductsBannerUrl} alt="" className="h-14 w-32 rounded-lg object-cover border border-border" />}
-              <Input type="file" accept="image/*" onChange={async (e) => {
+              {allProductsBannerUrl && (
+                <img src={allProductsBannerUrl} alt="" className="h-16 rounded-lg object-contain border border-border" style={{ aspectRatio: `${BANNER_W}/${BANNER_H}` }} />
+              )}
+              <Input type="file" accept="image/*" onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (!file) return;
-                try {
-                  const ext = file.name.split(".").pop();
-                  const path = `all-products-banner-${Date.now()}.${ext}`;
-                  const { error } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true });
-                  if (error) throw error;
-                  const { data: { publicUrl } } = supabase.storage.from("site-assets").getPublicUrl(path);
-                  setAllProductsBannerUrl(publicUrl);
-                } catch (err: any) {
-                  toast({ title: "อัปโหลดล้มเหลว", description: err.message, variant: "destructive" });
-                }
+                if (file) openBannerCrop(file, "all");
+                e.target.value = "";
               }} />
             </div>
             {allProductsBannerUrl && <Button variant="outline" size="sm" onClick={() => setAllProductsBannerUrl(null)}>ลบแบนเนอร์</Button>}
@@ -345,8 +463,12 @@ export default function SiteSettings() {
                     maxLength={500}
                   />
                   <div className="flex items-center gap-3">
-                    {b.image_url && <img src={b.image_url} alt="" className="h-12 w-20 rounded-lg object-cover" />}
-                    <Input type="file" accept="image/*" onChange={(e) => handleBannerImage(b.id, e)} className="flex-1" />
+                    {b.image_url && <img src={b.image_url} alt="" className="h-12 rounded-lg object-contain border border-border" style={{ aspectRatio: `${BANNER_W}/${BANNER_H}` }} />}
+                    <Input type="file" accept="image/*" onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) openBannerCrop(file, b.id);
+                      e.target.value = "";
+                    }} className="flex-1" />
                   </div>
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input
@@ -371,6 +493,14 @@ export default function SiteSettings() {
         {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
         บันทึกการตั้งค่า
       </Button>
+
+      {/* Banner Crop Dialog */}
+      <BannerCropDialog
+        open={cropOpen}
+        onOpenChange={setCropOpen}
+        file={cropFile}
+        onConfirm={uploadCroppedBanner}
+      />
     </div>
   );
 }
