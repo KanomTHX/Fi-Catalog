@@ -71,10 +71,8 @@ export default function StockIn() {
               <TableHeader>
                 <TableRow>
                   <TableHead>สินค้า</TableHead>
+                  <TableHead className="hidden sm:table-cell">SKU</TableHead>
                   <TableHead className="text-right">จำนวน</TableHead>
-                  <TableHead className="hidden sm:table-cell">
-                    <span className="inline-flex items-center gap-1"><Barcode className="h-3.5 w-3.5" /> บาร์โค้ด</span>
-                  </TableHead>
                   <TableHead>หมายเหตุ</TableHead>
                   <TableHead>วันที่</TableHead>
                 </TableRow>
