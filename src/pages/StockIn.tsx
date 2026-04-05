@@ -81,11 +81,11 @@ export default function StockIn() {
                 {movements.slice(0, 20).map((m) => (
                   <TableRow key={m.id}>
                     <TableCell className="font-medium">{m.products?.name ?? "—"}</TableCell>
+                    <TableCell className="hidden sm:table-cell font-mono text-xs text-muted-foreground">
+                      {(m.products as any)?.sku ?? "—"}
+                    </TableCell>
                     <TableCell className="text-right font-mono">
                       <Badge variant="default" className="bg-success text-success-foreground">+{m.quantity}</Badge>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell font-mono text-xs text-muted-foreground">
-                      {(m.products as any)?.barcode ?? <span className="italic text-muted-foreground/50">—</span>}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm max-w-48 truncate">{m.note ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{format(new Date(m.created_at), "dd/MM, HH:mm")}</TableCell>

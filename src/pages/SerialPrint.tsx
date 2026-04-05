@@ -13,16 +13,16 @@ function BarcodeLabel({ serialCode, productName, sku }: { serialCode: string; pr
 
   useEffect(() => {
     if (canvasRef.current) {
-      renderCode39ToCanvas(canvasRef.current, serialCode, { width: 250, height: 40 });
+      renderCode39ToCanvas(canvasRef.current, serialCode, { width: 280, height: 45 });
     }
   }, [serialCode]);
 
   return (
-    <div className="label-item border border-border rounded-md p-2 flex flex-col items-center gap-0.5 bg-background" style={{ width: '60mm', height: '30mm', pageBreakInside: 'avoid' }}>
-      <div className="text-[9px] font-medium truncate w-full text-center leading-tight">{productName}</div>
-      {sku && <div className="text-[8px] font-mono text-muted-foreground">SKU: {sku}</div>}
+    <div className="label-item border border-border rounded-md p-3 flex flex-col items-center gap-1 bg-background" style={{ width: '65mm', height: '35mm', pageBreakInside: 'avoid' }}>
+      <div className="text-[10px] font-semibold truncate w-full text-center leading-tight">{productName}</div>
+      {sku && <div className="text-[9px] font-mono text-muted-foreground">Product Code: {sku}</div>}
       <canvas ref={canvasRef} className="w-full" />
-      <div className="text-[9px] font-mono tracking-wider">S/N: {serialCode}</div>
+      <div className="text-[10px] font-mono tracking-wider font-medium">S/N: {serialCode}</div>
     </div>
   );
 }
@@ -73,7 +73,7 @@ export default function SerialPrint() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">พิมพ์ฉลากบาร์โค้ด</h1>
-          <p className="text-muted-foreground">เลือกสินค้าและ Serial Numbers เพื่อพิมพ์ฉลาก — SKU (Product Code) + Serial Number</p>
+          <p className="text-muted-foreground">เลือกสินค้าและ Serial Numbers เพื่อพิมพ์ฉลาก — Product Code (SKU) + Serial Number</p>
         </div>
 
         <Card>

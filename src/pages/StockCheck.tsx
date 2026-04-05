@@ -222,6 +222,7 @@ export default function StockCheck() {
                     <TableRow>
                       <TableHead>Serial Code</TableHead>
                       <TableHead>สินค้า</TableHead>
+                      <TableHead className="hidden sm:table-cell">Product Code</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -229,6 +230,7 @@ export default function StockCheck() {
                       <TableRow key={s.id}>
                         <TableCell className="font-mono text-sm">{s.serial_code}</TableCell>
                         <TableCell>{s.products?.name ?? "—"}</TableCell>
+                        <TableCell className="hidden sm:table-cell font-mono text-xs text-muted-foreground">{s.products?.sku ?? "—"}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
