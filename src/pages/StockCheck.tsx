@@ -165,6 +165,7 @@ export default function StockCheck() {
                   <TableHead>สถานะ</TableHead>
                   <TableHead>Serial Code</TableHead>
                   <TableHead>สินค้า</TableHead>
+                  <TableHead className="hidden sm:table-cell">Product Code</TableHead>
                   <TableHead>เวลา</TableHead>
                 </TableRow>
               </TableHeader>
@@ -180,6 +181,7 @@ export default function StockCheck() {
                     </TableCell>
                     <TableCell className="font-mono text-sm">{s.code}</TableCell>
                     <TableCell>{s.productName ?? "—"}</TableCell>
+                    <TableCell className="hidden sm:table-cell font-mono text-xs text-muted-foreground">{s.productSku ?? "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {s.timestamp.toLocaleTimeString("th-TH")}
                     </TableCell>
