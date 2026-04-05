@@ -10,7 +10,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useStockMovements, useCreateMovement } from "@/hooks/useStockMovements";
 import { ProductCombobox } from "@/components/ProductCombobox";
 import { format } from "date-fns";
-import { ArrowDownToLine, Barcode } from "lucide-react";
+import { ArrowDownToLine } from "lucide-react";
 
 export default function StockIn() {
   const { data: products = [] } = useProducts();
