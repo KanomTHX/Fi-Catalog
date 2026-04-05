@@ -12,6 +12,7 @@ interface ScannedItem {
   code: string;
   found: boolean;
   productName?: string;
+  productSku?: string;
   timestamp: Date;
 }
 
