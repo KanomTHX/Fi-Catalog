@@ -65,6 +65,7 @@ export default function StockCheck() {
       code: trimmed,
       found: !!serial,
       productName: serial?.products?.name,
+      productSku: serial?.products?.sku,
       timestamp: new Date(),
     };
     playBeep(!!serial);
