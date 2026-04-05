@@ -181,6 +181,8 @@ export default function SiteSettings() {
         setInstagramUrl(d.instagram_url || "");
         setFeaturedBannerUrl(d.featured_banner_url || null);
         setAllProductsBannerUrl(d.all_products_banner_url || null);
+        setFeaturedBannerFit(d.featured_banner_fit || "cover");
+        setAllProductsBannerFit(d.all_products_banner_fit || "cover");
       }
       setLoading(false);
     }
