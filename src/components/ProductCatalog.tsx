@@ -254,7 +254,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
       {!selectedCat && featured.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
           {siteSettings?.featured_banner_url ? (
-            <img src={siteSettings.featured_banner_url} alt="สินค้าแนะนำ" className="w-full rounded-2xl mb-8 object-cover" style={{ maxHeight: 224 }} />
+            <img src={siteSettings.featured_banner_url} alt="สินค้าแนะนำ" className="w-full rounded-2xl mb-8" style={{ maxHeight: 224, objectFit: (siteSettings as any).featured_banner_fit || "cover", objectPosition: "center" }} />
           ) : (
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="flex items-center justify-between mb-8">
               <div>
