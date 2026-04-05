@@ -211,6 +211,8 @@ export default function SiteSettings() {
         instagram_url: instagramUrl || null,
         featured_banner_url: featuredBannerUrl || null,
         all_products_banner_url: allProductsBannerUrl || null,
+        featured_banner_fit: featuredBannerFit,
+        all_products_banner_fit: allProductsBannerFit,
       } as any;
 
       if (settingsId) {

@@ -15,6 +15,8 @@ export interface SiteSettings {
   instagram_url: string | null;
   featured_banner_url: string | null;
   all_products_banner_url: string | null;
+  featured_banner_fit: string;
+  all_products_banner_fit: string;
 }
 
 export function useSiteSettings() {
