@@ -566,11 +566,13 @@ export type Database = {
       site_settings: {
         Row: {
           address: string | null
+          all_products_banner_fit: string
           all_products_banner_url: string | null
           company_description: string | null
           created_at: string
           email: string | null
           facebook_url: string | null
+          featured_banner_fit: string
           featured_banner_url: string | null
           google_map_embed: string | null
           id: string
@@ -583,11 +585,13 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          all_products_banner_fit?: string
           all_products_banner_url?: string | null
           company_description?: string | null
           created_at?: string
           email?: string | null
           facebook_url?: string | null
+          featured_banner_fit?: string
           featured_banner_url?: string | null
           google_map_embed?: string | null
           id?: string
@@ -600,11 +604,13 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          all_products_banner_fit?: string
           all_products_banner_url?: string | null
           company_description?: string | null
           created_at?: string
           email?: string | null
           facebook_url?: string | null
+          featured_banner_fit?: string
           featured_banner_url?: string | null
           google_map_embed?: string | null
           id?: string
