@@ -285,7 +285,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
       <section id="products" className="bg-secondary/40 scroll-mt-20">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
           {siteSettings?.all_products_banner_url ? (
-            <img src={siteSettings.all_products_banner_url} alt="สินค้าทั้งหมด" className="w-full rounded-2xl mb-10 object-cover" style={{ maxHeight: 224 }} />
+            <img src={siteSettings.all_products_banner_url} alt="สินค้าทั้งหมด" className="w-full rounded-2xl mb-10" style={{ maxHeight: 224, objectFit: (siteSettings as any).all_products_banner_fit || "cover", objectPosition: "center" }} />
           ) : (
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="text-center mb-10">
               <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-heading">สินค้าทั้งหมด</h2>
