@@ -151,6 +151,8 @@ export default function SiteSettings() {
   const [instagramUrl, setInstagramUrl] = useState("");
   const [featuredBannerUrl, setFeaturedBannerUrl] = useState<string | null>(null);
   const [allProductsBannerUrl, setAllProductsBannerUrl] = useState<string | null>(null);
+  const [featuredBannerFit, setFeaturedBannerFit] = useState("cover");
+  const [allProductsBannerFit, setAllProductsBannerFit] = useState("cover");
 
   // Banner crop dialog
   const [cropFile, setCropFile] = useState<File | null>(null);
