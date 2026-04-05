@@ -12,6 +12,7 @@ interface ScannedItem {
   code: string;
   found: boolean;
   productName?: string;
+  productSku?: string;
   timestamp: Date;
 }
 
@@ -64,6 +65,7 @@ export default function StockCheck() {
       code: trimmed,
       found: !!serial,
       productName: serial?.products?.name,
+      productSku: serial?.products?.sku,
       timestamp: new Date(),
     };
     playBeep(!!serial);
@@ -163,6 +165,7 @@ export default function StockCheck() {
                   <TableHead>สถานะ</TableHead>
                   <TableHead>Serial Code</TableHead>
                   <TableHead>สินค้า</TableHead>
+                  <TableHead className="hidden sm:table-cell">Product Code</TableHead>
                   <TableHead>เวลา</TableHead>
                 </TableRow>
               </TableHeader>
@@ -178,6 +181,7 @@ export default function StockCheck() {
                     </TableCell>
                     <TableCell className="font-mono text-sm">{s.code}</TableCell>
                     <TableCell>{s.productName ?? "—"}</TableCell>
+                    <TableCell className="hidden sm:table-cell font-mono text-xs text-muted-foreground">{s.productSku ?? "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {s.timestamp.toLocaleTimeString("th-TH")}
                     </TableCell>
@@ -218,6 +222,7 @@ export default function StockCheck() {
                     <TableRow>
                       <TableHead>Serial Code</TableHead>
                       <TableHead>สินค้า</TableHead>
+                      <TableHead className="hidden sm:table-cell">Product Code</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -225,6 +230,7 @@ export default function StockCheck() {
                       <TableRow key={s.id}>
                         <TableCell className="font-mono text-sm">{s.serial_code}</TableCell>
                         <TableCell>{s.products?.name ?? "—"}</TableCell>
+                        <TableCell className="hidden sm:table-cell font-mono text-xs text-muted-foreground">{s.products?.sku ?? "—"}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
