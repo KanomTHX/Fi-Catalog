@@ -397,34 +397,85 @@ export default function SiteSettings() {
           <CardTitle className="text-base">แบนเนอร์หน้าสินค้า</CardTitle>
           <CardDescription>รูปแบนเนอร์สำหรับส่วน "สินค้าแนะนำ" และ "สินค้าทั้งหมด" (แนะนำ 2048×448 px) — ระบบจะ crop ให้พอดีอัตโนมัติ</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>แบนเนอร์สินค้าแนะนำ</Label>
-            <div className="flex items-center gap-3">
-              {featuredBannerUrl && (
-                <img src={featuredBannerUrl} alt="" className="h-16 rounded-lg object-contain border border-border" style={{ aspectRatio: `${BANNER_W}/${BANNER_H}` }} />
-              )}
-              <Input type="file" accept="image/*" onChange={(e) => {
+        <CardContent className="space-y-6">
+          {/* Featured Banner */}
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">แบนเนอร์สินค้าแนะนำ</Label>
+            {featuredBannerUrl && (
+              <div className="border border-border rounded-xl overflow-hidden bg-muted">
+                <img
+                  src={featuredBannerUrl}
+                  alt="Preview แบนเนอร์สินค้าแนะนำ"
+                  className="w-full"
+                  style={{
+                    maxHeight: 224,
+                    objectFit: featuredBannerFit as any,
+                    objectPosition: "center",
+                  }}
+                />
+              </div>
+            )}
+            <div className="flex items-center gap-3 flex-wrap">
+              <Input type="file" accept="image/*" className="max-w-xs" onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) openBannerCrop(file, "featured");
                 e.target.value = "";
               }} />
-            </div>
-            {featuredBannerUrl && <Button variant="outline" size="sm" onClick={() => setFeaturedBannerUrl(null)}>ลบแบนเนอร์</Button>}
-          </div>
-          <div className="space-y-2">
-            <Label>แบนเนอร์สินค้าทั้งหมด</Label>
-            <div className="flex items-center gap-3">
-              {allProductsBannerUrl && (
-                <img src={allProductsBannerUrl} alt="" className="h-16 rounded-lg object-contain border border-border" style={{ aspectRatio: `${BANNER_W}/${BANNER_H}` }} />
+              {featuredBannerUrl && (
+                <>
+                  <select
+                    value={featuredBannerFit}
+                    onChange={(e) => setFeaturedBannerFit(e.target.value)}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="cover">เต็ม (Cover)</option>
+                    <option value="contain">พอดี (Contain)</option>
+                    <option value="fill">ยืดเต็ม (Fill)</option>
+                  </select>
+                  <Button variant="outline" size="sm" onClick={() => setFeaturedBannerUrl(null)}>ลบแบนเนอร์</Button>
+                </>
               )}
-              <Input type="file" accept="image/*" onChange={(e) => {
+            </div>
+          </div>
+
+          {/* All Products Banner */}
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">แบนเนอร์สินค้าทั้งหมด</Label>
+            {allProductsBannerUrl && (
+              <div className="border border-border rounded-xl overflow-hidden bg-muted">
+                <img
+                  src={allProductsBannerUrl}
+                  alt="Preview แบนเนอร์สินค้าทั้งหมด"
+                  className="w-full"
+                  style={{
+                    maxHeight: 224,
+                    objectFit: allProductsBannerFit as any,
+                    objectPosition: "center",
+                  }}
+                />
+              </div>
+            )}
+            <div className="flex items-center gap-3 flex-wrap">
+              <Input type="file" accept="image/*" className="max-w-xs" onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) openBannerCrop(file, "all");
                 e.target.value = "";
               }} />
+              {allProductsBannerUrl && (
+                <>
+                  <select
+                    value={allProductsBannerFit}
+                    onChange={(e) => setAllProductsBannerFit(e.target.value)}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="cover">เต็ม (Cover)</option>
+                    <option value="contain">พอดี (Contain)</option>
+                    <option value="fill">ยืดเต็ม (Fill)</option>
+                  </select>
+                  <Button variant="outline" size="sm" onClick={() => setAllProductsBannerUrl(null)}>ลบแบนเนอร์</Button>
+                </>
+              )}
             </div>
-            {allProductsBannerUrl && <Button variant="outline" size="sm" onClick={() => setAllProductsBannerUrl(null)}>ลบแบนเนอร์</Button>}
           </div>
         </CardContent>
       </Card>
